@@ -89,6 +89,88 @@ async def get_event_by_id(event_id: UUID, svc: EventService = Depends(_svc)) -> 
     return _event_out(event)
 
 
+@router.get("/report/download")
+async def download_club_report(
+    start_date: date = Query(..., description="Report start date (YYYY-MM-DD)"),
+    end_date: date = Query(..., description="Report end date (YYYY-MM-DD)"),
+    db: AsyncSession = Depends(get_db),
+    actor: User = Depends(get_current_user),
+) -> StreamingResponse:
+    if actor.role not in (UserRole.CLUB_ADMIN, UserRole.SUPER_ADMIN):
+        raise ForbiddenError("Club Admin required")
+    if actor.club_id is None:
+        raise ForbiddenError("No club assigned")
+
+    from app.modules.events.report import generate_club_report
+
+    club = (await db.execute(select(Club).where(Club.id == actor.club_id))).scalar_one_or_none()
+    if club is None:
+        raise ForbiddenError("Club not found")
+
+    start_dt = datetime(start_date.year, start_date.month, start_date.day, tzinfo=timezone.utc)
+    end_dt = datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59, tzinfo=timezone.utc)
+
+    q = (
+        select(Event)
+        .where(
+            Event.organizer_club_id == actor.club_id,
+            Event.is_deleted == False,
+            Event.start_datetime >= start_dt,
+            Event.start_datetime <= end_dt,
+        )
+        .order_by(Event.start_datetime)
+    )
+    events = list((await db.execute(q)).scalars().all())
+
+    analytics_repo = AnalyticsRepository(db)
+    events_data = []
+    for ev in events:
+        try:
+            stats = await analytics_repo.event_analytics(ev.id)
+        except Exception:
+            stats = {}
+        events_data.append({
+            "title": ev.title,
+            "description": ev.description,
+            "agenda": ev.agenda,
+            "venue": ev.venue,
+            "category": ev.category,
+            "event_type": ev.event_type.value if hasattr(ev.event_type, "value") else ev.event_type,
+            "status": ev.status.value if hasattr(ev.status, "value") else ev.status,
+            "start_datetime": ev.start_datetime,
+            "end_datetime": ev.end_datetime,
+            "max_participants": ev.max_participants,
+            "is_team_event": ev.is_team_event,
+            "team_min_size": ev.team_min_size,
+            "team_max_size": ev.team_max_size,
+            "total_registrations": stats.get("registrations", {}).get("total", 0),
+            "confirmed_registrations": stats.get("registrations", {}).get("confirmed", 0),
+            "attendance_present": stats.get("attendance", {}).get("present", 0),
+            "total_teams": stats.get("teams", {}).get("total", 0),
+            "avg_team_size": stats.get("teams", {}).get("avg_size", 0),
+            "budget": stats.get("finance", {}).get("budget", 0),
+            "spent": stats.get("finance", {}).get("spent", 0),
+            "nps": stats.get("feedback", {}).get("nps"),
+        })
+
+    doc_bytes = generate_club_report(
+        club_name=club.name,
+        department=club.department,
+        start_date=start_date,
+        end_date=end_date,
+        events=events_data,
+    )
+
+    safe_name = re.sub(r"[^\w\-]", "_", club.name)
+    filename = f"{safe_name}_Report_{start_date}_{end_date}.docx"
+
+    return StreamingResponse(
+        iter([doc_bytes]),
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 @router.get("/{slug}", response_model=EventOut)
 async def get_event(slug: str, svc: EventService = Depends(_svc)) -> EventOut:
     event = await svc.get_event_by_slug(slug)
@@ -173,91 +255,6 @@ async def assign_organizer(
 ) -> dict:
     organizer = await svc.assign_organizer(event_id, body.user_id, body.role, body.permissions, actor)
     return {"id": str(organizer.id), "event_id": str(organizer.event_id), "role": organizer.role}
-
-
-@router.get("/report/download")
-async def download_club_report(
-    start_date: date = Query(..., description="Report start date (YYYY-MM-DD)"),
-    end_date: date = Query(..., description="Report end date (YYYY-MM-DD)"),
-    db: AsyncSession = Depends(get_db),
-    actor: User = Depends(get_current_user),
-) -> StreamingResponse:
-    if actor.role not in (UserRole.CLUB_ADMIN, UserRole.SUPER_ADMIN):
-        raise ForbiddenError("Club Admin required")
-    if actor.club_id is None:
-        raise ForbiddenError("No club assigned")
-
-    from app.modules.events.report import generate_club_report
-
-    # Fetch club
-    club = (await db.execute(select(Club).where(Club.id == actor.club_id))).scalar_one_or_none()
-    if club is None:
-        raise ForbiddenError("Club not found")
-
-    # Fetch events in date range for this club
-    start_dt = datetime(start_date.year, start_date.month, start_date.day, tzinfo=timezone.utc)
-    end_dt = datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59, tzinfo=timezone.utc)
-
-    q = (
-        select(Event)
-        .where(
-            Event.organizer_club_id == actor.club_id,
-            Event.is_deleted == False,
-            Event.start_datetime >= start_dt,
-            Event.start_datetime <= end_dt,
-        )
-        .order_by(Event.start_datetime)
-    )
-    events = list((await db.execute(q)).scalars().all())
-
-    # Fetch analytics for each event
-    analytics_repo = AnalyticsRepository(db)
-    events_data = []
-    for ev in events:
-        try:
-            stats = await analytics_repo.event_analytics(ev.id)
-        except Exception:
-            stats = {}
-        events_data.append({
-            "title": ev.title,
-            "description": ev.description,
-            "agenda": ev.agenda,
-            "venue": ev.venue,
-            "category": ev.category,
-            "event_type": ev.event_type.value if hasattr(ev.event_type, "value") else ev.event_type,
-            "status": ev.status.value if hasattr(ev.status, "value") else ev.status,
-            "start_datetime": ev.start_datetime,
-            "end_datetime": ev.end_datetime,
-            "max_participants": ev.max_participants,
-            "is_team_event": ev.is_team_event,
-            "team_min_size": ev.team_min_size,
-            "team_max_size": ev.team_max_size,
-            "total_registrations": stats.get("registrations", {}).get("total", 0),
-            "confirmed_registrations": stats.get("registrations", {}).get("confirmed", 0),
-            "attendance_present": stats.get("attendance", {}).get("present", 0),
-            "total_teams": stats.get("teams", {}).get("total", 0),
-            "avg_team_size": stats.get("teams", {}).get("avg_size", 0),
-            "budget": stats.get("finance", {}).get("budget", 0),
-            "spent": stats.get("finance", {}).get("spent", 0),
-            "nps": stats.get("feedback", {}).get("nps"),
-        })
-
-    doc_bytes = generate_club_report(
-        club_name=club.name,
-        department=club.department,
-        start_date=start_date,
-        end_date=end_date,
-        events=events_data,
-    )
-
-    safe_name = re.sub(r"[^\w\-]", "_", club.name)
-    filename = f"{safe_name}_Report_{start_date}_{end_date}.docx"
-
-    return StreamingResponse(
-        iter([doc_bytes]),
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
 
 
 # ── Clubs ─────────────────────────────────────────────────────────────────────
