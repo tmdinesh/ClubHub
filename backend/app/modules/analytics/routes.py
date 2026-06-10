@@ -28,6 +28,17 @@ async def event_analytics(
     return await repo.event_analytics(event_id)
 
 
+@router.get("/clubs")
+async def all_clubs_analytics(
+    db: AsyncSession = Depends(get_db),
+    actor: User = Depends(get_current_user),
+) -> list[dict]:
+    if actor.role != UserRole.SUPER_ADMIN:
+        raise ForbiddenError("Super Admin required")
+    repo = AnalyticsRepository(db)
+    return await repo.all_clubs_analytics()
+
+
 @router.get("/clubs/{club_id}")
 async def club_analytics(
     club_id: UUID,

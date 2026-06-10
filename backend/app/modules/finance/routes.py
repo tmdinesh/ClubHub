@@ -9,7 +9,7 @@ from app.core.database import get_db
 from app.modules.auth.deps import get_current_user
 from app.modules.auth.models import User
 from app.modules.finance.repos import FinanceRepository
-from app.modules.finance.schemas import BudgetCreate, ExpenseCreate, ExpenseOut, FinanceSummary
+from app.modules.finance.schemas import BudgetCreate, ExpenseCreate, ExpenseOut, FinanceSummary, WinnerOut, WinnerSet
 from app.modules.finance.services import FinanceService
 
 router = APIRouter(tags=["finance"])
@@ -62,3 +62,29 @@ async def list_expenses(event_id: UUID, svc: FinanceService = Depends(_svc)) -> 
 async def finance_summary(event_id: UUID, svc: FinanceService = Depends(_svc)) -> FinanceSummary:
     data = await svc.get_budget_with_actuals(event_id)
     return FinanceSummary(**data)
+
+
+@router.get("/events/{event_id}/winners", response_model=list[WinnerOut])
+async def list_winners(event_id: UUID, svc: FinanceService = Depends(_svc)) -> list[WinnerOut]:
+    return await svc.list_winners(event_id)
+
+
+@router.post("/events/{event_id}/winners", response_model=WinnerOut, status_code=201)
+async def set_winner(
+    event_id: UUID,
+    body: WinnerSet,
+    svc: FinanceService = Depends(_svc),
+    actor: User = Depends(get_current_user),
+) -> WinnerOut:
+    winner = await svc.set_winner(event_id, body.user_id, body.position, body.prize_amount, actor)
+    return WinnerOut(**winner)
+
+
+@router.delete("/events/{event_id}/winners/{position}", status_code=204, response_model=None)
+async def remove_winner(
+    event_id: UUID,
+    position: int,
+    svc: FinanceService = Depends(_svc),
+    actor: User = Depends(get_current_user),
+) -> None:
+    await svc.remove_winner(event_id, position, actor)

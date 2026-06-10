@@ -30,11 +30,14 @@ async def google_login(service: AuthService = Depends(_get_service)) -> Redirect
 
 @router.get("/google/callback")
 async def google_callback(
-    code: str,
     service: AuthService = Depends(_get_service),
+    code: str | None = None,
+    error: str | None = None,
 ) -> RedirectResponse:
-    _, access_token, refresh_token = await service.google_callback(code)
     frontend_url = settings.FRONTEND_URL
+    if error or not code:
+        return RedirectResponse(url=f"{frontend_url}/login?error=access_denied")
+    _, access_token, refresh_token = await service.google_callback(code)
     return RedirectResponse(
         url=f"{frontend_url}/auth/callback?access_token={access_token}&refresh_token={refresh_token}"
     )

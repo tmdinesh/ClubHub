@@ -155,45 +155,75 @@ function AttendancePanel({ eventId }: { eventId: string }) {
   );
 }
 
+interface ExpenseItem { id: string; title: string; amount: number; category: string; notes: string | null; }
+
 function FinancePanel({ eventId }: { eventId: string }) {
-  const { data, isLoading, isError } = useQuery<FinanceData>({
+  const { data: budget, isLoading: loadingBudget } = useQuery<FinanceData>({
     queryKey: ["faculty-finance", eventId],
     queryFn: () => api.get(`/events/${eventId}/budget`).then((r) => r.data),
   });
+  const { data: expenses = [], isLoading: loadingExpenses } = useQuery<ExpenseItem[]>({
+    queryKey: ["faculty-expenses", eventId],
+    queryFn: () => api.get(`/events/${eventId}/expenses`).then((r) => r.data),
+  });
 
-  if (isLoading) return <div className="h-16 rounded-lg animate-pulse" style={{ background: "var(--ink-muted)" }} />;
-  if (isError || !data) return <p className="text-xs" style={{ color: "var(--dust)" }}>No budget set for this event.</p>;
-
-  const usedPct = data.total_budget > 0
-    ? Math.min((data.total_spent / data.total_budget) * 100, 100) : 0;
   const fmt = (n: number) =>
     new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
-  const barColor = usedPct > 90 ? "var(--cinnabar)" : usedPct > 70 ? "var(--amber)" : "var(--jade)";
+  if (loadingBudget || loadingExpenses)
+    return <div className="h-16 rounded-lg animate-pulse" style={{ background: "var(--ink-muted)" }} />;
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: "Budget", value: fmt(data.total_budget), color: "var(--cream)" },
-          { label: "Spent", value: fmt(data.total_spent), color: "var(--cinnabar)" },
-          { label: "Remaining", value: fmt(data.remaining), color: data.remaining < 0 ? "var(--cinnabar)" : "var(--jade)" },
-        ].map((s) => (
-          <div key={s.label} className="rounded-lg p-3 text-center" style={{ background: "var(--ink-muted)" }}>
-            <p className="text-lg font-bold" style={{ color: s.color }}>{s.value}</p>
-            <p className="text-xs mt-0.5" style={{ color: "var(--dust)" }}>{s.label}</p>
+      {/* Budget summary — amounts only, no percentage */}
+      {budget ? (
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "Budget",    value: fmt(budget.total_budget), color: "var(--cream)" },
+            { label: "Spent",     value: fmt(budget.total_spent),  color: "var(--cinnabar)" },
+            { label: "Remaining", value: fmt(budget.remaining),    color: budget.remaining < 0 ? "var(--cinnabar)" : "var(--jade)" },
+          ].map((s) => (
+            <div key={s.label} className="rounded-lg p-3 text-center" style={{ background: "var(--ink-muted)" }}>
+              <p className="text-lg font-bold" style={{ color: s.color }}>{s.value}</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--dust)" }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs" style={{ color: "var(--dust)" }}>No budget set for this event.</p>
+      )}
+
+      {/* Expenses list */}
+      {expenses.length > 0 ? (
+        <div>
+          <p className="text-xs font-semibold mb-2" style={{ color: "var(--fog)" }}>Expenses ({expenses.length})</p>
+          <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--seam)" }}>
+            <table className="w-full text-xs">
+              <thead>
+                <tr style={{ background: "var(--ink-muted)" }}>
+                  {["Title", "Category", "Amount"].map((h) => (
+                    <th key={h} className="px-3 py-2 text-left font-semibold uppercase tracking-wider" style={{ color: "var(--dust)" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {expenses.map((exp) => (
+                  <tr key={exp.id} style={{ borderTop: "1px solid var(--seam)" }}>
+                    <td className="px-3 py-2 font-medium" style={{ color: "var(--fog)" }}>
+                      {exp.title}
+                      {exp.notes && <span className="block text-[10px] mt-0.5" style={{ color: "var(--dust)" }}>{exp.notes}</span>}
+                    </td>
+                    <td className="px-3 py-2" style={{ color: "var(--ash)" }}>{exp.category}</td>
+                    <td className="px-3 py-2 font-semibold" style={{ color: "var(--cream)" }}>{fmt(exp.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ))}
-      </div>
-      <div>
-        <div className="flex justify-between text-xs mb-1" style={{ color: "var(--dust)" }}>
-          <span>Budget utilization</span>
-          <span className="font-semibold" style={{ color: "var(--fog)" }}>{usedPct.toFixed(1)}%</span>
         </div>
-        <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--ink-muted)" }}>
-          <div className="h-full rounded-full transition-all" style={{ width: `${usedPct}%`, background: barColor }} />
-        </div>
-      </div>
+      ) : (
+        <p className="text-xs" style={{ color: "var(--dust)" }}>No expenses recorded yet.</p>
+      )}
     </div>
   );
 }
@@ -366,33 +396,30 @@ export default function FacultyApprovals() {
   const [rejectTarget, setRejectTarget] = useState<{ id: string; title: string } | null>(null);
   const [viewTab, setViewTab] = useState<"pending" | "all">("pending");
 
-  const { data: pendingEvents = [], isLoading: loadingPending, error: pendingError } = useQuery<Event[]>({
-    queryKey: ["events", "pending-approval"],
-    queryFn: () => api.get("/events", { params: { status: "PENDING_APPROVAL" } }).then((r) => r.data),
-  });
-
-  const { data: allEvents = [], isLoading: loadingAll } = useQuery<Event[]>({
+  const { data: allEvents = [], isLoading: loadingAll, error: pendingError } = useQuery<Event[]>({
     queryKey: ["events", "faculty-mine"],
     queryFn: () => api.get("/events/faculty/mine").then((r) => r.data),
-    enabled: viewTab === "all",
   });
+
+  const pendingEvents = allEvents.filter((e) => e.status === "PENDING_APPROVAL");
+  const loadingPending = loadingAll;
 
   const approveMutation = useMutation({
     mutationFn: (eventId: string) => api.post(`/events/${eventId}/approve`, {}),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["events", "pending-approval"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["events", "faculty-mine"] }),
   });
 
   const rejectMutation = useMutation({
     mutationFn: ({ eventId, comment }: { eventId: string; comment: string }) =>
       api.post(`/events/${eventId}/reject`, { comment }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["events", "pending-approval"] });
+      queryClient.invalidateQueries({ queryKey: ["events", "faculty-mine"] });
       setRejectTarget(null);
     },
   });
 
   const events = viewTab === "pending" ? pendingEvents : allEvents;
-  const isLoading = viewTab === "pending" ? loadingPending : loadingAll;
+  const isLoading = loadingAll;
 
   return (
     <Layout>

@@ -145,8 +145,10 @@ export default function EventDetail() {
   }
 
   const statusConfig = STATUS_BADGE[event.status];
+  const now = new Date();
   const registrationOpen =
-    event.registration_end && !isPast(new Date(event.registration_end));
+    (!event.registration_start || isPast(new Date(event.registration_start))) &&
+    (!event.registration_end || !isPast(new Date(event.registration_end)));
 
   return (
     <div className="min-h-screen bg-background">

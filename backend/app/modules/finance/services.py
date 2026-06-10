@@ -3,8 +3,9 @@ from __future__ import annotations
 from uuid import UUID
 
 from app.modules.auth.models import User
-from app.modules.finance.models import EventBudget, Expense
+from app.modules.finance.models import EventBudget, EventWinner, Expense
 from app.modules.finance.repos import FinanceRepository
+from app.shared.enums import ExpenseCategory
 from app.shared.exceptions import ConflictError, NotFoundError
 
 
@@ -57,3 +58,47 @@ class FinanceService:
 
     async def list_expenses(self, event_id: UUID) -> list[Expense]:
         return await self.repo.list_expenses(event_id)
+
+    async def list_winners(self, event_id: UUID) -> list[dict]:
+        return await self.repo.list_winners(event_id)
+
+    async def set_winner(
+        self, event_id: UUID, user_id: UUID, position: int, prize_amount: float | None, actor: User
+    ) -> dict:
+        existing = await self.repo.get_winner_by_position(event_id, position)
+        if existing:
+            # Replace: delete old winner and its auto-expense
+            if existing.expense_id:
+                await self.repo.delete_winner(existing)
+            else:
+                await self.repo.delete_winner(existing)
+
+        expense_id = None
+        if prize_amount and prize_amount > 0:
+            ordinal = {1: "1st", 2: "2nd", 3: "3rd"}.get(position, f"{position}th")
+            expense = await self.repo.create_expense(
+                event_id=event_id,
+                category=ExpenseCategory.PRIZES,
+                title=f"Cash prize — {ordinal} place",
+                amount=prize_amount,
+                bill_url=None,
+                notes="Auto-created from winner record",
+                uploaded_by=actor.id,
+            )
+            expense_id = expense.id
+
+        winner = await self.repo.create_winner(
+            event_id=event_id,
+            user_id=user_id,
+            position=position,
+            prize_amount=prize_amount,
+            expense_id=expense_id,
+        )
+        winners = await self.repo.list_winners(event_id)
+        return next(w for w in winners if w["id"] == str(winner.id))
+
+    async def remove_winner(self, event_id: UUID, position: int, actor: User) -> None:
+        winner = await self.repo.get_winner_by_position(event_id, position)
+        if not winner:
+            raise NotFoundError("Winner", position)
+        await self.repo.delete_winner(winner)

@@ -13,19 +13,64 @@ import { useAuthStore } from "@/store/auth.store";
 import type { Registration, Team } from "@/types";
 import { fmtDateIST } from "@/lib/dateIST";
 
-const STATUS_COLORS: Record<Registration["status"], string> = {
-  CONFIRMED:  "bg-emerald-50 text-emerald-700 border-emerald-200",
-  PENDING:    "bg-amber-50 text-amber-700 border-amber-200",
-  WAITLISTED: "bg-blue-50 text-blue-700 border-blue-200",
-  CANCELLED:  "bg-slate-100 text-slate-500 border-slate-200",
-};
+// Status badge inline style helpers
+function statusBadgeStyle(type: "CONFIRMED" | "PENDING" | "WAITLISTED" | "CANCELLED"): React.CSSProperties {
+  switch (type) {
+    case "CONFIRMED":
+      return {
+        background: "color-mix(in srgb, var(--jade) 15%, transparent)",
+        color: "var(--jade)",
+        border: "1px solid color-mix(in srgb, var(--jade) 30%, transparent)",
+      };
+    case "PENDING":
+      return {
+        background: "color-mix(in srgb, var(--amber) 15%, transparent)",
+        color: "var(--amber)",
+        border: "1px solid color-mix(in srgb, var(--amber) 30%, transparent)",
+      };
+    case "WAITLISTED":
+      return {
+        background: "color-mix(in srgb, var(--sky) 15%, transparent)",
+        color: "var(--sky)",
+        border: "1px solid color-mix(in srgb, var(--sky) 30%, transparent)",
+      };
+    case "CANCELLED":
+      return {
+        background: "color-mix(in srgb, var(--ash) 15%, transparent)",
+        color: "var(--ash)",
+        border: "1px solid color-mix(in srgb, var(--ash) 30%, transparent)",
+      };
+  }
+}
 
-const TEAM_STATUS_COLORS: Record<Team["status"], string> = {
-  FORMING:      "bg-amber-50 text-amber-700 border-amber-200",
-  READY:        "bg-emerald-50 text-emerald-700 border-emerald-200",
-  SUBMITTED:    "bg-indigo-50 text-indigo-700 border-indigo-200",
-  DISQUALIFIED: "bg-red-50 text-red-600 border-red-200",
-};
+function teamStatusBadgeStyle(type: Team["status"]): React.CSSProperties {
+  switch (type) {
+    case "FORMING":
+      return {
+        background: "color-mix(in srgb, var(--amber) 15%, transparent)",
+        color: "var(--amber)",
+        border: "1px solid color-mix(in srgb, var(--amber) 30%, transparent)",
+      };
+    case "READY":
+      return {
+        background: "color-mix(in srgb, var(--jade) 15%, transparent)",
+        color: "var(--jade)",
+        border: "1px solid color-mix(in srgb, var(--jade) 30%, transparent)",
+      };
+    case "SUBMITTED":
+      return {
+        background: "color-mix(in srgb, var(--amber) 12%, transparent)",
+        color: "var(--amber)",
+        border: "1px solid color-mix(in srgb, var(--amber) 25%, transparent)",
+      };
+    case "DISQUALIFIED":
+      return {
+        background: "color-mix(in srgb, var(--cinnabar) 15%, transparent)",
+        color: "var(--cinnabar)",
+        border: "1px solid color-mix(in srgb, var(--cinnabar) 30%, transparent)",
+      };
+  }
+}
 
 // ── Copy-to-clipboard button ──────────────────────────────────────────────
 
@@ -38,8 +83,13 @@ function CopyButton({ text }: { text: string }) {
   }
   return (
     <button type="button" onClick={copy}
-      className="p-1 rounded text-slate-400 hover:text-indigo-600 transition-colors">
-      {copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+      className="p-1 rounded transition-colors"
+      style={{ color: "var(--ash)" }}
+      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--amber)")}
+      onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ash)")}>
+      {copied
+        ? <Check size={13} style={{ color: "var(--jade)" }} />
+        : <Copy size={13} />}
     </button>
   );
 }
@@ -53,6 +103,7 @@ function MyTeamCard({
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteToken, setInviteToken] = useState<string | null>(null);
   const [inviteError, setInviteError] = useState("");
+  const [inviteInputFocused, setInviteInputFocused] = useState(false);
 
   const inviteMutation = useMutation({
     mutationFn: (email: string) => api.post(`/teams/${team.id}/invite`, { email }),
@@ -66,45 +117,80 @@ function MyTeamCard({
   });
 
   return (
-    <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 space-y-3">
+    <div
+      className="rounded-xl p-4 space-y-3"
+      style={{
+        background: "color-mix(in srgb, var(--amber) 12%, transparent)",
+        border: "1px solid color-mix(in srgb, var(--amber) 25%, transparent)",
+      }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0">
-            <Users size={13} className="text-white" />
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: "var(--amber)", color: "var(--ink)" }}
+          >
+            <Users size={13} />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-semibold text-slate-800">{team.name}</span>
+              <span className="text-sm font-semibold" style={{ color: "var(--cream)" }}>{team.name}</span>
               {isLead && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">
+                <span
+                  className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                  style={{
+                    color: "var(--amber)",
+                    background: "color-mix(in srgb, var(--amber) 15%, transparent)",
+                    border: "1px solid color-mix(in srgb, var(--amber) 30%, transparent)",
+                  }}
+                >
                   <Crown size={9} /> Lead
                 </span>
               )}
-              <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${
-                team.is_public ? "text-emerald-700 bg-emerald-50 border-emerald-200" : "text-slate-600 bg-slate-100 border-slate-200"
-              }`}>
+              <span
+                className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                style={
+                  team.is_public
+                    ? {
+                        color: "var(--jade)",
+                        background: "color-mix(in srgb, var(--jade) 15%, transparent)",
+                        border: "1px solid color-mix(in srgb, var(--jade) 30%, transparent)",
+                      }
+                    : {
+                        color: "var(--fog)",
+                        background: "var(--ink-muted)",
+                        border: "1px solid var(--seam)",
+                      }
+                }
+              >
                 {team.is_public ? <><Globe size={9} /> Public</> : <>Private</>}
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs mt-0.5" style={{ color: "var(--fog)" }}>
               {team.member_count} of {team.max_size} members · min {team.min_size}
             </p>
           </div>
         </div>
-        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${TEAM_STATUS_COLORS[team.status]}`}>
+        <span
+          className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+          style={teamStatusBadgeStyle(team.status)}
+        >
           {team.status}
         </span>
       </div>
 
       {/* Join key (lead only, private team) */}
       {isLead && !team.is_public && team.join_key && (
-        <div className="bg-white border border-slate-200 rounded-lg px-3 py-2.5">
-          <p className="text-xs font-semibold text-slate-600 mb-1 flex items-center gap-1">
-            <KeyRound size={11} className="text-indigo-500" /> Join Key — share this with teammates
+        <div
+          className="rounded-lg px-3 py-2.5"
+          style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}
+        >
+          <p className="text-xs font-semibold mb-1 flex items-center gap-1" style={{ color: "var(--fog)" }}>
+            <KeyRound size={11} style={{ color: "var(--amber)" }} /> Join Key — share this with teammates
           </p>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-base font-bold tracking-widest text-indigo-700 select-all">
+            <span className="font-mono text-base font-bold tracking-widest select-all" style={{ color: "var(--amber)" }}>
               {team.join_key}
             </span>
             <CopyButton text={team.join_key} />
@@ -118,42 +204,78 @@ function MyTeamCard({
           {/* Email invite (still available for both public and private) */}
           {team.member_count < team.max_size && (
             <div>
-              <p className="text-xs font-semibold text-slate-600 mb-1">Invite by email</p>
+              <p className="text-xs font-semibold mb-1" style={{ color: "var(--fog)" }}>Invite by email</p>
               <div className="flex gap-2">
-                <input type="email" value={inviteEmail}
+                <input
+                  type="email"
+                  value={inviteEmail}
                   onChange={(e) => { setInviteEmail(e.target.value); setInviteToken(null); setInviteError(""); }}
                   placeholder="teammate@college.edu"
-                  className="flex-1 text-sm px-3 py-1.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white text-slate-900" />
-                <button type="button"
+                  className="flex-1 text-sm px-3 py-1.5 rounded-lg focus:outline-none"
+                  style={{
+                    background: "var(--ink-soft)",
+                    border: inviteInputFocused ? "1px solid var(--amber)" : "1px solid var(--seam)",
+                    boxShadow: inviteInputFocused ? "0 0 0 3px rgba(245,166,35,0.12)" : "none",
+                    color: "var(--cream)",
+                  }}
+                  onFocus={() => setInviteInputFocused(true)}
+                  onBlur={() => setInviteInputFocused(false)}
+                />
+                <button
+                  type="button"
                   onClick={() => inviteEmail && inviteMutation.mutate(inviteEmail)}
                   disabled={!inviteEmail || inviteMutation.isPending}
-                  className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center gap-1">
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors flex items-center gap-1"
+                  style={{ background: "var(--amber)", color: "var(--ink)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--amber-glow)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
+                >
                   {inviteMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : null}
                   Send
                 </button>
               </div>
               {inviteToken && (
-                <div className="mt-2 bg-white border border-emerald-200 rounded-lg p-2.5">
-                  <p className="text-xs font-semibold text-emerald-700 mb-1 flex items-center gap-1">
+                <div
+                  className="mt-2 rounded-lg p-2.5"
+                  style={{
+                    background: "var(--ink-soft)",
+                    border: "1px solid color-mix(in srgb, var(--jade) 30%, transparent)",
+                  }}
+                >
+                  <p className="text-xs font-semibold mb-1 flex items-center gap-1" style={{ color: "var(--jade)" }}>
                     <CheckCircle size={11} /> Invitation token — share with teammate:
                   </p>
                   <div className="flex items-center gap-1">
-                    <p className="text-xs font-mono text-slate-700 break-all select-all bg-slate-50 rounded px-2 py-1.5 flex-1">{inviteToken}</p>
+                    <p
+                      className="text-xs font-mono break-all select-all rounded px-2 py-1.5 flex-1"
+                      style={{ color: "var(--cream)", background: "var(--ink-muted)" }}
+                    >
+                      {inviteToken}
+                    </p>
                     <CopyButton text={inviteToken} />
                   </div>
                 </div>
               )}
-              {inviteError && <p className="text-xs text-red-600 mt-1 flex items-center gap-1"><AlertCircle size={11} /> {inviteError}</p>}
+              {inviteError && (
+                <p className="text-xs mt-1 flex items-center gap-1" style={{ color: "var(--cinnabar)" }}>
+                  <AlertCircle size={11} /> {inviteError}
+                </p>
+              )}
             </div>
           )}
 
           {/* Submit */}
           {(team.status === "READY" || team.status === "FORMING") && (
-            <button type="button"
+            <button
+              type="button"
               onClick={() => submitMutation.mutate()}
               disabled={submitMutation.isPending || team.member_count < team.min_size}
               title={team.member_count < team.min_size ? `Need ${team.min_size - team.member_count} more member(s)` : ""}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 disabled:opacity-50 transition-colors">
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors"
+              style={{ background: "var(--jade)", color: "var(--ink)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.filter = "brightness(1.1)")}
+              onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
+            >
               {submitMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
               Submit Team
               {team.member_count < team.min_size && (
@@ -165,7 +287,7 @@ function MyTeamCard({
       )}
 
       {!isLead && team.status === "SUBMITTED" && (
-        <p className="text-xs text-emerald-700 flex items-center gap-1">
+        <p className="text-xs flex items-center gap-1" style={{ color: "var(--jade)" }}>
           <CheckCircle size={11} /> Team submitted.
         </p>
       )}
@@ -182,6 +304,10 @@ function TeamPanel({ reg }: { reg: Registration }) {
   const [teamName, setTeamName] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [createError, setCreateError] = useState("");
+  const [teamNameFocused, setTeamNameFocused] = useState(false);
+  const [joinKey, setJoinKey] = useState("");
+  const [joinKeyFocused, setJoinKeyFocused] = useState(false);
+  const [joinKeyError, setJoinKeyError] = useState("");
 
   const { data: myTeams = [], isLoading: loadingMy } = useQuery<Team[]>({
     queryKey: ["my-teams-event", reg.event_id],
@@ -224,6 +350,12 @@ function TeamPanel({ reg }: { reg: Registration }) {
     onError: (err) => alert(apiError(err, "Failed to join team.")),
   });
 
+  const joinByKeyMutation = useMutation({
+    mutationFn: (key: string) => api.post("/teams/join-by-key", { join_key: key }),
+    onSuccess: () => { invalidateTeams(); setJoinKey(""); setJoinKeyError(""); },
+    onError: (err) => setJoinKeyError(apiError(err, "Invalid or expired key.")),
+  });
+
   const myTeamIds = new Set(myTeams.map((t) => t.id));
   const joinablePublic = allTeams.filter(
     (t) => !myTeamIds.has(t.id) && t.is_public &&
@@ -236,14 +368,23 @@ function TeamPanel({ reg }: { reg: Registration }) {
   }
 
   return (
-    <div className="mt-3 border-t border-slate-100 pt-3">
+    <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--seam)" }}>
       {/* Tab bar */}
-      <div className="flex gap-1 bg-slate-50 p-0.5 rounded-lg mb-3 w-fit">
+      <div className="flex gap-1 p-0.5 rounded-lg mb-3 w-fit" style={{ background: "var(--ink-muted)" }}>
         {(["my", "browse"] as const).map((t) => (
-          <button key={t} type="button" onClick={() => setTab(t)}
-            className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
-              tab === t ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
-            }`}>
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className="px-3 py-1 rounded-md text-xs font-semibold transition-all"
+            style={
+              tab === t
+                ? { background: "var(--ink-soft)", color: "var(--cream)", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }
+                : { color: "var(--fog)" }
+            }
+            onMouseEnter={(e) => { if (tab !== t) e.currentTarget.style.color = "var(--cream)"; }}
+            onMouseLeave={(e) => { if (tab !== t) e.currentTarget.style.color = "var(--fog)"; }}
+          >
             {t === "my" ? "My Team" : "Browse / Join"}
           </button>
         ))}
@@ -253,48 +394,124 @@ function TeamPanel({ reg }: { reg: Registration }) {
       {tab === "my" && (
         <div className="space-y-3">
           {loadingMy ? (
-            <div className="h-12 bg-slate-50 rounded-lg animate-pulse" />
+            <div className="h-12 rounded-lg animate-pulse" style={{ background: "var(--ink-muted)" }} />
           ) : myTeams.length === 0 ? (
             <div>
-              <p className="text-xs text-slate-500 mb-3">
-                You're not in a team yet. Create one, or browse public teams and join — or enter a private team's key.
+              <p className="text-xs mb-3" style={{ color: "var(--fog)" }}>
+                You're not in a team yet. Create one below, browse public teams on the Browse tab, or paste a private team's key.
               </p>
 
               {/* Visibility toggle */}
               <div className="flex items-center gap-3 mb-3">
-                <button type="button"
+                <button
+                  type="button"
                   onClick={() => setIsPublic(true)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                    isPublic ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                  }`}>
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                  style={
+                    isPublic
+                      ? { background: "var(--jade)", color: "var(--ink)", border: "1px solid var(--jade)" }
+                      : { background: "var(--ink-soft)", color: "var(--fog)", border: "1px solid var(--seam)" }
+                  }
+                  onMouseEnter={(e) => { if (!isPublic) e.currentTarget.style.background = "var(--ink-muted)"; }}
+                  onMouseLeave={(e) => { if (!isPublic) e.currentTarget.style.background = "var(--ink-soft)"; }}
+                >
                   <Globe size={12} /> Public
                 </button>
-                <button type="button"
+                <button
+                  type="button"
                   onClick={() => setIsPublic(false)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                    !isPublic ? "bg-slate-700 text-white border-slate-700" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                  }`}>
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                  style={
+                    !isPublic
+                      ? { background: "var(--fog)", color: "var(--ink)", border: "1px solid var(--fog)" }
+                      : { background: "var(--ink-soft)", color: "var(--fog)", border: "1px solid var(--seam)" }
+                  }
+                  onMouseEnter={(e) => { if (isPublic) e.currentTarget.style.background = "var(--ink-muted)"; }}
+                  onMouseLeave={(e) => { if (isPublic) e.currentTarget.style.background = "var(--ink-soft)"; }}
+                >
                   Private
                 </button>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs" style={{ color: "var(--ash)" }}>
                   {isPublic ? "Anyone can join directly" : "Teammates join using a key you share"}
                 </span>
               </div>
 
               <div className="flex gap-2">
-                <input type="text" value={teamName}
+                <input
+                  type="text"
+                  value={teamName}
                   onChange={(e) => { setTeamName(e.target.value); setCreateError(""); }}
                   placeholder="Team name…"
-                  className="flex-1 text-sm px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 text-slate-900" />
-                <button type="button"
+                  className="flex-1 text-sm px-3 py-2 rounded-lg focus:outline-none"
+                  style={{
+                    background: "var(--ink-soft)",
+                    border: teamNameFocused ? "1px solid var(--amber)" : "1px solid var(--seam)",
+                    boxShadow: teamNameFocused ? "0 0 0 3px rgba(245,166,35,0.12)" : "none",
+                    color: "var(--cream)",
+                  }}
+                  onFocus={() => setTeamNameFocused(true)}
+                  onBlur={() => setTeamNameFocused(false)}
+                />
+                <button
+                  type="button"
                   onClick={() => teamName.trim() && createMutation.mutate()}
                   disabled={!teamName.trim() || createMutation.isPending}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors"
+                  style={{ background: "var(--amber)", color: "var(--ink)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--amber-glow)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
+                >
                   {createMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
                   Create {isPublic ? "Public" : "Private"} Team
                 </button>
               </div>
-              {createError && <p className="text-xs text-red-600 mt-1 flex items-center gap-1"><AlertCircle size={11} /> {createError}</p>}
+              {createError && (
+                <p className="text-xs mt-1 flex items-center gap-1" style={{ color: "var(--cinnabar)" }}>
+                  <AlertCircle size={11} /> {createError}
+                </p>
+              )}
+
+              {/* Join by key */}
+              <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--seam)" }}>
+                <p className="text-xs font-semibold mb-2 flex items-center gap-1" style={{ color: "var(--fog)" }}>
+                  <KeyRound size={11} style={{ color: "var(--amber)" }} /> Have a private team key?
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={joinKey}
+                    onChange={(e) => { setJoinKey(e.target.value); setJoinKeyError(""); }}
+                    placeholder="Enter join key…"
+                    className="flex-1 text-sm px-3 py-2 rounded-lg focus:outline-none font-mono tracking-widest"
+                    style={{
+                      background: "var(--ink-soft)",
+                      border: joinKeyFocused ? "1px solid var(--amber)" : "1px solid var(--seam)",
+                      boxShadow: joinKeyFocused ? "0 0 0 3px rgba(245,166,35,0.12)" : "none",
+                      color: "var(--amber)",
+                    }}
+                    onFocus={() => setJoinKeyFocused(true)}
+                    onBlur={() => setJoinKeyFocused(false)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && joinKey.trim()) joinByKeyMutation.mutate(joinKey.trim()); }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => joinKey.trim() && joinByKeyMutation.mutate(joinKey.trim())}
+                    disabled={!joinKey.trim() || joinByKeyMutation.isPending}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors"
+                    style={{ background: "var(--fog)", color: "var(--ink)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.filter = "brightness(1.1)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
+                  >
+                    {joinByKeyMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <ChevronRight size={12} />}
+                    Join
+                  </button>
+                </div>
+                {joinKeyError && (
+                  <p className="text-xs mt-1 flex items-center gap-1" style={{ color: "var(--cinnabar)" }}>
+                    <AlertCircle size={11} /> {joinKeyError}
+                  </p>
+                )}
+              </div>
             </div>
           ) : (
             myTeams.map((team) => (
@@ -313,38 +530,59 @@ function TeamPanel({ reg }: { reg: Registration }) {
       {tab === "browse" && (
         <div className="space-y-4">
           {myTeams.length > 0 && (
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            <p
+              className="rounded-lg px-3 py-2 text-xs"
+              style={{
+                color: "var(--amber)",
+                background: "color-mix(in srgb, var(--amber) 12%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--amber) 30%, transparent)",
+              }}
+            >
               You're already in a team. You can only belong to one team per event.
             </p>
           )}
 
           {/* Public teams */}
           <div>
-            <h4 className="text-xs font-semibold text-slate-600 flex items-center gap-1 mb-2">
-              <Globe size={11} className="text-emerald-600" /> Public Teams
+            <h4 className="text-xs font-semibold flex items-center gap-1 mb-2" style={{ color: "var(--fog)" }}>
+              <Globe size={11} style={{ color: "var(--jade)" }} /> Public Teams
             </h4>
             {loadingAll ? (
-              <div className="h-10 bg-slate-50 rounded-lg animate-pulse" />
+              <div className="h-10 rounded-lg animate-pulse" style={{ background: "var(--ink-muted)" }} />
             ) : joinablePublic.length === 0 ? (
-              <p className="text-xs text-slate-400">No public teams with open spots right now.</p>
+              <p className="text-xs" style={{ color: "var(--ash)" }}>No public teams with open spots right now.</p>
             ) : (
               <div className="space-y-2">
                 {joinablePublic.map((team) => (
-                  <div key={team.id}
-                    className="flex items-center justify-between bg-emerald-50/60 border border-emerald-100 rounded-lg px-3 py-2.5">
+                  <div
+                    key={team.id}
+                    className="flex items-center justify-between rounded-lg px-3 py-2.5"
+                    style={{
+                      background: "color-mix(in srgb, var(--jade) 10%, transparent)",
+                      border: "1px solid color-mix(in srgb, var(--jade) 20%, transparent)",
+                    }}
+                  >
                     <div>
-                      <p className="text-sm font-medium text-slate-800">{team.name}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">
+                      <p className="text-sm font-medium" style={{ color: "var(--cream)" }}>{team.name}</p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--ash)" }}>
                         {team.member_count}/{team.max_size} members ·{" "}
-                        <span className={team.status === "READY" ? "text-emerald-600 font-semibold" : "text-amber-600 font-semibold"}>
+                        <span
+                          className="font-semibold"
+                          style={{ color: team.status === "READY" ? "var(--jade)" : "var(--amber)" }}
+                        >
                           {team.status}
                         </span>
                       </p>
                     </div>
-                    <button type="button"
+                    <button
+                      type="button"
                       onClick={() => joinPublicMutation.mutate(team.id)}
                       disabled={joinPublicMutation.isPending || myTeams.length > 0}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 disabled:opacity-50 transition-colors">
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors"
+                      style={{ background: "var(--jade)", color: "var(--ink)" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.filter = "brightness(1.1)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
+                    >
                       {joinPublicMutation.isPending && joinPublicMutation.variables === team.id
                         ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
                       Join
@@ -365,11 +603,14 @@ function TeamPanel({ reg }: { reg: Registration }) {
 function SkeletonRow() {
   return (
     <tr className="animate-pulse">
-      <td className="px-4 py-3.5"><div className="h-4 bg-slate-100 rounded w-48 mb-1.5" /><div className="h-3 bg-slate-100 rounded w-28" /></td>
-      <td className="px-4 py-3.5"><div className="h-4 bg-slate-100 rounded w-32" /></td>
-      <td className="px-4 py-3.5"><div className="h-4 bg-slate-100 rounded w-24" /></td>
-      <td className="px-4 py-3.5"><div className="h-5 bg-slate-100 rounded-full w-24" /></td>
-      <td className="px-4 py-3.5"><div className="h-8 bg-slate-100 rounded w-20" /></td>
+      <td className="px-4 py-3.5">
+        <div className="h-4 rounded w-48 mb-1.5" style={{ background: "var(--ink-muted)" }} />
+        <div className="h-3 rounded w-28" style={{ background: "var(--ink-muted)" }} />
+      </td>
+      <td className="px-4 py-3.5"><div className="h-4 rounded w-32" style={{ background: "var(--ink-muted)" }} /></td>
+      <td className="px-4 py-3.5"><div className="h-4 rounded w-24" style={{ background: "var(--ink-muted)" }} /></td>
+      <td className="px-4 py-3.5"><div className="h-5 rounded-full w-24" style={{ background: "var(--ink-muted)" }} /></td>
+      <td className="px-4 py-3.5"><div className="h-8 rounded w-20" style={{ background: "var(--ink-muted)" }} /></td>
     </tr>
   );
 }
@@ -390,59 +631,94 @@ function TicketModal({ ticket, onClose }: { ticket: TicketInfo; onClose: () => v
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4"
+      style={{ background: "rgba(0,0,0,0.6)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+      <div className="rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" style={{ background: "var(--ink-soft)" }}>
         {/* Header band */}
-        <div className="bg-indigo-600 px-6 py-5 text-white relative">
+        <div className="px-6 py-5 relative" style={{ background: "var(--amber)", color: "var(--ink)" }}>
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+            className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center transition-colors"
+            style={{ background: "rgba(0,0,0,0.15)", color: "var(--ink)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.25)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.15)")}
           >
             <X size={14} />
           </button>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-200 mb-1">Entry Ticket</p>
-          <h2 className="text-lg font-bold leading-tight pr-8">{ticket.eventTitle}</h2>
-          <p className="text-sm text-indigo-200 mt-0.5">{ticket.clubName}</p>
+          <p
+            className="text-[10px] font-bold uppercase tracking-widest mb-1"
+            style={{ color: "var(--ink)", opacity: 0.7 }}
+          >
+            Entry Ticket
+          </p>
+          <h2 className="text-lg font-bold leading-tight pr-8" style={{ color: "var(--ink)" }}>
+            {ticket.eventTitle}
+          </h2>
+          <p className="text-sm mt-0.5" style={{ color: "var(--ink)", opacity: 0.7 }}>{ticket.clubName}</p>
         </div>
 
         {/* Tear line */}
         <div className="relative h-0">
-          <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-slate-100 -translate-y-1/2" />
-          <div className="absolute -right-3 top-0 w-6 h-6 rounded-full bg-slate-100 -translate-y-1/2" />
-          <div className="mx-4 border-t-2 border-dashed border-slate-200" />
+          <div
+            className="absolute -left-3 top-0 w-6 h-6 rounded-full -translate-y-1/2"
+            style={{ background: "var(--ink-muted)" }}
+          />
+          <div
+            className="absolute -right-3 top-0 w-6 h-6 rounded-full -translate-y-1/2"
+            style={{ background: "var(--ink-muted)" }}
+          />
+          <div className="mx-4" style={{ borderTop: "2px dashed var(--seam)" }} />
         </div>
 
         {/* Body */}
-        <div className="px-6 pt-5 pb-6 space-y-4">
+        <div className="px-6 pt-5 pb-6 space-y-4" style={{ background: "var(--ink-soft)" }}>
           {/* Meta fields */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Participant</p>
-              <p className="font-semibold text-slate-800 truncate">{ticket.participantName}</p>
+              <p
+                className="text-[10px] font-bold uppercase tracking-widest mb-0.5"
+                style={{ color: "var(--ash)" }}
+              >
+                Participant
+              </p>
+              <p className="font-semibold truncate" style={{ color: "var(--cream)" }}>{ticket.participantName}</p>
             </div>
             {ticket.teamName && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Team</p>
-                <p className="font-semibold text-slate-800 truncate">{ticket.teamName}</p>
+                <p
+                  className="text-[10px] font-bold uppercase tracking-widest mb-0.5"
+                  style={{ color: "var(--ash)" }}
+                >
+                  Team
+                </p>
+                <p className="font-semibold truncate" style={{ color: "var(--cream)" }}>{ticket.teamName}</p>
               </div>
             )}
             {ticket.eventDate && (
               <div className={ticket.teamName ? "col-span-2" : ""}>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Date</p>
-                <p className="font-semibold text-slate-800">{ticket.eventDate}</p>
+                <p
+                  className="text-[10px] font-bold uppercase tracking-widest mb-0.5"
+                  style={{ color: "var(--ash)" }}
+                >
+                  Date
+                </p>
+                <p className="font-semibold" style={{ color: "var(--cream)" }}>{ticket.eventDate}</p>
               </div>
             )}
           </div>
 
           {/* QR code */}
           <div className="flex flex-col items-center pt-2">
-            <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+            <div
+              className="rounded-xl p-3"
+              style={{ background: "var(--ink-muted)", border: "1px solid var(--seam)" }}
+            >
               <img src={qrUrl} alt="Entry QR code" className="w-40 h-40 object-contain" />
             </div>
-            <p className="text-[10px] text-slate-400 mt-2">Scan at the venue for entry</p>
+            <p className="text-[10px] mt-2" style={{ color: "var(--ash)" }}>Scan at the venue for entry</p>
           </div>
 
           {/* Download */}
@@ -451,7 +727,10 @@ function TicketModal({ ticket, onClose }: { ticket: TicketInfo; onClose: () => v
             download={`ticket-${ticket.registrationId}.png`}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-colors"
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold transition-colors"
+            style={{ background: "var(--amber)", color: "var(--ink)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--amber-glow)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
           >
             <QrCode size={14} /> Download QR
           </a>
@@ -469,6 +748,7 @@ export default function MyEvents() {
   const [query, setQuery] = useState("");
   const [teamPanelId, setTeamPanelId] = useState<string | null>(null);
   const [ticketInfo, setTicketInfo] = useState<TicketInfo | null>(null);
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const { data: registrations, isLoading, error } = useQuery<Registration[]>({
     queryKey: ["registrations", "me"],
@@ -495,7 +775,6 @@ export default function MyEvents() {
   }, [registrations, query]);
 
   function handleShowTicket(reg: Registration) {
-    // Try to read team name from the already-fetched my-teams cache for this event
     const cachedTeams = queryClient.getQueryData<{ id: string; name: string }[]>(
       ["my-teams-event", reg.event_id]
     );
@@ -526,33 +805,57 @@ export default function MyEvents() {
     <Layout>
       <div className="p-8 max-w-5xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-            <CalendarDays size={22} className="text-indigo-500" />
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: "var(--cream)" }}>
+            <CalendarDays size={22} style={{ color: "var(--amber)" }} />
             My Events
           </h1>
-          <p className="text-slate-500 mt-1 text-sm">All events you've registered for.</p>
+          <p className="mt-1 text-sm" style={{ color: "var(--fog)" }}>All events you've registered for.</p>
         </div>
 
         {error ? (
-          <div className="bg-red-50 border border-red-100 rounded-xl p-6 flex items-center gap-3">
-            <AlertCircle size={18} className="text-red-500 shrink-0" />
-            <p className="text-sm text-red-700">Failed to load registrations.</p>
+          <div
+            className="rounded-xl p-6 flex items-center gap-3"
+            style={{
+              background: "color-mix(in srgb, var(--cinnabar) 12%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--cinnabar) 25%, transparent)",
+            }}
+          >
+            <AlertCircle size={18} className="shrink-0" style={{ color: "var(--cinnabar)" }} />
+            <p className="text-sm" style={{ color: "var(--cinnabar)" }}>Failed to load registrations.</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+          <div
+            className="rounded-xl overflow-hidden"
+            style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}
+          >
             {/* Toolbar */}
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
-              <span className="text-sm font-semibold text-slate-700 shrink-0">
+            <div
+              className="px-4 py-3 flex items-center gap-3"
+              style={{ borderBottom: "1px solid var(--seam)" }}
+            >
+              <span className="text-sm font-semibold shrink-0" style={{ color: "var(--fog)" }}>
                 {isLoading ? "Loading…" : `${filtered.length} registration${filtered.length !== 1 ? "s" : ""}`}
               </span>
               <div className="relative flex-1 max-w-xs ml-auto">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <Search
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                  style={{ color: "var(--ash)" }}
+                />
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search event, club or date…"
-                  className="w-full pl-8 pr-3 py-1.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white placeholder:text-slate-400 text-slate-900"
+                  className="w-full pl-8 pr-3 py-1.5 text-sm rounded-lg focus:outline-none"
+                  style={{
+                    background: "var(--ink-muted)",
+                    border: searchFocused ? "1px solid var(--amber)" : "1px solid var(--seam)",
+                    boxShadow: searchFocused ? "0 0 0 3px rgba(245,166,35,0.12)" : "none",
+                    color: "var(--cream)",
+                  }}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
                 />
               </div>
             </div>
@@ -560,27 +863,33 @@ export default function MyEvents() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-50/60">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Event</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Club</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Start Date</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                  <tr style={{ background: "color-mix(in srgb, var(--ink-muted) 60%, transparent)" }}>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--fog)" }}>Event</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--fog)" }}>Club</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--fog)" }}>Start Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--fog)" }}>Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--fog)" }}>Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody>
                   {isLoading ? (
                     Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
                   ) : filtered.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-4 py-12 text-center">
-                        <CalendarDays size={36} className="text-slate-200 mx-auto mb-3" />
+                        <CalendarDays size={36} className="mx-auto mb-3" style={{ color: "var(--ash)" }} />
                         {query ? (
-                          <p className="text-slate-400 text-sm">No events match "{query}".</p>
+                          <p className="text-sm" style={{ color: "var(--ash)" }}>No events match "{query}".</p>
                         ) : (
                           <>
-                            <p className="text-slate-400 text-sm">You haven't registered for any events yet.</p>
-                            <Link to="/" className="mt-2 inline-block text-xs text-indigo-600 hover:underline">Browse events →</Link>
+                            <p className="text-sm" style={{ color: "var(--ash)" }}>You haven't registered for any events yet.</p>
+                            <Link
+                              to="/"
+                              className="mt-2 inline-block text-xs hover:underline"
+                              style={{ color: "var(--amber)" }}
+                            >
+                              Browse events →
+                            </Link>
                           </>
                         )}
                       </td>
@@ -588,58 +897,108 @@ export default function MyEvents() {
                   ) : (
                     filtered.map((reg) => (
                       <React.Fragment key={reg.id}>
-                        <tr className="hover:bg-slate-50/50 transition-colors">
+                        <tr
+                          className="transition-colors"
+                          style={{ borderTop: "1px solid var(--seam)" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--ink-muted) 50%, transparent)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                        >
                           <td className="px-4 py-3.5">
                             <div className="flex items-center gap-2">
-                              <Link to={`/events/${reg.event_slug}`}
-                                className="font-medium text-slate-800 hover:text-indigo-600 transition-colors">
+                              <Link
+                                to={`/events/${reg.event_slug}`}
+                                className="font-medium transition-colors"
+                                style={{ color: "var(--cream)" }}
+                                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--amber)")}
+                                onMouseLeave={(e) => (e.currentTarget.style.color = "var(--cream)")}
+                              >
                                 {reg.event_title}
                               </Link>
                               {reg.is_team_event && (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded-full shrink-0">
+                                <span
+                                  className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0"
+                                  style={{
+                                    color: "var(--amber)",
+                                    background: "color-mix(in srgb, var(--amber) 12%, transparent)",
+                                    border: "1px solid color-mix(in srgb, var(--amber) 25%, transparent)",
+                                  }}
+                                >
                                   <Users size={9} /> Team
                                 </span>
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-3.5 text-slate-500 text-xs">{reg.club_name}</td>
-                          <td className="px-4 py-3.5 text-slate-600 text-xs whitespace-nowrap">
+                          <td className="px-4 py-3.5 text-xs" style={{ color: "var(--fog)" }}>{reg.club_name}</td>
+                          <td className="px-4 py-3.5 text-xs whitespace-nowrap" style={{ color: "var(--fog)" }}>
                             {reg.event_start_datetime
                               ? fmtDateIST(reg.event_start_datetime)
-                              : <span className="text-slate-300">—</span>}
+                              : <span style={{ color: "var(--ash)" }}>—</span>}
                           </td>
                           <td className="px-4 py-3.5">
-                            <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-1 rounded-full border ${STATUS_COLORS[reg.status]}`}>
+                            <span
+                              className="inline-flex items-center text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                              style={statusBadgeStyle(reg.status)}
+                            >
                               {reg.status}
                             </span>
                           </td>
                           <td className="px-4 py-3.5">
                             <div className="flex items-center gap-2">
                               {reg.is_team_event && reg.status === "CONFIRMED" && (
-                                <button type="button"
+                                <button
+                                  type="button"
                                   onClick={() => setTeamPanelId(teamPanelId === reg.id ? null : reg.id)}
-                                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                  style={
                                     teamPanelId === reg.id
-                                      ? "bg-indigo-600 text-white"
-                                      : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-                                  }`}>
+                                      ? { background: "var(--amber)", color: "var(--ink)" }
+                                      : {
+                                          background: "color-mix(in srgb, var(--amber) 12%, transparent)",
+                                          color: "var(--amber)",
+                                        }
+                                  }
+                                  onMouseEnter={(e) => {
+                                    if (teamPanelId !== reg.id)
+                                      e.currentTarget.style.background = "color-mix(in srgb, var(--amber) 20%, transparent)";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (teamPanelId !== reg.id)
+                                      e.currentTarget.style.background = "color-mix(in srgb, var(--amber) 12%, transparent)";
+                                  }}
+                                >
                                   <Users size={12} />
                                   {reg.team_id ? "My Team" : "Team"}
-                                  <ChevronRight size={11} className={`transition-transform ${teamPanelId === reg.id ? "rotate-90" : ""}`} />
+                                  <ChevronRight
+                                    size={11}
+                                    className={`transition-transform ${teamPanelId === reg.id ? "rotate-90" : ""}`}
+                                  />
                                 </button>
                               )}
                               {reg.status === "CONFIRMED" && (
-                                <button type="button"
+                                <button
+                                  type="button"
                                   onClick={() => handleShowTicket(reg)}
-                                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 text-slate-600 hover:bg-slate-100 text-xs font-medium transition-colors">
+                                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                  style={{ background: "var(--ink-muted)", color: "var(--fog)" }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--seam)")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
+                                >
                                   <QrCode size={12} /> Ticket
                                 </button>
                               )}
                               {(reg.status === "CONFIRMED" || reg.status === "WAITLISTED") && (
-                                <button type="button"
+                                <button
+                                  type="button"
                                   onClick={() => { if (confirm("Cancel this registration?")) cancelMutation.mutate(reg.id); }}
                                   disabled={cancelMutation.isPending}
-                                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 text-xs font-medium transition-colors disabled:opacity-50">
+                                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+                                  style={{
+                                    background: "color-mix(in srgb, var(--cinnabar) 12%, transparent)",
+                                    color: "var(--cinnabar)",
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--cinnabar) 20%, transparent)")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--cinnabar) 12%, transparent)")}
+                                >
                                   <X size={12} /> Cancel
                                 </button>
                               )}
@@ -649,7 +1008,11 @@ export default function MyEvents() {
 
                         {teamPanelId === reg.id && reg.is_team_event && reg.status === "CONFIRMED" && (
                           <tr key={`team-${reg.id}`}>
-                            <td colSpan={5} className="px-4 pb-4 bg-slate-50/30">
+                            <td
+                              colSpan={5}
+                              className="px-4 pb-4"
+                              style={{ background: "color-mix(in srgb, var(--ink-muted) 30%, transparent)" }}
+                            >
                               <TeamPanel reg={reg} />
                             </td>
                           </tr>

@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from jose import JWTError, jwt
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.redis import get_redis_client
@@ -24,7 +26,6 @@ class AttendanceService:
         self.reg_repo = reg_repo
 
     async def scan(self, qr_token: str, checkpoint_id: UUID, scanner: User) -> dict:
-        # Decode and verify QR JWT
         try:
             payload = jwt.decode(qr_token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
         except JWTError:
@@ -44,19 +45,24 @@ class AttendanceService:
         if not cp:
             raise NotFoundError("Checkpoint", checkpoint_id)
 
-        # Redis lock: SETNX with 5s TTL to prevent race-condition duplicates
+        # Fetch participant info for display
+        participant_info = await self.repo.get_participant_info(UUID(reg_id))
+
         redis = get_redis_client()
         lock_key = f"attendance_lock:{reg_id}:{checkpoint_id}"
         acquired = await redis.set(lock_key, "1", nx=True, ex=5)
 
         if not acquired:
-            # Lock not acquired → concurrent scan in progress, treat as duplicate
-            return {"is_duplicate": True, "message": "Scan in progress"}
+            return {
+                "is_duplicate": True,
+                "message": "Scan in progress",
+                **participant_info,
+            }
 
         try:
             existing = await self.repo.existing_record(UUID(reg_id), checkpoint_id)
             if existing:
-                return {"is_duplicate": True, "record_id": str(existing.id)}
+                return {"is_duplicate": True, "record_id": str(existing.id), **participant_info}
 
             record = await self.repo.create_record(
                 registration_id=UUID(reg_id),
@@ -65,7 +71,7 @@ class AttendanceService:
                 scanned_by=scanner.id,
                 is_duplicate=False,
             )
-            return {"is_duplicate": False, "record_id": str(record.id)}
+            return {"is_duplicate": False, "record_id": str(record.id), **participant_info}
         finally:
             await redis.delete(lock_key)
 

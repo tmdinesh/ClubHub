@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -24,6 +24,7 @@ export default function Login() {
   }, [isAuthenticated, navigate]);
 
   const isPending = !!(searchParams.get("access_token") && searchParams.get("refresh_token"));
+  const oauthError = searchParams.get("error");
 
   return (
     <div style={{
@@ -70,6 +71,23 @@ export default function Login() {
               Sign in with your institutional account<br />to access ClubHub.
             </p>
           </div>
+
+          {/* OAuth error banner */}
+          {oauthError && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              background: "color-mix(in srgb, var(--cinnabar) 12%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--cinnabar) 30%, transparent)",
+              borderRadius: 10, padding: "12px 14px", marginBottom: 16,
+            }}>
+              <AlertCircle size={16} style={{ color: "var(--cinnabar)", flexShrink: 0 }} />
+              <p style={{ fontSize: 13, color: "var(--cinnabar)" }}>
+                {oauthError === "access_denied"
+                  ? "Sign-in was cancelled. Please grant the required permissions to continue."
+                  : "Google sign-in failed. Please try again."}
+              </p>
+            </div>
+          )}
 
           {/* Card */}
           <div style={{

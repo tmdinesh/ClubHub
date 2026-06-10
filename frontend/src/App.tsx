@@ -16,6 +16,7 @@ import MyEvents from "@/pages/dashboard/MyEvents";
 import MyTeams from "@/pages/dashboard/MyTeams";
 import CertificateVault from "@/pages/dashboard/CertificateVault";
 import Notifications from "@/pages/dashboard/Notifications";
+import BrowseEvents from "@/pages/dashboard/BrowseEvents";
 
 // Organizer / manage
 import EventOverview from "@/pages/manage/EventOverview";
@@ -54,6 +55,7 @@ export default function App() {
         {/* Participant dashboard */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/dashboard/events" element={<ProtectedRoute><MyEvents /></ProtectedRoute>} />
+        <Route path="/dashboard/browse" element={<ProtectedRoute><BrowseEvents /></ProtectedRoute>} />
         <Route path="/dashboard/teams" element={<ProtectedRoute><MyTeams /></ProtectedRoute>} />
         <Route path="/dashboard/certificates" element={<ProtectedRoute><CertificateVault /></ProtectedRoute>} />
         <Route path="/dashboard/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />

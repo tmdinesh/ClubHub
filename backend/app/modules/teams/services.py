@@ -195,6 +195,10 @@ class TeamService:
         if team.lead_id != actor.id:
             raise ForbiddenError("Only team lead can remove members")
         await self.repo.remove_member(team_id, user_id)
+        if team.status == TeamStatus.SUBMITTED:
+            count = await self.repo.count_members(team_id)
+            new_status = TeamStatus.READY if count >= team.min_size else TeamStatus.FORMING
+            await self.repo.update_team(team, status=new_status)
 
     async def submit_team(self, team_id: UUID, actor: User) -> Team:
         team = await self.get_team(team_id)

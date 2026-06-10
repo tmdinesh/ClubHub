@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.finance.models import BudgetCategory, EventBudget, Expense
+from app.modules.finance.models import BudgetCategory, EventBudget, EventWinner, Expense
 from app.shared.enums import ExpenseCategory
 
 
@@ -64,3 +64,59 @@ class FinanceRepository:
             .group_by(Expense.category)
         )
         return {row[0]: float(row[1]) for row in result.all()}
+
+    async def list_winners(self, event_id: UUID) -> list[dict]:
+        from app.modules.auth.models import User
+        q = (
+            select(
+                EventWinner.id,
+                EventWinner.position,
+                EventWinner.prize_amount,
+                EventWinner.expense_id,
+                EventWinner.user_id,
+                User.name.label("participant_name"),
+                User.email.label("participant_email"),
+                User.roll_number.label("roll_number"),
+                User.bank_account_name.label("bank_account_name"),
+                User.bank_account_number.label("bank_account_number"),
+                User.bank_ifsc.label("bank_ifsc"),
+            )
+            .join(User, EventWinner.user_id == User.id)
+            .where(EventWinner.event_id == event_id)
+            .order_by(EventWinner.position)
+        )
+        rows = await self.db.execute(q)
+        return [
+            {
+                "id": str(r.id),
+                "position": r.position,
+                "prize_amount": float(r.prize_amount) if r.prize_amount else None,
+                "expense_id": str(r.expense_id) if r.expense_id else None,
+                "user_id": str(r.user_id),
+                "participant_name": r.participant_name,
+                "participant_email": r.participant_email,
+                "roll_number": r.roll_number,
+                "bank_account_name": r.bank_account_name,
+                "bank_account_number": r.bank_account_number,
+                "bank_ifsc": r.bank_ifsc,
+            }
+            for r in rows
+        ]
+
+    async def get_winner_by_position(self, event_id: UUID, position: int) -> EventWinner | None:
+        result = await self.db.execute(
+            select(EventWinner).where(
+                EventWinner.event_id == event_id, EventWinner.position == position
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def create_winner(self, **kwargs) -> EventWinner:
+        winner = EventWinner(**kwargs)
+        self.db.add(winner)
+        await self.db.flush()
+        return winner
+
+    async def delete_winner(self, winner: EventWinner) -> None:
+        await self.db.delete(winner)
+        await self.db.flush()

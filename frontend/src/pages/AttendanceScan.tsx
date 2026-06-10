@@ -14,7 +14,7 @@ import type { Event } from "@/types";
 interface Checkpoint { id: string; name: string; order: number; }
 interface AttendanceStats { registered: number; present: number; absent: number; rate: number; }
 
-type ScanResult = { is_duplicate: boolean; record_id?: string; message?: string } | null;
+type ScanResult = { is_duplicate: boolean; record_id?: string; message?: string; participant_name?: string; roll_number?: string; team_name?: string } | null;
 type InputMode = "camera" | "manual";
 
 // ── Camera scanner hook ───────────────────────────────────────────────────────
@@ -413,12 +413,26 @@ export default function AttendanceScan() {
               <>
                 <AlertCircle size={38} style={{ color: "var(--amber)", margin: "0 auto 8px" }} />
                 <p style={{ color: "var(--amber)", fontWeight: 700, fontSize: 16 }}>Already scanned</p>
+                {lastResult.participant_name && (
+                  <p style={{ color: "rgba(245,166,35,0.8)", fontSize: 14, marginTop: 6, fontWeight: 600 }}>{lastResult.participant_name}</p>
+                )}
                 <p style={{ color: "rgba(245,166,35,0.65)", fontSize: 12, marginTop: 4 }}>This participant was already marked present.</p>
               </>
             ) : (
               <>
                 <CheckCircle size={38} style={{ color: "var(--jade)", margin: "0 auto 8px" }} />
-                <p style={{ color: "var(--jade)", fontWeight: 700, fontSize: 16 }}>Marked Present!</p>
+                <p style={{ color: "var(--jade)", fontWeight: 700, fontSize: 18 }}>Marked Present!</p>
+                {lastResult.participant_name && (
+                  <p style={{ color: "var(--cream)", fontSize: 16, fontWeight: 600, marginTop: 8 }}>{lastResult.participant_name}</p>
+                )}
+                {lastResult.roll_number && (
+                  <p style={{ color: "var(--fog)", fontSize: 13, marginTop: 3 }}>Roll No: {lastResult.roll_number}</p>
+                )}
+                {lastResult.team_name && (
+                  <p style={{ color: "var(--amber)", fontSize: 13, marginTop: 3, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                    <Users size={12} /> {lastResult.team_name}
+                  </p>
+                )}
               </>
             )}
           </div>
