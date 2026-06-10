@@ -16,6 +16,10 @@ class UserOut(BaseModel):
     role: UserRole
     department: str | None
     year: int | None
+    roll_number: str | None = None
+    bank_account_name: str | None = None
+    bank_account_number: str | None = None
+    bank_ifsc: str | None = None
     is_active: bool
     last_login: datetime | None
     created_at: datetime

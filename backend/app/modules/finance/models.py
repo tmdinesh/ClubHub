@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from sqlalchemy import ForeignKey, Index, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -64,3 +64,24 @@ class Expense(Base):
         String(16), nullable=False, default=ExpenseStatus.PENDING
     )
     notes: Mapped[str | None] = mapped_column(Text)
+
+
+class EventWinner(Base):
+    __tablename__ = "event_winners"
+    __table_args__ = (
+        UniqueConstraint("event_id", "user_id", name="uq_event_winners_event_user"),
+        UniqueConstraint("event_id", "position", name="uq_event_winners_event_position"),
+        Index("ix_event_winners_event_id", "event_id"),
+    )
+
+    event_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("events.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    prize_amount: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    expense_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("expenses.id", ondelete="SET NULL"), nullable=True
+    )

@@ -305,6 +305,9 @@ function TeamPanel({ reg }: { reg: Registration }) {
   const [isPublic, setIsPublic] = useState(true);
   const [createError, setCreateError] = useState("");
   const [teamNameFocused, setTeamNameFocused] = useState(false);
+  const [joinKey, setJoinKey] = useState("");
+  const [joinKeyFocused, setJoinKeyFocused] = useState(false);
+  const [joinKeyError, setJoinKeyError] = useState("");
 
   const { data: myTeams = [], isLoading: loadingMy } = useQuery<Team[]>({
     queryKey: ["my-teams-event", reg.event_id],
@@ -345,6 +348,12 @@ function TeamPanel({ reg }: { reg: Registration }) {
     mutationFn: (teamId: string) => api.post(`/teams/${teamId}/join`),
     onSuccess: () => invalidateTeams(),
     onError: (err) => alert(apiError(err, "Failed to join team.")),
+  });
+
+  const joinByKeyMutation = useMutation({
+    mutationFn: (key: string) => api.post("/teams/join-by-key", { join_key: key }),
+    onSuccess: () => { invalidateTeams(); setJoinKey(""); setJoinKeyError(""); },
+    onError: (err) => setJoinKeyError(apiError(err, "Invalid or expired key.")),
   });
 
   const myTeamIds = new Set(myTeams.map((t) => t.id));
@@ -389,7 +398,7 @@ function TeamPanel({ reg }: { reg: Registration }) {
           ) : myTeams.length === 0 ? (
             <div>
               <p className="text-xs mb-3" style={{ color: "var(--fog)" }}>
-                You're not in a team yet. Create one, or browse public teams and join — or enter a private team's key.
+                You're not in a team yet. Create one below, browse public teams on the Browse tab, or paste a private team's key.
               </p>
 
               {/* Visibility toggle */}
@@ -461,6 +470,48 @@ function TeamPanel({ reg }: { reg: Registration }) {
                   <AlertCircle size={11} /> {createError}
                 </p>
               )}
+
+              {/* Join by key */}
+              <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--seam)" }}>
+                <p className="text-xs font-semibold mb-2 flex items-center gap-1" style={{ color: "var(--fog)" }}>
+                  <KeyRound size={11} style={{ color: "var(--amber)" }} /> Have a private team key?
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={joinKey}
+                    onChange={(e) => { setJoinKey(e.target.value); setJoinKeyError(""); }}
+                    placeholder="Enter join key…"
+                    className="flex-1 text-sm px-3 py-2 rounded-lg focus:outline-none font-mono tracking-widest"
+                    style={{
+                      background: "var(--ink-soft)",
+                      border: joinKeyFocused ? "1px solid var(--amber)" : "1px solid var(--seam)",
+                      boxShadow: joinKeyFocused ? "0 0 0 3px rgba(245,166,35,0.12)" : "none",
+                      color: "var(--amber)",
+                    }}
+                    onFocus={() => setJoinKeyFocused(true)}
+                    onBlur={() => setJoinKeyFocused(false)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && joinKey.trim()) joinByKeyMutation.mutate(joinKey.trim()); }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => joinKey.trim() && joinByKeyMutation.mutate(joinKey.trim())}
+                    disabled={!joinKey.trim() || joinByKeyMutation.isPending}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors"
+                    style={{ background: "var(--fog)", color: "var(--ink)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.filter = "brightness(1.1)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
+                  >
+                    {joinByKeyMutation.isPending ? <Loader2 size={12} className="animate-spin" /> : <ChevronRight size={12} />}
+                    Join
+                  </button>
+                </div>
+                {joinKeyError && (
+                  <p className="text-xs mt-1 flex items-center gap-1" style={{ color: "var(--cinnabar)" }}>
+                    <AlertCircle size={11} /> {joinKeyError}
+                  </p>
+                )}
+              </div>
             </div>
           ) : (
             myTeams.map((team) => (

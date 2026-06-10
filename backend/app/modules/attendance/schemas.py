@@ -15,6 +15,9 @@ class ScanResponse(BaseModel):
     is_duplicate: bool
     record_id: str | None = None
     message: str | None = None
+    participant_name: str | None = None
+    roll_number: str | None = None
+    team_name: str | None = None
 
 
 class AttendanceDashboard(BaseModel):

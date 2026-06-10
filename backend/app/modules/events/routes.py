@@ -125,10 +125,12 @@ async def download_club_report(
     analytics_repo = AnalyticsRepository(db)
     events_data = []
     for ev in events:
+        stats: dict = {}
         try:
-            stats = await analytics_repo.event_analytics(ev.id)
+            async with db.begin_nested():
+                stats = await analytics_repo.event_analytics(ev.id)
         except Exception:
-            stats = {}
+            pass
         events_data.append({
             "title": ev.title,
             "description": ev.description,

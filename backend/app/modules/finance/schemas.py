@@ -53,3 +53,23 @@ class FinanceSummary(BaseModel):
     total_spent: float
     remaining: float
     by_category: list[CategorySummary]
+
+
+class WinnerSet(BaseModel):
+    user_id: UUID
+    position: int
+    prize_amount: float | None = None
+
+
+class WinnerOut(BaseModel):
+    id: str
+    position: int
+    prize_amount: float | None
+    expense_id: str | None
+    user_id: str
+    participant_name: str
+    participant_email: str
+    roll_number: str | None
+    bank_account_name: str | None
+    bank_account_number: str | None
+    bank_ifsc: str | None

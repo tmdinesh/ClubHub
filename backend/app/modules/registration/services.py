@@ -79,13 +79,24 @@ class RegistrationService:
             else:
                 status = RegistrationStatus.CONFIRMED
 
-            reg = await self.repo.create(
-                event_id=event_id,
-                user_id=actor.id,
-                status=status,
-                registered_at=now,
-                confirmed_at=now if status == RegistrationStatus.CONFIRMED else None,
-            )
+            if existing:
+                # Reactivate the cancelled registration instead of inserting a new row
+                reg = await self.repo.update(
+                    existing,
+                    status=status,
+                    registered_at=now,
+                    confirmed_at=now if status == RegistrationStatus.CONFIRMED else None,
+                    qr_token=None,
+                    team_id=None,
+                )
+            else:
+                reg = await self.repo.create(
+                    event_id=event_id,
+                    user_id=actor.id,
+                    status=status,
+                    registered_at=now,
+                    confirmed_at=now if status == RegistrationStatus.CONFIRMED else None,
+                )
         finally:
             await redis.delete(lock_key)
 
@@ -112,8 +123,21 @@ class RegistrationService:
 
         event_id = reg.event_id
         was_confirmed = reg.status == RegistrationStatus.CONFIRMED
+        deleted_user_id = reg.user_id
+
+        event = await self.event_repo.get_event(event_id)
+        event_title = event.title if event else "an event"
 
         await self.repo.delete(reg)
+
+        if self.notif_repo:
+            await self.notif_repo.create(
+                user_id=deleted_user_id,
+                type="REGISTRATION_REMOVED",
+                title=f"Removed from event: {event_title}",
+                body="Your registration has been removed by the event organiser.",
+                metadata_={"event_id": str(event_id)},
+            )
 
         if was_confirmed:
             waitlisted = await self.repo.first_waitlisted(event_id)

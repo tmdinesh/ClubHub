@@ -34,6 +34,10 @@ class User(Base):
     role: Mapped[UserRole] = mapped_column(String(32), nullable=False, default=UserRole.PARTICIPANT)
     department: Mapped[str | None] = mapped_column(String(128))
     year: Mapped[int | None] = mapped_column()
+    roll_number: Mapped[str | None] = mapped_column(String(32))
+    bank_account_name: Mapped[str | None] = mapped_column(String(256))
+    bank_account_number: Mapped[str | None] = mapped_column(String(32))
+    bank_ifsc: Mapped[str | None] = mapped_column(String(16))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     last_login: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     club_id: Mapped[uuid.UUID | None] = mapped_column(
