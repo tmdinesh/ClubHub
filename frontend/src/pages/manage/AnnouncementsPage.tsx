@@ -25,9 +25,9 @@ const announcementSchema = z.object({
 
 type AnnouncementForm = z.infer<typeof announcementSchema>;
 
-const CHANNEL_LABELS: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-  EMAIL: { label: "Email", icon: <Mail size={13} />, color: "bg-sky-50 text-sky-700 border-sky-200" },
-  IN_APP: { label: "In-App", icon: <Bell size={13} />, color: "bg-violet-50 text-violet-700 border-violet-200" },
+const CHANNEL_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
+  EMAIL: { label: "Email", icon: <Mail size={13} /> },
+  IN_APP: { label: "In-App", icon: <Bell size={13} /> },
 };
 
 export default function AnnouncementsPage() {
@@ -67,54 +67,107 @@ export default function AnnouncementsPage() {
     <Layout eventId={eventId}>
       <div className="p-8 max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-            <Megaphone size={22} className="text-indigo-500" />
+          <h1
+            className="text-2xl font-bold tracking-tight flex items-center gap-2"
+            style={{ color: "var(--cream)" }}
+          >
+            <Megaphone size={22} style={{ color: "var(--amber)" }} />
             Announcements
           </h1>
-          <p className="text-slate-500 mt-1 text-sm">
+          <p className="mt-1 text-sm" style={{ color: "var(--fog)" }}>
             Send updates to all registered participants.
           </p>
         </div>
 
         {/* Compose form */}
-        <div className="bg-white rounded-xl border border-slate-100 p-6 mb-6">
-          <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
-            <Send size={14} className="text-indigo-500" />
+        <div
+          className="rounded-xl p-6 mb-6"
+          style={{
+            background: "var(--ink-soft)",
+            border: "1px solid var(--seam)",
+          }}
+        >
+          <h2
+            className="text-sm font-semibold mb-4 flex items-center gap-2"
+            style={{ color: "var(--cream)" }}
+          >
+            <Send size={14} style={{ color: "var(--amber)" }} />
             New Announcement
           </h2>
           <form onSubmit={handleSubmit((d) => sendMutation.mutate(d))} className="space-y-4">
             <div>
-              <label className="text-xs font-semibold text-slate-600 block mb-1">
+              <label
+                className="text-xs font-semibold block mb-1"
+                style={{ color: "var(--dust)" }}
+              >
                 Title
               </label>
               <input
                 type="text"
                 {...register("title")}
                 placeholder="Announcement title…"
-                className="w-full text-sm px-3 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 placeholder:text-slate-300"
+                className="w-full text-sm px-3 py-2.5 rounded-lg focus:outline-none"
+                style={{
+                  background: "var(--ink-muted)",
+                  border: "1px solid var(--seam)",
+                  color: "var(--cream)",
+                  // @ts-ignore
+                  "--placeholder-color": "var(--dust)",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "var(--amber)";
+                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.12)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "var(--seam)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
               />
               {errors.title && (
-                <p className="text-xs text-red-500 mt-0.5">{errors.title.message}</p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--cinnabar)" }}>
+                  {errors.title.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-600 block mb-1">
+              <label
+                className="text-xs font-semibold block mb-1"
+                style={{ color: "var(--dust)" }}
+              >
                 Message
               </label>
               <textarea
                 {...register("body")}
                 rows={4}
                 placeholder="Write your announcement here…"
-                className="w-full text-sm px-3 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 placeholder:text-slate-300 resize-none"
+                className="w-full text-sm px-3 py-2.5 rounded-lg focus:outline-none resize-none"
+                style={{
+                  background: "var(--ink-muted)",
+                  border: "1px solid var(--seam)",
+                  color: "var(--cream)",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "var(--amber)";
+                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.12)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "var(--seam)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
               />
               {errors.body && (
-                <p className="text-xs text-red-500 mt-0.5">{errors.body.message}</p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--cinnabar)" }}>
+                  {errors.body.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-600 block mb-2">
+              <label
+                className="text-xs font-semibold block mb-2"
+                style={{ color: "var(--dust)" }}
+              >
                 Channels
               </label>
               <Controller
@@ -128,11 +181,20 @@ export default function AnnouncementsPage() {
                       return (
                         <label
                           key={ch}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all text-sm font-medium select-none ${
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all text-sm font-medium select-none"
+                          style={
                             checked
-                              ? "bg-indigo-50 border-indigo-300 text-indigo-700"
-                              : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
-                          }`}
+                              ? {
+                                  background: "color-mix(in srgb, var(--amber) 15%, transparent)",
+                                  borderColor: "var(--amber)",
+                                  color: "var(--amber)",
+                                }
+                              : {
+                                  background: "var(--ink-muted)",
+                                  border: "1px solid var(--seam)",
+                                  color: "var(--fog)",
+                                }
+                          }
                         >
                           <input
                             type="checkbox"
@@ -154,22 +216,40 @@ export default function AnnouncementsPage() {
                 )}
               />
               {errors.channels && (
-                <p className="text-xs text-red-500 mt-0.5">{errors.channels.message}</p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--cinnabar)" }}>
+                  {errors.channels.message}
+                </p>
               )}
             </div>
 
             {sendMutation.isError && (
-              <p className="text-xs text-red-600">Failed to send announcement. Try again.</p>
+              <p className="text-xs" style={{ color: "var(--cinnabar)" }}>
+                Failed to send announcement. Try again.
+              </p>
             )}
             {sendMutation.isSuccess && (
-              <p className="text-xs text-emerald-600">Announcement sent successfully!</p>
+              <p className="text-xs" style={{ color: "var(--jade)" }}>
+                Announcement sent successfully!
+              </p>
             )}
 
             <div className="flex justify-end pt-2">
               <button
                 type="submit"
                 disabled={sendMutation.isPending}
-                className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                style={{
+                  background: "var(--amber)",
+                  color: "var(--ink)",
+                  opacity: sendMutation.isPending ? 0.4 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  if (!sendMutation.isPending)
+                    e.currentTarget.style.background = "var(--amber-glow)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "var(--amber)";
+                }}
               >
                 {sendMutation.isPending ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -187,24 +267,51 @@ export default function AnnouncementsPage() {
 
         {/* Past announcements */}
         <div>
-          <h2 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-            <Megaphone size={14} className="text-slate-400" />
+          <h2
+            className="text-sm font-semibold mb-3 flex items-center gap-2"
+            style={{ color: "var(--cream)" }}
+          >
+            <Megaphone size={14} style={{ color: "var(--dust)" }} />
             Past Announcements
           </h2>
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="bg-white rounded-xl border border-slate-100 p-4 animate-pulse">
-                  <div className="h-4 bg-slate-100 rounded w-1/3 mb-2" />
-                  <div className="h-3 bg-slate-100 rounded w-full" />
-                  <div className="h-3 bg-slate-100 rounded w-2/3 mt-1" />
+                <div
+                  key={i}
+                  className="rounded-xl p-4 animate-pulse"
+                  style={{
+                    background: "var(--ink-soft)",
+                    border: "1px solid var(--seam)",
+                  }}
+                >
+                  <div
+                    className="h-4 rounded w-1/3 mb-2"
+                    style={{ background: "var(--ink-muted)" }}
+                  />
+                  <div
+                    className="h-3 rounded w-full"
+                    style={{ background: "var(--ink-muted)" }}
+                  />
+                  <div
+                    className="h-3 rounded w-2/3 mt-1"
+                    style={{ background: "var(--ink-muted)" }}
+                  />
                 </div>
               ))}
             </div>
           ) : !announcements || announcements.length === 0 ? (
-            <div className="bg-white rounded-xl border border-slate-100 p-10 text-center">
-              <Megaphone size={32} className="text-slate-200 mx-auto mb-3" />
-              <p className="text-slate-400 text-sm">No announcements sent yet.</p>
+            <div
+              className="rounded-xl p-10 text-center"
+              style={{
+                background: "var(--ink-soft)",
+                border: "1px solid var(--seam)",
+              }}
+            >
+              <Megaphone size={32} className="mx-auto mb-3" style={{ color: "var(--dust)" }} />
+              <p className="text-sm" style={{ color: "var(--fog)" }}>
+                No announcements sent yet.
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -213,22 +320,43 @@ export default function AnnouncementsPage() {
                 .map((ann) => (
                   <div
                     key={ann.id}
-                    className="bg-white rounded-xl border border-slate-100 p-4 hover:shadow-sm transition-shadow"
+                    className="rounded-xl p-4 transition-shadow"
+                    style={{
+                      background: "var(--ink-soft)",
+                      border: "1px solid var(--seam)",
+                    }}
                   >
                     <div className="flex items-start justify-between gap-3 mb-2">
-                      <h3 className="text-sm font-semibold text-slate-800">{ann.title}</h3>
-                      <p className="text-xs text-slate-400 shrink-0">
+                      <h3 className="text-sm font-semibold" style={{ color: "var(--cream)" }}>
+                        {ann.title}
+                      </h3>
+                      <p className="text-xs shrink-0" style={{ color: "var(--dust)" }}>
                         {fmtDateTimeMedIST(ann.sent_at)}
                       </p>
                     </div>
-                    <p className="text-sm text-slate-600 leading-relaxed">{ann.body}</p>
+                    <p className="text-sm leading-relaxed" style={{ color: "var(--fog)" }}>
+                      {ann.body}
+                    </p>
                     <div className="flex items-center gap-1.5 mt-3">
                       {(ann.channels ?? []).map((ch) => {
                         const meta = CHANNEL_LABELS[ch];
+                        const badgeStyle =
+                          ch === "EMAIL"
+                            ? {
+                                background: "color-mix(in srgb, var(--sky) 15%, transparent)",
+                                color: "var(--sky)",
+                                border: "1px solid color-mix(in srgb, var(--sky) 40%, transparent)",
+                              }
+                            : {
+                                background: "color-mix(in srgb, var(--amber) 15%, transparent)",
+                                color: "var(--amber)",
+                                border: "1px solid color-mix(in srgb, var(--amber) 40%, transparent)",
+                              };
                         return (
                           <span
                             key={ch}
-                            className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${meta?.color ?? "bg-slate-50 text-slate-500 border-slate-200"}`}
+                            className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                            style={badgeStyle}
                           >
                             {meta?.icon}
                             {meta?.label ?? ch}

@@ -53,10 +53,23 @@ function formatCurrency(n: number) {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 }
 
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  fontSize: 14,
+  padding: "10px 12px",
+  borderRadius: 8,
+  border: "1px solid var(--seam)",
+  background: "var(--ink-muted)",
+  color: "var(--cream)",
+  outline: "none",
+  boxSizing: "border-box",
+};
+
 export default function FinancePage() {
   const { eventId } = useParams<{ eventId: string }>();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = React.useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const { data: budget, isLoading: loadingBudget } = useQuery<FinanceSummary>({
     queryKey: ["budget", eventId],
@@ -94,20 +107,32 @@ export default function FinancePage() {
 
   const chartData = budget?.by_category ?? [];
 
+  const progressFill = usedPct > 90 ? "var(--cinnabar)" : usedPct > 70 ? "var(--amber)" : "var(--jade)";
+
+  function focusStyle(fieldName: string): React.CSSProperties {
+    return focusedField === fieldName
+      ? { ...inputStyle, border: "1px solid var(--amber)", boxShadow: "0 0 0 2px color-mix(in srgb, var(--amber) 20%, transparent)" }
+      : inputStyle;
+  }
+
   return (
     <Layout eventId={eventId}>
       <div className="p-8 max-w-5xl mx-auto">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-              <Wallet size={22} className="text-amber-500" />
+            <h1 style={{ color: "var(--cream)" }} className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <Wallet size={22} style={{ color: "var(--amber)" }} />
               Finance
             </h1>
-            <p className="text-slate-500 mt-1 text-sm">Budget tracking and expenses</p>
+            <p style={{ color: "var(--dust)" }} className="mt-1 text-sm">Budget tracking and expenses</p>
           </div>
-          <button type="button"
+          <button
+            type="button"
             onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors"
+            style={{ background: "var(--amber)", color: "var(--ink)" }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--amber-glow)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
           >
             <Plus size={15} />
             Add Expense
@@ -116,121 +141,153 @@ export default function FinancePage() {
 
         {/* Budget overview */}
         {loadingBudget ? (
-          <div className="bg-white rounded-xl border border-slate-100 p-6 mb-5 animate-pulse">
-            <div className="h-6 bg-slate-100 rounded w-32 mb-4" />
-            <div className="h-4 bg-slate-100 rounded-full mb-2" />
+          <div
+            style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}
+            className="rounded-xl p-6 mb-5 animate-pulse"
+          >
+            <div style={{ background: "var(--ink-muted)" }} className="h-6 rounded w-32 mb-4" />
+            <div style={{ background: "var(--ink-muted)" }} className="h-4 rounded-full mb-2" />
             <div className="flex justify-between">
-              <div className="h-3 bg-slate-100 rounded w-20" />
-              <div className="h-3 bg-slate-100 rounded w-20" />
+              <div style={{ background: "var(--ink-muted)" }} className="h-3 rounded w-20" />
+              <div style={{ background: "var(--ink-muted)" }} className="h-3 rounded w-20" />
             </div>
           </div>
         ) : budget ? (
-          <div className="bg-white rounded-xl border border-slate-100 p-6 mb-5">
+          <div
+            style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}
+            className="rounded-xl p-6 mb-5"
+          >
             <div className="grid grid-cols-3 gap-4 mb-5">
               <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Total Budget</p>
-                <p className="text-2xl font-bold text-slate-800">{formatCurrency(budget.total_budget)}</p>
+                <p style={{ color: "var(--dust)" }} className="text-xs uppercase tracking-wider font-semibold mb-1">Total Budget</p>
+                <p style={{ color: "var(--cream)" }} className="text-2xl font-bold">{formatCurrency(budget.total_budget)}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Spent</p>
-                <p className="text-2xl font-bold text-rose-600">{formatCurrency(budget.total_spent)}</p>
+                <p style={{ color: "var(--dust)" }} className="text-xs uppercase tracking-wider font-semibold mb-1">Spent</p>
+                <p style={{ color: "var(--cinnabar)" }} className="text-2xl font-bold">{formatCurrency(budget.total_spent)}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">Remaining</p>
-                <p className={`text-2xl font-bold ${budget.remaining < 0 ? "text-red-600" : "text-emerald-600"}`}>
+                <p style={{ color: "var(--dust)" }} className="text-xs uppercase tracking-wider font-semibold mb-1">Remaining</p>
+                <p
+                  style={{ color: budget.remaining < 0 ? "var(--cinnabar)" : "var(--jade)" }}
+                  className="text-2xl font-bold"
+                >
                   {formatCurrency(budget.remaining)}
                 </p>
               </div>
             </div>
-            <div className="relative h-4 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              style={{ background: "var(--ink-muted)" }}
+              className="relative h-4 rounded-full overflow-hidden"
+            >
               <div
-                className={`absolute left-0 top-0 h-full rounded-full transition-all duration-700 ${
-                  usedPct > 90 ? "bg-red-500" : usedPct > 70 ? "bg-amber-500" : "bg-emerald-500"
-                }`}
-                style={{ width: `${usedPct}%` }}
+                style={{ width: `${usedPct}%`, background: progressFill }}
+                className="absolute left-0 top-0 h-full rounded-full transition-all duration-700"
               />
             </div>
-            <p className="text-xs text-slate-400 mt-1.5 text-right">{usedPct.toFixed(1)}% utilized</p>
+            <p style={{ color: "var(--dust)" }} className="text-xs mt-1.5 text-right">{usedPct.toFixed(1)}% utilized</p>
           </div>
         ) : null}
 
         {/* Add expense form */}
         {showForm && (
-          <div className="bg-white rounded-xl border border-indigo-100 ring-1 ring-indigo-100 p-5 mb-5">
-            <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
-              <Receipt size={14} className="text-indigo-500" />
+          <div
+            style={{ background: "var(--ink-soft)", border: "1px solid var(--amber)", boxShadow: "0 0 0 1px var(--amber)" }}
+            className="rounded-xl p-5 mb-5"
+          >
+            <h2 style={{ color: "var(--cream)" }} className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <Receipt size={14} style={{ color: "var(--amber)" }} />
               New Expense
             </h2>
             <form onSubmit={handleSubmit((d) => addExpense.mutate(d))} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-600 block mb-1">Category</label>
+                  <label style={{ color: "var(--fog)" }} className="text-xs font-semibold block mb-1">Category</label>
                   <select
                     {...register("category")}
-                    className="w-full text-sm px-3 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+                    style={{
+                      ...focusStyle("category"),
+                      colorScheme: "dark",
+                    }}
+                    onFocus={() => setFocusedField("category")}
+                    onBlur={() => setFocusedField(null)}
                   >
                     <option value="">Select category…</option>
                     {EXPENSE_CATEGORIES.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
-                  {errors.category && <p className="text-xs text-red-500 mt-0.5">{errors.category.message}</p>}
+                  {errors.category && <p style={{ color: "var(--cinnabar)" }} className="text-xs mt-0.5">{errors.category.message}</p>}
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-600 block mb-1">Amount (₹)</label>
+                  <label style={{ color: "var(--fog)" }} className="text-xs font-semibold block mb-1">Amount (₹)</label>
                   <input
                     type="number"
                     step="0.01"
                     {...register("amount")}
                     placeholder="0.00"
-                    className="w-full text-sm px-3 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    style={focusStyle("amount")}
+                    onFocus={() => setFocusedField("amount")}
+                    onBlur={() => setFocusedField(null)}
                   />
-                  {errors.amount && <p className="text-xs text-red-500 mt-0.5">{errors.amount.message}</p>}
+                  {errors.amount && <p style={{ color: "var(--cinnabar)" }} className="text-xs mt-0.5">{errors.amount.message}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-600 block mb-1">Title</label>
+                  <label style={{ color: "var(--fog)" }} className="text-xs font-semibold block mb-1">Title</label>
                   <input
                     type="text"
                     {...register("title")}
                     placeholder="Brief title…"
-                    className="w-full text-sm px-3 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    style={focusStyle("title")}
+                    onFocus={() => setFocusedField("title")}
+                    onBlur={() => setFocusedField(null)}
                   />
-                  {errors.title && <p className="text-xs text-red-500 mt-0.5">{errors.title.message}</p>}
+                  {errors.title && <p style={{ color: "var(--cinnabar)" }} className="text-xs mt-0.5">{errors.title.message}</p>}
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-600 block mb-1">Bill URL (optional)</label>
+                  <label style={{ color: "var(--fog)" }} className="text-xs font-semibold block mb-1">Bill URL (optional)</label>
                   <input
                     type="text"
                     {...register("bill_url")}
                     placeholder="https://…"
-                    className="w-full text-sm px-3 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    style={focusStyle("bill_url")}
+                    onFocus={() => setFocusedField("bill_url")}
+                    onBlur={() => setFocusedField(null)}
                   />
-                  {errors.bill_url && <p className="text-xs text-red-500 mt-0.5">{errors.bill_url.message}</p>}
+                  {errors.bill_url && <p style={{ color: "var(--cinnabar)" }} className="text-xs mt-0.5">{errors.bill_url.message}</p>}
                 </div>
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-600 block mb-1">Notes (optional)</label>
+                <label style={{ color: "var(--fog)" }} className="text-xs font-semibold block mb-1">Notes (optional)</label>
                 <input
                   type="text"
                   {...register("notes")}
                   placeholder="Additional notes…"
-                  className="w-full text-sm px-3 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  style={focusStyle("notes")}
+                  onFocus={() => setFocusedField("notes")}
+                  onBlur={() => setFocusedField(null)}
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => { setShowForm(false); reset(); }}
-                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                  style={{ color: "var(--fog)", background: "transparent", border: "none" }}
+                  className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={addExpense.isPending}
-                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                  style={{ background: "var(--amber)", color: "var(--ink)" }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors"
+                  onMouseEnter={(e) => { if (!addExpense.isPending) e.currentTarget.style.background = "var(--amber-glow)"; }}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
                 >
                   {addExpense.isPending && <Loader2 size={14} className="animate-spin" />}
                   Add Expense
@@ -242,55 +299,70 @@ export default function FinancePage() {
 
         {/* Category chart */}
         {chartData.length > 0 && (
-          <div className="bg-white rounded-xl border border-slate-100 p-5 mb-5">
-            <h2 className="text-sm font-semibold text-slate-700 mb-4">Budget vs Actual by Category</h2>
+          <div
+            style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}
+            className="rounded-xl p-5 mb-5"
+          >
+            <h2 style={{ color: "var(--fog)" }} className="text-sm font-semibold mb-4">Budget vs Actual by Category</h2>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={chartData} margin={{ top: 0, right: 0, bottom: 0, left: -10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis dataKey="category" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#2A3040" vertical={false} />
+                <XAxis dataKey="category" tick={{ fontSize: 11, fill: "#7A8699" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "#7A8699" }} axisLine={false} tickLine={false} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }}
+                  contentStyle={{ background: "#161A23", border: "1px solid #2A3040", color: "#F5F0E8", borderRadius: 8, fontSize: 12 }}
                   formatter={(v: number) => formatCurrency(v)}
                 />
                 <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="allocated" name="Allocated" fill="#e0e7ff" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="spent" name="Spent" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="allocated" name="Allocated" fill="#2A3040" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="spent" name="Spent" fill="#F5A623" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         )}
 
         {/* Expenses list */}
-        <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-50">
-            <h2 className="text-sm font-semibold text-slate-700">All Expenses</h2>
+        <div
+          style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}
+          className="rounded-xl overflow-hidden"
+        >
+          <div style={{ borderBottom: "1px solid var(--seam)" }} className="px-4 py-3">
+            <h2 style={{ color: "var(--fog)" }} className="text-sm font-semibold">All Expenses</h2>
           </div>
           {loadingExpenses ? (
-            <div className="divide-y divide-slate-50">
+            <div className="divide-y" style={{ borderColor: "var(--seam)" }}>
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-4 px-4 py-3.5 animate-pulse">
-                  <div className="h-4 bg-slate-100 rounded w-24" />
-                  <div className="h-4 bg-slate-100 rounded w-48 flex-1" />
-                  <div className="h-4 bg-slate-100 rounded w-20" />
+                  <div style={{ background: "var(--ink-muted)" }} className="h-4 rounded w-24" />
+                  <div style={{ background: "var(--ink-muted)" }} className="h-4 rounded w-48 flex-1" />
+                  <div style={{ background: "var(--ink-muted)" }} className="h-4 rounded w-20" />
                 </div>
               ))}
             </div>
           ) : !expenses || expenses.length === 0 ? (
             <div className="p-10 text-center">
-              <Receipt size={32} className="text-slate-200 mx-auto mb-3" />
-              <p className="text-slate-400 text-sm">No expenses recorded yet.</p>
+              <Receipt size={32} style={{ color: "var(--dust)" }} className="mx-auto mb-3" />
+              <p style={{ color: "var(--dust)" }} className="text-sm">No expenses recorded yet.</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-50">
+            <div>
               {expenses.map((e) => (
-                <div key={e.id} className="flex items-center gap-4 px-4 py-3.5 hover:bg-slate-50/50 transition-colors">
-                  <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                <div
+                  key={e.id}
+                  className="flex items-center gap-4 px-4 py-3.5 transition-colors"
+                  style={{ borderTop: "1px solid var(--seam)" }}
+                  onMouseEnter={(el) => (el.currentTarget.style.background = "color-mix(in srgb, var(--cream) 3%, transparent)")}
+                  onMouseLeave={(el) => (el.currentTarget.style.background = "transparent")}
+                >
+                  <span
+                    style={{ background: "var(--ink-muted)", color: "var(--ash)" }}
+                    className="text-xs font-semibold px-2 py-0.5 rounded"
+                  >
                     {e.category}
                   </span>
-                  <p className="flex-1 text-sm text-slate-700">{e.title}</p>
-                  <p className="text-xs text-slate-400">{e.notes ?? ""}</p>
-                  <p className="text-sm font-semibold text-slate-800 w-24 text-right">
+                  <p style={{ color: "var(--cream)" }} className="flex-1 text-sm">{e.title}</p>
+                  <p style={{ color: "var(--fog)" }} className="text-xs">{e.notes ?? ""}</p>
+                  <p style={{ color: "var(--cream)" }} className="text-sm font-semibold w-24 text-right">
                     {formatCurrency(e.amount)}
                   </p>
                 </div>

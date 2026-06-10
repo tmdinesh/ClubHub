@@ -87,47 +87,95 @@ export default function AttendanceTakersPage() {
       <div className="p-8 max-w-3xl mx-auto">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-              <KeyRound size={22} className="text-indigo-500" />
+            <h1
+              className="text-2xl font-bold tracking-tight flex items-center gap-2"
+              style={{ color: "var(--cream)" }}
+            >
+              <KeyRound size={22} style={{ color: "var(--amber)" }} />
               Attendance Taker Credentials
             </h1>
-            <p className="text-slate-500 mt-1 text-sm">
+            <p className="mt-1 text-sm" style={{ color: "var(--fog)" }}>
               Generate 10 login credentials for attendance takers at this event.
             </p>
           </div>
           <div className="flex gap-2">
             {hasGenerated && (
-              <button type="button"
-                onClick={() => { if (confirm("Delete all credentials for this event?")) deleteMutation.mutate(); }}
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm("Delete all credentials for this event?")) deleteMutation.mutate();
+                }}
                 disabled={deleteMutation.isPending}
-                className="flex items-center gap-1.5 px-3 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg text-xs font-semibold hover:bg-red-100 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors"
+                style={{
+                  background: "color-mix(in srgb, var(--cinnabar) 10%, transparent)",
+                  color: "var(--cinnabar)",
+                  border: "1px solid color-mix(in srgb, var(--cinnabar) 30%, transparent)",
+                  opacity: deleteMutation.isPending ? 0.4 : 1,
+                }}
               >
-                {deleteMutation.isPending ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                {deleteMutation.isPending ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <Trash2 size={13} />
+                )}
                 Delete All
               </button>
             )}
-            <button type="button"
+            <button
+              type="button"
               onClick={() => generateMutation.mutate()}
               disabled={generateMutation.isPending || (hasGenerated && existing.length >= 10)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+              style={{
+                background: "var(--amber)",
+                color: "var(--ink)",
+                opacity:
+                  generateMutation.isPending || (hasGenerated && existing.length >= 10) ? 0.4 : 1,
+              }}
+              onMouseEnter={(e) => {
+                if (!generateMutation.isPending)
+                  e.currentTarget.style.background = "var(--amber-glow)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "var(--amber)";
+              }}
             >
-              {generateMutation.isPending
-                ? <Loader2 size={14} className="animate-spin" />
-                : <RefreshCw size={14} />}
+              {generateMutation.isPending ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <RefreshCw size={14} />
+              )}
               {hasGenerated ? "Regenerate" : "Generate 10 Credentials"}
             </button>
           </div>
         </div>
 
         {newCreds.length > 0 && (
-          <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
-            <p className="flex-1 text-sm text-amber-800">
+          <div
+            className="flex items-center gap-3 rounded-xl p-4 mb-5"
+            style={{
+              background: "color-mix(in srgb, var(--amber) 10%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--amber) 30%, transparent)",
+            }}
+          >
+            <p className="flex-1 text-sm" style={{ color: "var(--amber)" }}>
               <strong>Save these passwords now.</strong> They cannot be retrieved after you leave this page.
             </p>
             <button
               type="button"
               onClick={exportPdf}
-              className="flex items-center gap-1.5 px-3 py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold hover:bg-amber-700 transition-colors shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold shrink-0 transition-colors"
+              style={{
+                background: "var(--amber)",
+                color: "var(--ink)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--amber-glow)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "var(--amber)";
+              }}
             >
               <FileDown size={13} />
               Export PDF
@@ -135,63 +183,144 @@ export default function AttendanceTakersPage() {
           </div>
         )}
 
-        <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+        <div
+          className="rounded-xl overflow-hidden"
+          style={{
+            background: "var(--ink-soft)",
+            border: "1px solid var(--seam)",
+          }}
+        >
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50/60 border-b border-slate-100">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Label</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Username</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Password</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Copy</th>
+                <tr style={{ background: "var(--ink-muted)", borderBottom: "1px solid var(--seam)" }}>
+                  <th
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+                    style={{ color: "var(--dust)" }}
+                  >
+                    Label
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+                    style={{ color: "var(--dust)" }}
+                  >
+                    Username
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+                    style={{ color: "var(--dust)" }}
+                  >
+                    Password
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider"
+                    style={{ color: "var(--dust)" }}
+                  >
+                    Copy
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody>
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
+                    <tr key={i} className="animate-pulse" style={{ borderBottom: "1px solid var(--seam)" }}>
                       {[1, 2, 3, 4].map((j) => (
                         <td key={j} className="px-4 py-3.5">
-                          <div className="h-4 bg-slate-100 rounded w-24" />
+                          <div
+                            className="h-4 rounded w-24"
+                            style={{ background: "var(--ink-muted)" }}
+                          />
                         </td>
                       ))}
                     </tr>
                   ))
                 ) : displayCreds.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-12 text-center text-slate-400 text-sm">
+                    <td
+                      colSpan={4}
+                      className="px-4 py-12 text-center text-sm"
+                      style={{ color: "var(--fog)" }}
+                    >
                       No credentials yet. Click "Generate 10 Credentials" to create them.
                     </td>
                   </tr>
                 ) : (
                   displayCreds.map((cred) => (
-                    <tr key={cred.id} className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3.5 text-slate-700 text-sm font-medium">{cred.label}</td>
-                      <td className="px-4 py-3.5 font-mono text-xs text-slate-600">{cred.username}</td>
+                    <tr
+                      key={cred.id}
+                      style={{ borderBottom: "1px solid var(--seam)" }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background =
+                          "color-mix(in srgb, var(--cream) 3%, transparent)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "transparent";
+                      }}
+                    >
+                      <td className="px-4 py-3.5 text-sm font-medium" style={{ color: "var(--cream)" }}>
+                        {cred.label}
+                      </td>
+                      <td
+                        className="px-4 py-3.5 font-mono text-xs"
+                        style={{ color: "var(--fog)" }}
+                      >
+                        {cred.username}
+                      </td>
                       <td className="px-4 py-3.5">
                         {cred.plain_password ? (
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-xs text-slate-800">
+                            <span
+                              className="font-mono text-xs"
+                              style={{
+                                color: revealed[cred.id] ? "var(--jade)" : "var(--dust)",
+                              }}
+                            >
                               {revealed[cred.id] ? cred.plain_password : "••••••••••"}
                             </span>
-                            <button type="button"
-                              onClick={() => setRevealed((p) => ({ ...p, [cred.id]: !p[cred.id] }))}
-                              className="text-slate-400 hover:text-slate-700"
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setRevealed((p) => ({ ...p, [cred.id]: !p[cred.id] }))
+                              }
+                              style={{ color: "var(--fog)" }}
                             >
                               {revealed[cred.id] ? <EyeOff size={13} /> : <Eye size={13} />}
                             </button>
                           </div>
                         ) : (
-                          <span className="text-slate-300 text-xs italic">Hidden</span>
+                          <span className="text-xs italic" style={{ color: "var(--dust)" }}>
+                            Hidden
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3.5">
                         {cred.plain_password && (
-                          <button type="button"
-                            onClick={() => copyText(`Username: ${cred.username}\nPassword: ${cred.plain_password}`, cred.id)}
-                            className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                          <button
+                            type="button"
+                            onClick={() =>
+                              copyText(
+                                `Username: ${cred.username}\nPassword: ${cred.plain_password}`,
+                                cred.id
+                              )
+                            }
+                            className="flex items-center gap-1 text-xs font-medium transition-colors"
+                            style={{
+                              color: copied[cred.id] ? "var(--jade)" : "var(--amber)",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!copied[cred.id])
+                                e.currentTarget.style.color = "var(--amber-glow)";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!copied[cred.id])
+                                e.currentTarget.style.color = "var(--amber)";
+                            }}
                           >
-                            {copied[cred.id] ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                            {copied[cred.id] ? (
+                              <Check size={13} style={{ color: "var(--jade)" }} />
+                            ) : (
+                              <Copy size={13} />
+                            )}
                             {copied[cred.id] ? "Copied" : "Copy"}
                           </button>
                         )}
@@ -205,8 +334,12 @@ export default function AttendanceTakersPage() {
         </div>
 
         {!isLoading && displayCreds.length > 0 && (
-          <p className="mt-3 text-xs text-slate-400 text-center">
-            Attendance takers log in at <span className="font-mono">/attendance-login</span> with these credentials.
+          <p className="mt-3 text-xs text-center" style={{ color: "var(--dust)" }}>
+            Attendance takers log in at{" "}
+            <span className="font-mono" style={{ color: "var(--fog)" }}>
+              /attendance-login
+            </span>{" "}
+            with these credentials.
           </p>
         )}
       </div>
