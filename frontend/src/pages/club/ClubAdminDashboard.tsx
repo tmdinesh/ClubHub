@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import {
   PlusCircle, CalendarDays, ChevronRight, AlertCircle,
   Clock, CheckCircle, Send, BarChart3, Loader2, AlertTriangle, X,
-  Pencil, Trash2,
+  Pencil, Trash2, FileDown,
 } from "lucide-react";
 import { toISO, previewIST, fmtDateTimeMedIST } from "@/lib/dateIST";
 import Layout from "@/components/Layout";
@@ -300,12 +300,127 @@ const EMPTY_FORM: CreateEventForm = {
   is_team_event: false, team_min_size: "2", team_max_size: "5",
 };
 
+// ── Report modal ─────────────────────────────────────────────────────────────
+
+function ReportModal({ onClose }: { onClose: () => void }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const yearStart = `${new Date().getFullYear()}-01-01`;
+  const [startDate, setStartDate] = useState(yearStart);
+  const [endDate, setEndDate] = useState(today);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleDownload() {
+    if (!startDate || !endDate) { setError("Please select both dates."); return; }
+    if (startDate > endDate) { setError("Start date must be before end date."); return; }
+    setError("");
+    setLoading(true);
+    try {
+      const res = await api.get("/events/report/download", {
+        params: { start_date: startDate, end_date: endDate },
+        responseType: "blob",
+      });
+      const url = URL.createObjectURL(new Blob([res.data], {
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Club_Report_${startDate}_${endDate}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      onClose();
+    } catch (e: unknown) {
+      setError(apiError(e, "Failed to generate report."));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm" style={{ background: "rgba(0,0,0,0.7)" }}>
+      <div className="rounded-2xl shadow-2xl w-full max-w-sm mx-4" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid var(--seam)" }}>
+          <div className="flex items-center gap-2">
+            <FileDown size={18} style={{ color: "var(--amber)" }} />
+            <h2 className="text-base font-bold" style={{ color: "var(--cream)" }}>Generate Club Report</h2>
+          </div>
+          <button type="button" onClick={onClose} className="p-1 rounded transition-colors" style={{ color: "var(--ash)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--cream)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ash)")}>
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 space-y-4">
+          <p className="text-sm" style={{ color: "var(--fog)" }}>
+            Download a Word document summarising all events in the selected period, including registration, attendance, and finance data.
+          </p>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--dust)" }}>From</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full text-sm px-3 py-2 rounded-lg"
+              style={{ background: "var(--ink-muted)", border: "1px solid var(--seam)", color: "var(--cream)" }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--amber)"; e.currentTarget.style.outline = "none"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--seam)"; }}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--dust)" }}>To</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full text-sm px-3 py-2 rounded-lg"
+              style={{ background: "var(--ink-muted)", border: "1px solid var(--seam)", color: "var(--cream)" }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--amber)"; e.currentTarget.style.outline = "none"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--seam)"; }}
+            />
+          </div>
+          {error && (
+            <div className="flex items-center gap-2 text-sm" style={{ color: "var(--cinnabar)" }}>
+              <AlertCircle size={14} />
+              {error}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end gap-2 px-6 py-4" style={{ borderTop: "1px solid var(--seam)" }}>
+          <button type="button" onClick={onClose}
+            className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+            style={{ color: "var(--ash)", border: "1px solid var(--seam)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+            Cancel
+          </button>
+          <button type="button" onClick={handleDownload} disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors"
+            style={{ background: "var(--amber)", color: "var(--ink)" }}
+            onMouseEnter={(e) => !loading && (e.currentTarget.style.background = "var(--amber-glow)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}>
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
+            {loading ? "Generating…" : "Download .docx"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 export default function ClubAdminDashboard() {
   const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const [showCreate, setShowCreate] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const [form, setForm] = useState<CreateEventForm>(EMPTY_FORM);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState("");
@@ -506,10 +621,23 @@ export default function ClubAdminDashboard() {
               My Events
             </h1>
           </div>
-          <Button type="button" onClick={() => setShowCreate((v) => !v)} className="gap-2">
-            <PlusCircle size={16} />
-            New Event
-          </Button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowReport(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+              style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)", color: "var(--fog)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "var(--cream)"; e.currentTarget.style.borderColor = "var(--amber)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--fog)"; e.currentTarget.style.borderColor = "var(--seam)"; }}
+            >
+              <FileDown size={15} />
+              Generate Report
+            </button>
+            <Button type="button" onClick={() => setShowCreate((v) => !v)} className="gap-2">
+              <PlusCircle size={16} />
+              New Event
+            </Button>
+          </div>
         </div>
 
         {/* Summary */}
@@ -1018,6 +1146,7 @@ export default function ClubAdminDashboard() {
         </div>
       </div>
     )}
+    {showReport && <ReportModal onClose={() => setShowReport(false)} />}
   </>
   );
 }

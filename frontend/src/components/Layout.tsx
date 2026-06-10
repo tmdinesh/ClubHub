@@ -57,6 +57,7 @@ function getNavItems(role: string, eventId?: string): NavItem[] {
   }
   return [
     { to: "/dashboard",              label: "Overview",      icon: <LayoutDashboard size={15} />, exact: true },
+    { to: "/dashboard/browse",       label: "Browse Events", icon: <CalendarDays size={15} /> },
     { to: "/dashboard/events",       label: "My Events",     icon: <CalendarDays size={15} /> },
     { to: "/dashboard/teams",        label: "Teams",         icon: <Users size={15} /> },
     { to: "/dashboard/certificates", label: "Certificates",  icon: <Award size={15} /> },
