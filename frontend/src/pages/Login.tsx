@@ -67,7 +67,7 @@ export default function Login() {
               Welcome back
             </h1>
             <p style={{ fontSize: 14, color: "var(--fog)", lineHeight: 1.6 }}>
-              Sign in with your institutional account<br />to access ClubOps.
+              Sign in with your institutional account<br />to access ClubHub.
             </p>
           </div>
 

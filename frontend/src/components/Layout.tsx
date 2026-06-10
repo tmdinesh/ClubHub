@@ -1,10 +1,13 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth.store";
 import {
   LayoutDashboard, CalendarDays, Users, Award, Bell, LogOut,
   ChevronRight, Settings, ShieldCheck, ClipboardCheck, Megaphone,
   BarChart3, Wallet, ListChecks, Radio, KeyRound,
 } from "lucide-react";
+import api from "@/lib/api";
+import type { Event } from "@/types";
 
 interface NavItem {
   to: string;
@@ -82,6 +85,13 @@ export default function Layout({ children, eventId }: LayoutProps) {
   const navItems = getNavItems(role, eventId);
   const section = eventId ? "Event" : (SECTION_LABEL[role] ?? "Portal");
 
+  const { data: eventData } = useQuery<Event>({
+    queryKey: ["event", eventId],
+    queryFn: () => api.get(`/events/${eventId}`).then((r) => r.data),
+    enabled: !!eventId,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const initials = user?.name
     ? user.name.split(" ").map((p) => p[0]).join("").toUpperCase().slice(0, 2)
     : "?";
@@ -108,7 +118,7 @@ export default function Layout({ children, eventId }: LayoutProps) {
               <span style={{ color: "var(--ink)", fontFamily: "'DM Serif Display', serif", fontSize: 13, fontWeight: 700, lineHeight: 1 }}>C</span>
             </div>
             <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>
-              ClubOps
+              ClubHub
             </span>
           </div>
         </div>
@@ -120,6 +130,34 @@ export default function Layout({ children, eventId }: LayoutProps) {
             textTransform: "uppercase", color: "var(--dust)",
           }}>{section}</span>
         </div>
+
+        {/* Event name banner */}
+        {eventId && (
+          <div style={{
+            margin: "0 12px 8px",
+            padding: "10px 12px",
+            background: "color-mix(in srgb, var(--amber) 8%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--amber) 25%, transparent)",
+            borderRadius: 10,
+          }}>
+            {eventData ? (
+              <p style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: "var(--cream)",
+                lineHeight: 1.3,
+                wordBreak: "break-word",
+              }}>
+                {eventData.title}
+              </p>
+            ) : (
+              <div style={{ height: 14, background: "var(--ink-muted)", borderRadius: 4, width: "80%" }} />
+            )}
+            <p style={{ fontSize: 10, color: "var(--amber)", marginTop: 3, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+              Managing event
+            </p>
+          </div>
+        )}
 
         {/* Nav */}
         <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto pb-2">
