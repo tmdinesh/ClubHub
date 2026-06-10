@@ -36,11 +36,14 @@ export default function CertificateVerify() {
   });
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+    <div
+      className="flex min-h-screen flex-col items-center justify-center p-4"
+      style={{ background: "var(--ink)" }}
+    >
       {/* Brand mark */}
       <div className="mb-8 flex items-center gap-2">
-        <ShieldCheck className="h-7 w-7 text-primary" />
-        <span className="text-xl font-bold text-foreground">
+        <ShieldCheck className="h-7 w-7" style={{ color: "var(--amber)" }} />
+        <span className="text-xl font-bold" style={{ color: "var(--cream)" }}>
           ClubOps Certificate Verification
         </span>
       </div>
@@ -50,7 +53,7 @@ export default function CertificateVerify() {
           {/* Loading */}
           {isLoading && (
             <div className="flex flex-col items-center gap-4 py-8">
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <Loader2 className="h-10 w-10 animate-spin" style={{ color: "var(--amber)" }} />
               <p className="text-sm text-muted-foreground">
                 Verifying certificate...
               </p>
@@ -60,8 +63,13 @@ export default function CertificateVerify() {
           {/* Error / fetch failed */}
           {isError && (
             <div className="flex flex-col items-center gap-4 py-6 text-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
-                <XCircle className="h-10 w-10 text-destructive" />
+              <div
+                className="flex h-20 w-20 items-center justify-center rounded-full"
+                style={{
+                  background: "color-mix(in srgb, var(--cinnabar) 15%, transparent)",
+                }}
+              >
+                <XCircle className="h-10 w-10" style={{ color: "var(--cinnabar)" }} />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-foreground">
@@ -72,7 +80,14 @@ export default function CertificateVerify() {
                   try again.
                 </p>
               </div>
-              <div className="mt-2 rounded-md bg-muted px-4 py-2 font-mono text-sm text-muted-foreground">
+              <div
+                className="mt-2 rounded-md px-4 py-2 font-mono text-sm"
+                style={{
+                  background: "var(--ink-muted)",
+                  color: "var(--ash)",
+                  border: "1px solid var(--seam)",
+                }}
+              >
                 Code: {code}
               </div>
             </div>
@@ -81,25 +96,39 @@ export default function CertificateVerify() {
           {/* Valid certificate */}
           {!isLoading && !isError && data?.valid && (
             <div className="flex flex-col items-center gap-6 text-center">
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-green-100">
-                <CheckCircle2 className="h-12 w-12 text-green-600" />
+              <div
+                className="flex h-24 w-24 items-center justify-center rounded-full"
+                style={{
+                  background: "color-mix(in srgb, var(--jade) 15%, transparent)",
+                }}
+              >
+                <CheckCircle2 className="h-12 w-12" style={{ color: "var(--jade)" }} />
               </div>
 
               <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-green-600">
+                <p
+                  className="text-xs font-semibold uppercase tracking-widest"
+                  style={{ color: "var(--jade)" }}
+                >
                   Certificate Verified
                 </p>
-                <h2 className="mt-1 text-2xl font-bold text-foreground">
+                <h2
+                  className="mt-1 text-2xl font-bold"
+                  style={{ color: "var(--cream)" }}
+                >
                   {data.recipient ?? "Recipient"}
                 </h2>
               </div>
 
               <div className="w-full space-y-3 text-left">
-                <div className="rounded-lg border bg-muted/40 p-4 space-y-3">
-                  <InfoRow
-                    label="Event"
-                    value={data.event ?? "—"}
-                  />
+                <div
+                  className="rounded-lg p-4 space-y-3"
+                  style={{
+                    background: "var(--ink-muted)",
+                    border: "1px solid var(--seam)",
+                  }}
+                >
+                  <InfoRow label="Event" value={data.event ?? "—"} />
                   {data.certificate_type && (
                     <InfoRow
                       label="Certificate Type"
@@ -112,11 +141,7 @@ export default function CertificateVerify() {
                       value={fmtDateLongIST(data.issued_at)}
                     />
                   )}
-                  <InfoRow
-                    label="Certificate Code"
-                    value={code ?? ""}
-                    mono
-                  />
+                  <InfoRow label="Certificate Code" value={code ?? ""} mono />
                 </div>
               </div>
             </div>
@@ -125,8 +150,13 @@ export default function CertificateVerify() {
           {/* Invalid certificate */}
           {!isLoading && !isError && data && !data.valid && (
             <div className="flex flex-col items-center gap-4 py-6 text-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
-                <XCircle className="h-10 w-10 text-destructive" />
+              <div
+                className="flex h-20 w-20 items-center justify-center rounded-full"
+                style={{
+                  background: "color-mix(in srgb, var(--cinnabar) 15%, transparent)",
+                }}
+              >
+                <XCircle className="h-10 w-10" style={{ color: "var(--cinnabar)" }} />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-foreground">
@@ -137,7 +167,14 @@ export default function CertificateVerify() {
                     "No certificate matches this verification code. It may have been revoked or the code is incorrect."}
                 </p>
               </div>
-              <div className="mt-2 rounded-md bg-muted px-4 py-2 font-mono text-sm text-muted-foreground">
+              <div
+                className="mt-2 rounded-md px-4 py-2 font-mono text-sm"
+                style={{
+                  background: "var(--ink-muted)",
+                  color: "var(--ash)",
+                  border: "1px solid var(--seam)",
+                }}
+              >
                 Code: {code}
               </div>
             </div>
@@ -145,7 +182,7 @@ export default function CertificateVerify() {
         </CardContent>
       </Card>
 
-      <p className="mt-6 text-center text-xs text-muted-foreground">
+      <p className="mt-6 text-center text-xs" style={{ color: "var(--dust)" }}>
         This verification is provided by ClubOps. Certificates are
         cryptographically signed and tamper-evident.
       </p>
@@ -164,11 +201,15 @@ function InfoRow({
 }) {
   return (
     <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between">
-      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <span
+        className="text-xs font-medium uppercase tracking-wide"
+        style={{ color: "var(--fog)" }}
+      >
         {label}
       </span>
       <span
-        className={`text-sm font-semibold text-foreground ${mono ? "font-mono" : ""}`}
+        className={`text-sm font-semibold ${mono ? "font-mono" : ""}`}
+        style={{ color: "var(--cream)" }}
       >
         {value}
       </span>

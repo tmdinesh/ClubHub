@@ -11,11 +11,12 @@ import api, { apiError } from "@/lib/api";
 import type { Certificate } from "@/types";
 import { fmtDateIST } from "@/lib/dateIST";
 
-const CERT_TYPE_BADGES: Record<Certificate["certificate_type"], string> = {
-  PARTICIPATION: "bg-blue-50 text-blue-700 border-blue-200",
-  VOLUNTEER:     "bg-emerald-50 text-emerald-700 border-emerald-200",
-  WINNER:        "bg-amber-50 text-amber-700 border-amber-200",
-  RUNNER_UP:     "bg-orange-50 text-orange-700 border-orange-200",
+// Cert type badge styles using design system CSS vars
+const CERT_TYPE_BADGE_STYLES: Record<Certificate["certificate_type"], React.CSSProperties> = {
+  PARTICIPATION: { background: "color-mix(in srgb, var(--sky) 15%, transparent)", color: "var(--sky)", border: "1px solid color-mix(in srgb, var(--sky) 35%, transparent)" },
+  VOLUNTEER:     { background: "color-mix(in srgb, var(--jade) 15%, transparent)", color: "var(--jade)", border: "1px solid color-mix(in srgb, var(--jade) 35%, transparent)" },
+  WINNER:        { background: "var(--amber-dim)", color: "var(--amber)", border: "1px solid color-mix(in srgb, var(--amber) 35%, transparent)" },
+  RUNNER_UP:     { background: "color-mix(in srgb, var(--fog) 15%, transparent)", color: "var(--fog)", border: "1px solid color-mix(in srgb, var(--fog) 35%, transparent)" },
 };
 
 const POSITIONS = ["1st", "2nd", "3rd", "4th"] as const;
@@ -118,6 +119,7 @@ function TemplateEditor({ certType, onClose, eventId }: PlaceholderEditorProps) 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const [fileDragOver, setFileDragOver] = useState(false);
 
   const availableFields: PlaceholderField[] = certType === "WINNER"
     ? ["name", "position", "date", "event_name", "club_name"]
@@ -185,23 +187,61 @@ function TemplateEditor({ certType, onClose, eventId }: PlaceholderEditorProps) 
     }
   }
 
+  const fieldConfigInputStyle: React.CSSProperties = {
+    display: "block",
+    width: "100%",
+    marginTop: 2,
+    padding: "4px 8px",
+    border: "1px solid var(--seam)",
+    borderRadius: 6,
+    fontSize: 12,
+    background: "var(--ink)",
+    color: "var(--cream)",
+    outline: "none",
+    boxSizing: "border-box",
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h2 className="text-base font-bold text-slate-800">
+    <div
+      style={{ background: "rgba(0,0,0,0.8)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+    >
+      <div
+        style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)", color: "var(--cream)" }}
+        className="rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+      >
+        <div style={{ borderBottom: "1px solid var(--seam)" }} className="flex items-center justify-between px-6 py-4">
+          <h2 style={{ color: "var(--cream)" }} className="text-base font-bold">
             Upload {certType === "WINNER" ? "Winner" : "Participation"} Certificate Template
           </h2>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ color: "var(--fog)" }}
+            className="transition-colors"
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--cream)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--fog)")}
+          >
+            <X size={18} />
+          </button>
         </div>
 
         <div className="p-6 space-y-5">
           {/* File picker */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-2">Template Image (PNG or JPEG)</label>
-            <label className="flex items-center gap-3 px-4 py-3 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-colors">
-              <ImageIcon size={18} className="text-slate-400" />
-              <span className="text-sm text-slate-500">{file ? file.name : "Click to choose an image…"}</span>
+            <label style={{ color: "var(--fog)" }} className="block text-xs font-semibold mb-2">Template Image (PNG or JPEG)</label>
+            <label
+              style={{
+                border: fileDragOver ? "2px dashed var(--amber)" : "2px dashed var(--seam)",
+                background: fileDragOver ? "color-mix(in srgb, var(--amber) 5%, transparent)" : "transparent",
+                transition: "border-color 0.15s, background 0.15s",
+              }}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer"
+              onMouseEnter={() => setFileDragOver(true)}
+              onMouseLeave={() => setFileDragOver(false)}
+            >
+              <ImageIcon size={18} style={{ color: "var(--dust)" }} />
+              <span style={{ color: "var(--dust)" }} className="text-sm">{file ? file.name : "Click to choose an image…"}</span>
               <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
             </label>
           </div>
@@ -210,11 +250,11 @@ function TemplateEditor({ certType, onClose, eventId }: PlaceholderEditorProps) 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               {/* Canvas */}
               <div className="lg:col-span-2">
-                <p className="text-xs text-slate-500 mb-2 flex items-center gap-1">
-                  <span className="inline-block w-2 h-2 rounded-full bg-indigo-500" />
-                  Click on the image to place the <strong className="text-slate-700">{PLACEHOLDER_LABELS[activeField]}</strong> field
+                <p style={{ color: "var(--dust)" }} className="text-xs mb-2 flex items-center gap-1">
+                  <span style={{ background: "var(--amber)" }} className="inline-block w-2 h-2 rounded-full" />
+                  Click on the image to place the <strong style={{ color: "var(--cream)" }}>{PLACEHOLDER_LABELS[activeField]}</strong> field
                 </p>
-                <div className="relative border border-slate-200 rounded-xl overflow-hidden">
+                <div style={{ border: "1px solid var(--seam)" }} className="relative rounded-xl overflow-hidden">
                   <img
                     ref={imgRef}
                     src={preview}
@@ -236,7 +276,10 @@ function TemplateEditor({ certType, onClose, eventId }: PlaceholderEditorProps) 
                         style={{ left, top, transform: "translate(-50%,-50%)", color: cfg.color }}
                         className="absolute pointer-events-none"
                       >
-                        <span className="bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap">
+                        <span
+                          style={{ background: "var(--amber)", color: "var(--ink)" }}
+                          className="text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap"
+                        >
                           {field}
                         </span>
                       </div>
@@ -248,59 +291,66 @@ function TemplateEditor({ certType, onClose, eventId }: PlaceholderEditorProps) 
               {/* Field config panel */}
               <div className="space-y-4">
                 <div>
-                  <p className="text-xs font-semibold text-slate-600 mb-2">Active field</p>
+                  <p style={{ color: "var(--fog)" }} className="text-xs font-semibold mb-2">Active field</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {availableFields.map((f) => (
-                      <button
-                        key={f}
-                        type="button"
-                        onClick={() => setActiveField(f)}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors border ${
-                          activeField === f
-                            ? "bg-indigo-600 text-white border-indigo-600"
-                            : placeholders[f]
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                        }`}
-                      >
-                        {placeholders[f] ? <Check size={10} className="inline mr-1" /> : null}{f}
-                      </button>
-                    ))}
+                    {availableFields.map((f) => {
+                      const isActive = activeField === f;
+                      const isPlaced = !!placeholders[f];
+                      let btnStyle: React.CSSProperties;
+                      if (isActive) {
+                        btnStyle = { background: "var(--amber)", color: "var(--ink)", border: "1px solid var(--amber)" };
+                      } else if (isPlaced) {
+                        btnStyle = { background: "color-mix(in srgb, var(--jade) 15%, transparent)", color: "var(--jade)", border: "1px solid color-mix(in srgb, var(--jade) 35%, transparent)" };
+                      } else {
+                        btnStyle = { background: "var(--ink-muted)", color: "var(--fog)", border: "1px solid var(--seam)" };
+                      }
+                      return (
+                        <button
+                          key={f}
+                          type="button"
+                          onClick={() => setActiveField(f)}
+                          style={btnStyle}
+                          className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                        >
+                          {placeholders[f] ? <Check size={10} className="inline mr-1" /> : null}{f}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
                 {placeholders[activeField] && (
-                  <div className="space-y-3 bg-slate-50 rounded-xl p-3">
-                    <p className="text-xs font-semibold text-slate-700">{PLACEHOLDER_LABELS[activeField]}</p>
+                  <div style={{ background: "var(--ink-muted)", borderRadius: 12 }} className="space-y-3 p-3">
+                    <p style={{ color: "var(--cream)" }} className="text-xs font-semibold">{PLACEHOLDER_LABELS[activeField]}</p>
                     <div className="grid grid-cols-2 gap-2">
-                      <label className="text-xs text-slate-500">
+                      <label style={{ color: "var(--fog)" }} className="text-xs">
                         X <input type="number" value={placeholders[activeField].x}
                           onChange={(e) => updateField(activeField, "x", +e.target.value)}
-                          className="block w-full mt-0.5 px-2 py-1 border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-indigo-300" />
+                          style={fieldConfigInputStyle} />
                       </label>
-                      <label className="text-xs text-slate-500">
+                      <label style={{ color: "var(--fog)" }} className="text-xs">
                         Y <input type="number" value={placeholders[activeField].y}
                           onChange={(e) => updateField(activeField, "y", +e.target.value)}
-                          className="block w-full mt-0.5 px-2 py-1 border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-indigo-300" />
+                          style={fieldConfigInputStyle} />
                       </label>
                     </div>
-                    <label className="text-xs text-slate-500 block">
+                    <label style={{ color: "var(--fog)" }} className="text-xs block">
                       Font size
                       <input type="number" min={8} max={200} value={placeholders[activeField].font_size}
                         onChange={(e) => updateField(activeField, "font_size", +e.target.value)}
-                        className="block w-full mt-0.5 px-2 py-1 border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-indigo-300" />
+                        style={fieldConfigInputStyle} />
                     </label>
-                    <label className="text-xs text-slate-500 block">
+                    <label style={{ color: "var(--fog)" }} className="text-xs block">
                       Color
                       <input type="color" value={placeholders[activeField].color}
                         onChange={(e) => updateField(activeField, "color", e.target.value)}
-                        className="block mt-0.5 w-full h-7 border border-slate-200 rounded cursor-pointer" />
+                        style={{ display: "block", marginTop: 2, width: "100%", height: 28, border: "1px solid var(--seam)", borderRadius: 6, cursor: "pointer", background: "transparent" }} />
                     </label>
-                    <label className="text-xs text-slate-500 block">
+                    <label style={{ color: "var(--fog)" }} className="text-xs block">
                       Alignment
                       <select value={placeholders[activeField].align}
                         onChange={(e) => updateField(activeField, "align", e.target.value)}
-                        className="block w-full mt-0.5 px-2 py-1 border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-indigo-300">
+                        style={{ ...fieldConfigInputStyle, colorScheme: "dark" }}>
                         <option value="left">Left</option>
                         <option value="center">Center</option>
                         <option value="right">Right</option>
@@ -313,16 +363,32 @@ function TemplateEditor({ certType, onClose, eventId }: PlaceholderEditorProps) 
           )}
 
           {error && (
-            <p className="text-xs text-red-600 flex items-center gap-1"><AlertCircle size={12} /> {error}</p>
+            <p style={{ color: "var(--cinnabar)" }} className="text-xs flex items-center gap-1"><AlertCircle size={12} /> {error}</p>
           )}
           {success && (
-            <p className="text-sm text-emerald-600 flex items-center gap-1.5"><CheckCircle size={13} /> Template saved!</p>
+            <p style={{ color: "var(--jade)" }} className="text-sm flex items-center gap-1.5"><CheckCircle size={13} /> Template saved!</p>
           )}
 
-          <div className="flex gap-3 justify-end pt-2 border-t border-slate-100">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-            <button type="button" onClick={handleSave} disabled={uploading || !file}
-              className="flex items-center gap-2 px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+          <div style={{ borderTop: "1px solid var(--seam)" }} className="flex gap-3 justify-end pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              style={{ border: "1px solid var(--seam)", color: "var(--fog)", background: "transparent" }}
+              className="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={uploading || !file}
+              style={{ background: "var(--amber)", color: "var(--ink)" }}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold disabled:opacity-50 transition-colors"
+              onMouseEnter={(e) => { if (!uploading && file) e.currentTarget.style.background = "var(--amber-glow)"; }}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
+            >
               {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
               Save Template
             </button>
@@ -350,47 +416,88 @@ function BankModal({ winnerName, onConfirm, onCancel }: BankModalProps) {
 
   const hasAny = details.bank_account || details.bank_name || details.ifsc || details.upi;
 
+  const modalInputStyle: React.CSSProperties = {
+    display: "block",
+    width: "100%",
+    marginTop: 4,
+    padding: "8px 12px",
+    border: "1px solid var(--seam)",
+    borderRadius: 8,
+    fontSize: 14,
+    background: "var(--ink-muted)",
+    color: "var(--cream)",
+    outline: "none",
+    boxSizing: "border-box",
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-        <div className="px-6 py-4 border-b border-slate-100">
-          <h2 className="text-base font-bold text-slate-800">Bank Details for {winnerName}</h2>
-          <p className="text-xs text-slate-400 mt-0.5">Optional — only if this winner has a cash prize.</p>
+    <div
+      style={{ background: "rgba(0,0,0,0.8)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+    >
+      <div
+        style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)", color: "var(--cream)" }}
+        className="rounded-2xl shadow-2xl w-full max-w-md"
+      >
+        <div style={{ borderBottom: "1px solid var(--seam)" }} className="px-6 py-4">
+          <h2 style={{ color: "var(--cream)" }} className="text-base font-bold">Bank Details for {winnerName}</h2>
+          <p style={{ color: "var(--dust)" }} className="text-xs mt-0.5">Optional — only if this winner has a cash prize.</p>
         </div>
         <div className="p-6 space-y-4">
-          <label className="block text-xs font-semibold text-slate-600">
+          <label style={{ color: "var(--fog)" }} className="block text-xs font-semibold">
             Account Number
             <input type="text" value={details.bank_account} onChange={(e) => set("bank_account", e.target.value)}
               placeholder="e.g. 123456789012"
-              className="block w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+              style={modalInputStyle} />
           </label>
-          <label className="block text-xs font-semibold text-slate-600">
+          <label style={{ color: "var(--fog)" }} className="block text-xs font-semibold">
             Bank Name
             <input type="text" value={details.bank_name} onChange={(e) => set("bank_name", e.target.value)}
               placeholder="e.g. State Bank of India"
-              className="block w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+              style={modalInputStyle} />
           </label>
-          <label className="block text-xs font-semibold text-slate-600">
+          <label style={{ color: "var(--fog)" }} className="block text-xs font-semibold">
             IFSC Code
             <input type="text" value={details.ifsc} onChange={(e) => set("ifsc", e.target.value.toUpperCase())}
               placeholder="e.g. SBIN0001234"
-              className="block w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+              style={{ ...modalInputStyle, fontFamily: "monospace" }} />
           </label>
-          <label className="block text-xs font-semibold text-slate-600">
+          <label style={{ color: "var(--fog)" }} className="block text-xs font-semibold">
             UPI ID
             <input type="text" value={details.upi} onChange={(e) => set("upi", e.target.value)}
               placeholder="e.g. name@upi"
-              className="block w-full mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
+              style={modalInputStyle} />
           </label>
         </div>
-        <div className="px-6 py-4 border-t border-slate-100 flex gap-3 justify-end">
-          <button type="button" onClick={onCancel} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
-          <button type="button" onClick={() => onConfirm(null)}
-            className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+        <div style={{ borderTop: "1px solid var(--seam)" }} className="px-6 py-4 flex gap-3 justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            style={{ border: "1px solid var(--seam)", color: "var(--fog)", background: "transparent" }}
+            className="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm(null)}
+            style={{ border: "1px solid var(--seam)", color: "var(--fog)", background: "transparent" }}
+            className="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+          >
             Skip
           </button>
-          <button type="button" onClick={() => onConfirm(hasAny ? details : null)}
-            className="flex items-center gap-2 px-5 py-2 bg-amber-600 text-white rounded-xl text-sm font-semibold hover:bg-amber-700 transition-colors">
+          <button
+            type="button"
+            onClick={() => onConfirm(hasAny ? details : null)}
+            style={{ background: "var(--amber)", color: "var(--ink)" }}
+            className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-colors"
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--amber-glow)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
+          >
             <CreditCard size={14} /> Save & Issue
           </button>
         </div>
@@ -515,17 +622,20 @@ export default function CertificatesManage() {
     <Layout eventId={eventId}>
       <div className="p-8 max-w-5xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-            <Award size={22} className="text-amber-500" />
+          <h1 style={{ color: "var(--cream)" }} className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Award size={22} style={{ color: "var(--amber)" }} />
             Certificates
           </h1>
-          <p className="text-slate-500 mt-1 text-sm">
+          <p style={{ color: "var(--dust)" }} className="mt-1 text-sm">
             {certificates.length} issued · {present.length} attendees present
           </p>
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-6 w-fit">
+        <div
+          style={{ background: "var(--ink-muted)" }}
+          className="flex gap-1 p-1 rounded-xl mb-6 w-fit"
+        >
           {([
             { id: "participation", label: "Participation", icon: <Users size={14} /> },
             { id: "winner",        label: "Winners",       icon: <Trophy size={14} /> },
@@ -535,9 +645,12 @@ export default function CertificatesManage() {
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                tab === t.id ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
-              }`}
+              style={
+                tab === t.id
+                  ? { background: "var(--ink-soft)", color: "var(--cream)", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }
+                  : { background: "transparent", color: "var(--fog)" }
+              }
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all"
             >
               {t.icon}{t.label}
             </button>
@@ -547,35 +660,41 @@ export default function CertificatesManage() {
         {/* ── Participation tab ──────────────────────────────────── */}
         {tab === "participation" && (
           <div className="space-y-5">
-            <div className="bg-white rounded-xl border border-slate-100 p-6">
-              <h2 className="text-sm font-semibold text-slate-700 mb-1">Issue Participation Certificates</h2>
-              <p className="text-xs text-slate-400 mb-5">
+            <div style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }} className="rounded-xl p-6">
+              <h2 style={{ color: "var(--cream)" }} className="text-sm font-semibold mb-1">Issue Participation Certificates</h2>
+              <p style={{ color: "var(--dust)" }} className="text-xs mb-5">
                 Automatically issues a certificate to every attendee marked present ({present.length} people).
                 Already-issued certificates are skipped.
               </p>
 
               {participationTemplate && (
-                <div className="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 mb-4">
+                <div
+                  style={{ color: "var(--jade)", background: "color-mix(in srgb, var(--jade) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--jade) 30%, transparent)" }}
+                  className="flex items-center gap-2 text-xs rounded-lg px-3 py-2 mb-4"
+                >
                   <CheckCircle size={13} /> Custom template active — certificates will use your design.
                 </div>
               )}
 
               {present.length === 0 ? (
-                <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                <div
+                  style={{ color: "var(--amber)", background: "var(--amber-dim)", border: "1px solid color-mix(in srgb, var(--amber) 30%, transparent)" }}
+                  className="flex items-center gap-2 text-sm rounded-lg px-4 py-3"
+                >
                   <AlertCircle size={15} />
                   No attendees are marked present yet. Scan QR codes at the event first.
                 </div>
               ) : (
                 <>
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="text-3xl font-bold text-indigo-600">{present.length}</div>
+                    <div style={{ color: "var(--amber)" }} className="text-3xl font-bold">{present.length}</div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-700">attendees present</p>
-                      <p className="text-xs text-slate-400">{participationCount} certificates already issued</p>
+                      <p style={{ color: "var(--cream)" }} className="text-sm font-semibold">attendees present</p>
+                      <p style={{ color: "var(--dust)" }} className="text-xs">{participationCount} certificates already issued</p>
                     </div>
                   </div>
                   {partError && (
-                    <p className="text-xs text-red-600 mb-3 flex items-center gap-1">
+                    <p style={{ color: "var(--cinnabar)" }} className="text-xs mb-3 flex items-center gap-1">
                       <AlertCircle size={12} /> {partError}
                     </p>
                   )}
@@ -583,7 +702,10 @@ export default function CertificatesManage() {
                     type="button"
                     onClick={() => participationMutation.mutate()}
                     disabled={participationMutation.isPending || present.length === 0}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                    style={{ background: "var(--amber)", color: "var(--ink)" }}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 transition-colors"
+                    onMouseEnter={(e) => { if (!participationMutation.isPending) e.currentTarget.style.background = "var(--amber-glow)"; }}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
                   >
                     {participationMutation.isPending
                       ? <Loader2 size={15} className="animate-spin" />
@@ -591,7 +713,7 @@ export default function CertificatesManage() {
                     Generate {present.length - participationCount > 0 ? `${present.length - participationCount} ` : ""}Participation Certificates
                   </button>
                   {participationMutation.isSuccess && (
-                    <p className="mt-3 text-sm text-emerald-600 flex items-center gap-1.5">
+                    <p style={{ color: "var(--jade)" }} className="mt-3 text-sm flex items-center gap-1.5">
                       <CheckCircle size={13} /> Certificates generated successfully!
                     </p>
                   )}
@@ -605,36 +727,59 @@ export default function CertificatesManage() {
         {tab === "winner" && (
           <div className="space-y-5">
             {winnerTemplate && (
-              <div className="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+              <div
+                style={{ color: "var(--jade)", background: "color-mix(in srgb, var(--jade) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--jade) 30%, transparent)" }}
+                className="flex items-center gap-2 text-xs rounded-lg px-3 py-2"
+              >
                 <CheckCircle size={13} /> Custom winner template active.
               </div>
             )}
 
             {winners.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                <h3 className="text-xs font-semibold text-amber-800 uppercase tracking-wider mb-3">
+              <div
+                style={{
+                  background: "color-mix(in srgb, var(--amber) 10%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--amber) 30%, transparent)",
+                }}
+                className="rounded-xl p-4"
+              >
+                <h3 style={{ color: "var(--amber)" }} className="text-xs font-semibold uppercase tracking-wider mb-3">
                   Declared Winners
                 </h3>
                 <div className="space-y-2">
                   {[...winners].sort((a, b) => POSITIONS.indexOf(a.position) - POSITIONS.indexOf(b.position)).map((w) => (
-                    <div key={w.user_id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-amber-100">
+                    <div
+                      key={w.user_id}
+                      style={{ background: "var(--ink-muted)", border: "1px solid var(--seam)" }}
+                      className="flex items-center justify-between rounded-lg px-3 py-2"
+                    >
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-amber-700 mr-1">{POSITION_LABELS[w.position]}</span>
-                        <span className="text-sm font-medium text-slate-800">{w.name}</span>
+                        <span style={{ color: "var(--amber)" }} className="text-xs font-bold mr-1">{POSITION_LABELS[w.position]}</span>
+                        <span style={{ color: "var(--cream)" }} className="text-sm font-medium">{w.name}</span>
                         {(w.bank_account || w.upi) && (
-                          <span className="flex items-center gap-0.5 text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200 rounded px-1.5 py-0.5">
+                          <span
+                            style={{ color: "var(--jade)", background: "color-mix(in srgb, var(--jade) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--jade) 30%, transparent)" }}
+                            className="flex items-center gap-0.5 text-[10px] rounded px-1.5 py-0.5"
+                          >
                             <CreditCard size={9} /> Bank
                           </span>
                         )}
                       </div>
-                      <button type="button" onClick={() => removeWinner(w.user_id)} className="text-slate-300 hover:text-red-500 transition-colors">
+                      <button
+                        type="button"
+                        onClick={() => removeWinner(w.user_id)}
+                        style={{ color: "var(--seam)" }}
+                        className="transition-colors"
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "var(--cinnabar)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "var(--seam)")}
+                      >
                         <X size={14} />
                       </button>
                     </div>
                   ))}
                 </div>
                 {winError && (
-                  <p className="text-xs text-red-600 mt-3 flex items-center gap-1">
+                  <p style={{ color: "var(--cinnabar)" }} className="text-xs mt-3 flex items-center gap-1">
                     <AlertCircle size={12} /> {winError}
                   </p>
                 )}
@@ -642,76 +787,118 @@ export default function CertificatesManage() {
                   type="button"
                   onClick={handleIssueWinnersClick}
                   disabled={winnersMutation.isPending}
-                  className="mt-3 flex items-center gap-2 px-5 py-2.5 bg-amber-600 text-white rounded-xl text-sm font-semibold hover:bg-amber-700 disabled:opacity-50 transition-colors"
+                  style={{ background: "var(--amber)", color: "var(--ink)" }}
+                  className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 transition-colors"
+                  onMouseEnter={(e) => { if (!winnersMutation.isPending) e.currentTarget.style.background = "var(--amber-glow)"; }}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
                 >
                   {winnersMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Trophy size={14} />}
                   Issue {winners.length} Winner Certificate{winners.length !== 1 ? "s" : ""}
                 </button>
                 {winnersMutation.isSuccess && (
-                  <p className="mt-2 text-sm text-emerald-600 flex items-center gap-1.5">
+                  <p style={{ color: "var(--jade)" }} className="mt-2 text-sm flex items-center gap-1.5">
                     <CheckCircle size={13} /> Winner certificates issued!
                   </p>
                 )}
               </div>
             )}
 
-            <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
-              <div className="p-4 border-b border-slate-50">
-                <p className="text-sm font-semibold text-slate-700 mb-3">
+            <div style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }} className="rounded-xl overflow-hidden">
+              <div style={{ borderBottom: "1px solid var(--seam)" }} className="p-4">
+                <p style={{ color: "var(--cream)" }} className="text-sm font-semibold mb-3">
                   Search attendees and assign positions
                 </p>
                 <div className="relative">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search size={14} style={{ color: "var(--dust)" }} className="absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={winnerSearch}
                     onChange={(e) => setWinnerSearch(e.target.value)}
                     placeholder="Search by name or email…"
-                    className="w-full pl-8 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    style={{
+                      width: "100%",
+                      paddingLeft: 32,
+                      paddingRight: 16,
+                      paddingTop: 8,
+                      paddingBottom: 8,
+                      fontSize: 14,
+                      border: "1px solid var(--seam)",
+                      borderRadius: 8,
+                      background: "var(--ink-muted)",
+                      color: "var(--cream)",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                    onFocus={(e) => { e.currentTarget.style.border = "1px solid var(--amber)"; e.currentTarget.style.boxShadow = "0 0 0 2px color-mix(in srgb, var(--amber) 20%, transparent)"; }}
+                    onBlur={(e) => { e.currentTarget.style.border = "1px solid var(--seam)"; e.currentTarget.style.boxShadow = "none"; }}
                   />
                 </div>
               </div>
 
               {loadingPresent ? (
-                <div className="p-8 text-center text-slate-400 text-sm animate-pulse">Loading attendees…</div>
+                <div style={{ color: "var(--dust)" }} className="p-8 text-center text-sm animate-pulse">Loading attendees…</div>
               ) : present.length === 0 ? (
                 <div className="p-8 text-center">
-                  <AlertCircle size={28} className="text-slate-200 mx-auto mb-2" />
-                  <p className="text-sm text-slate-400">No attendees marked present yet.</p>
+                  <AlertCircle size={28} style={{ color: "var(--dust)" }} className="mx-auto mb-2" />
+                  <p style={{ color: "var(--dust)" }} className="text-sm">No attendees marked present yet.</p>
                 </div>
               ) : filteredPresent.length === 0 ? (
-                <div className="p-6 text-center text-sm text-slate-400">No attendees match "{winnerSearch}"</div>
+                <div style={{ color: "var(--dust)" }} className="p-6 text-center text-sm">No attendees match "{winnerSearch}"</div>
               ) : (
-                <div className="divide-y divide-slate-50">
+                <div>
                   {filteredPresent.map((user) => {
                     const assigned = getAssignedPosition(user.user_id);
                     const hasWinnerCert = alreadyHasWinner(user.user_id);
                     return (
-                      <div key={user.user_id} className={`flex items-center justify-between px-4 py-3 ${hasWinnerCert ? "opacity-50" : ""}`}>
+                      <div
+                        key={user.user_id}
+                        style={{ borderTop: "1px solid var(--seam)", opacity: hasWinnerCert ? 0.5 : 1 }}
+                        className="flex items-center justify-between px-4 py-3 transition-colors"
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--cream) 3%, transparent)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                      >
                         <div>
-                          <p className="text-sm font-medium text-slate-800">{user.name}</p>
-                          <p className="text-xs text-slate-400">{user.email}</p>
+                          <p style={{ color: "var(--cream)" }} className="text-sm font-medium">{user.name}</p>
+                          <p style={{ color: "var(--dust)" }} className="text-xs">{user.email}</p>
                         </div>
                         <div className="flex gap-1.5 flex-wrap justify-end">
                           {hasWinnerCert ? (
-                            <span className="text-xs text-amber-600 font-semibold flex items-center gap-1">
+                            <span style={{ color: "var(--amber)" }} className="text-xs font-semibold flex items-center gap-1">
                               <Check size={12} /> Certificate issued
                             </span>
                           ) : (
-                            POSITIONS.map((pos) => (
-                              <button
-                                key={pos}
-                                type="button"
-                                onClick={() => assigned === pos ? removeWinner(user.user_id) : addWinner(user, pos)}
-                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors border ${
-                                  assigned === pos
-                                    ? "bg-amber-600 text-white border-amber-600"
-                                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200"
-                                }`}
-                              >
-                                {pos}
-                              </button>
-                            ))
+                            POSITIONS.map((pos) => {
+                              const isActive = assigned === pos;
+                              return (
+                                <button
+                                  key={pos}
+                                  type="button"
+                                  onClick={() => isActive ? removeWinner(user.user_id) : addWinner(user, pos)}
+                                  style={
+                                    isActive
+                                      ? { background: "var(--amber)", color: "var(--ink)", border: "1px solid var(--amber)" }
+                                      : { background: "var(--ink-muted)", color: "var(--fog)", border: "1px solid var(--seam)" }
+                                  }
+                                  className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                                  onMouseEnter={(e) => {
+                                    if (!isActive) {
+                                      e.currentTarget.style.background = "color-mix(in srgb, var(--amber) 15%, transparent)";
+                                      e.currentTarget.style.color = "var(--amber)";
+                                      e.currentTarget.style.borderColor = "color-mix(in srgb, var(--amber) 40%, transparent)";
+                                    }
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (!isActive) {
+                                      e.currentTarget.style.background = "var(--ink-muted)";
+                                      e.currentTarget.style.color = "var(--fog)";
+                                      e.currentTarget.style.borderColor = "var(--seam)";
+                                    }
+                                  }}
+                                >
+                                  {pos}
+                                </button>
+                              );
+                            })
                           )}
                         </div>
                       </div>
@@ -729,30 +916,45 @@ export default function CertificatesManage() {
             {(["PARTICIPATION", "WINNER"] as const).map((type) => {
               const t = templates.find((x) => x.type === type);
               return (
-                <div key={type} className="bg-white rounded-xl border border-slate-100 p-5 flex items-center justify-between gap-4">
+                <div
+                  key={type}
+                  style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}
+                  className="rounded-xl p-5 flex items-center justify-between gap-4"
+                >
                   <div className="flex items-center gap-4">
                     {t?.template_file_url ? (
-                      <img src={t.template_file_url} alt="template preview" className="w-24 h-16 object-cover rounded-lg border border-slate-200" />
+                      <img
+                        src={t.template_file_url}
+                        alt="template preview"
+                        style={{ border: "1px solid var(--seam)" }}
+                        className="w-24 h-16 object-cover rounded-lg"
+                      />
                     ) : (
-                      <div className="w-24 h-16 bg-slate-50 rounded-lg border border-dashed border-slate-200 flex items-center justify-center">
-                        <ImageIcon size={20} className="text-slate-300" />
+                      <div
+                        style={{ background: "color-mix(in srgb, var(--amber) 10%, transparent)", border: "2px dashed var(--seam)" }}
+                        className="w-24 h-16 rounded-lg flex items-center justify-center"
+                      >
+                        <ImageIcon size={20} style={{ color: "var(--dust)" }} />
                       </div>
                     )}
                     <div>
-                      <p className="text-sm font-semibold text-slate-800">{type === "WINNER" ? "Winner" : "Participation"} Template</p>
+                      <p style={{ color: "var(--cream)" }} className="text-sm font-semibold">{type === "WINNER" ? "Winner" : "Participation"} Template</p>
                       {t ? (
-                        <p className="text-xs text-emerald-600 flex items-center gap-1 mt-0.5">
+                        <p style={{ color: "var(--jade)" }} className="text-xs flex items-center gap-1 mt-0.5">
                           <CheckCircle size={11} /> Uploaded · {Object.keys(t.placeholders ?? {}).length} placeholder(s) configured
                         </p>
                       ) : (
-                        <p className="text-xs text-slate-400 mt-0.5">No template — uses default plain layout</p>
+                        <p style={{ color: "var(--dust)" }} className="text-xs mt-0.5">No template — uses default plain layout</p>
                       )}
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setTemplateEditorType(type)}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 transition-colors shrink-0"
+                    style={{ background: "var(--amber)", color: "var(--ink)" }}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors shrink-0"
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--amber-glow)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
                   >
                     <Upload size={12} /> {t ? "Replace" : "Upload"}
                   </button>
@@ -763,14 +965,17 @@ export default function CertificatesManage() {
         )}
 
         {/* Issued certificates list */}
-        <div className="bg-white rounded-xl border border-slate-100 overflow-hidden mt-6">
-          <div className="px-4 py-3 border-b border-slate-50 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-700">Issued Certificates ({certificates.length})</h2>
+        <div style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }} className="rounded-xl overflow-hidden mt-6">
+          <div style={{ borderBottom: "1px solid var(--seam)" }} className="px-4 py-3 flex items-center justify-between">
+            <h2 style={{ color: "var(--fog)" }} className="text-sm font-semibold">Issued Certificates ({certificates.length})</h2>
             {certificates.length > 0 && (
               <button
                 type="button"
                 onClick={() => exportCertsCsv(certificates)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                style={{ background: "var(--ink-muted)", border: "1px solid var(--seam)", color: "var(--ash)" }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--cream) 5%, transparent)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
               >
                 <Download size={12} /> Export CSV
               </button>
@@ -779,51 +984,77 @@ export default function CertificatesManage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50/60 border-b border-slate-100">
+                <tr style={{ background: "var(--ink-muted)", borderBottom: "1px solid var(--seam)" }}>
                   {["Recipient", "Type", "Code", "Issued", ""].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
+                    <th key={h} style={{ color: "var(--dust)" }} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody>
                 {loadingCerts ? (
                   Array.from({ length: 4 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      {[1,2,3,4,5].map((j) => <td key={j} className="px-4 py-3.5"><div className="h-4 bg-slate-100 rounded w-20" /></td>)}
+                    <tr key={i} style={{ borderTop: "1px solid var(--seam)" }} className="animate-pulse">
+                      {[1,2,3,4,5].map((j) => (
+                        <td key={j} className="px-4 py-3.5">
+                          <div style={{ background: "var(--ink-muted)" }} className="h-4 rounded w-20" />
+                        </td>
+                      ))}
                     </tr>
                   ))
                 ) : certificates.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-10 text-center text-slate-400 text-sm">
+                    <td colSpan={5} style={{ color: "var(--dust)" }} className="px-4 py-10 text-center text-sm">
                       No certificates issued yet.
                     </td>
                   </tr>
                 ) : (
                   certificates.map((cert) => (
-                    <tr key={cert.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-4 py-3.5 font-medium text-slate-800 text-sm">
+                    <tr
+                      key={cert.id}
+                      style={{ borderTop: "1px solid var(--seam)" }}
+                      className="transition-colors"
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--cream) 3%, transparent)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <td style={{ color: "var(--cream)" }} className="px-4 py-3.5 font-medium text-sm">
                         {cert.recipient_name || cert.recipient_id.slice(0, 12) + "…"}
                         {cert.metadata_?.position && (
-                          <span className="ml-2 text-xs text-amber-600 font-normal">{cert.metadata_.position}</span>
+                          <span style={{ color: "var(--amber)" }} className="ml-2 text-xs font-normal">{cert.metadata_.position}</span>
                         )}
                       </td>
                       <td className="px-4 py-3.5">
-                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${CERT_TYPE_BADGES[cert.certificate_type]}`}>
+                        <span
+                          style={{ ...CERT_TYPE_BADGE_STYLES[cert.certificate_type], fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999 }}
+                        >
                           {cert.certificate_type}
                         </span>
                       </td>
-                      <td className="px-4 py-3.5 font-mono text-xs text-slate-500">{cert.unique_code}</td>
-                      <td className="px-4 py-3.5 text-xs text-slate-500">{fmtDateIST(cert.issued_at)}</td>
+                      <td style={{ color: "var(--fog)", fontFamily: "monospace", fontSize: 12 }} className="px-4 py-3.5">{cert.unique_code}</td>
+                      <td style={{ color: "var(--fog)", fontSize: 12 }} className="px-4 py-3.5">{fmtDateIST(cert.issued_at)}</td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">
                           {cert.pdf_url && (
-                            <a href={cert.pdf_url} target="_blank" rel="noopener noreferrer"
-                              className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded-lg text-xs font-medium transition-colors">
+                            <a
+                              href={cert.pdf_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ background: "var(--ink-muted)", color: "var(--ash)", border: "none" }}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                              onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--cream) 5%, transparent)")}
+                              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
+                            >
                               <Download size={11} /> PDF
                             </a>
                           )}
-                          <a href={`/verify/${cert.unique_code}`} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-medium transition-colors">
+                          <a
+                            href={`/verify/${cert.unique_code}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ background: "var(--ink-muted)", color: "var(--sky)", border: "none" }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                            onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--sky) 12%, transparent)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
+                          >
                             <ShieldCheck size={11} /> Verify
                           </a>
                         </div>

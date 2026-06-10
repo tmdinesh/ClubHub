@@ -33,30 +33,68 @@ interface StatCardProps {
 
 function StatCard({ label, value, icon, iconBg, iconColor, sub, highlight }: StatCardProps) {
   return (
-    <div className={`bg-white rounded-xl border p-5 hover:shadow-sm transition-shadow ${highlight ? "border-indigo-100 ring-1 ring-indigo-100" : "border-slate-100"}`}>
-      <div className="flex items-start justify-between mb-3">
-        <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
-          <span className={iconColor}>{icon}</span>
+    <div
+      style={{
+        background: "var(--ink-soft)",
+        border: highlight ? "1px solid var(--amber)" : "1px solid var(--seam)",
+        borderRadius: 12,
+        padding: 20,
+        transition: "box-shadow 0.15s",
+        boxShadow: highlight ? "0 0 0 1px var(--amber)" : undefined,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 10,
+            background: iconBg,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <span style={{ color: iconColor }}>{icon}</span>
         </div>
         {highlight && (
-          <span className="text-[10px] bg-indigo-50 text-indigo-600 font-semibold px-2 py-0.5 rounded-full">
+          <span
+            style={{
+              fontSize: 10,
+              background: "color-mix(in srgb, var(--amber) 15%, transparent)",
+              color: "var(--amber)",
+              fontWeight: 700,
+              padding: "2px 8px",
+              borderRadius: 999,
+              border: "1px solid color-mix(in srgb, var(--amber) 30%, transparent)",
+            }}
+          >
             KEY
           </span>
         )}
       </div>
-      <p className="text-3xl font-bold text-slate-800 tracking-tight mb-1">{value}</p>
-      <p className="text-sm font-medium text-slate-600">{label}</p>
-      {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+      <p style={{ fontSize: 30, fontWeight: 700, color: "var(--cream)", letterSpacing: "-0.02em", marginBottom: 4 }}>{value}</p>
+      <p style={{ fontSize: 14, fontWeight: 500, color: "var(--fog)" }}>{label}</p>
+      {sub && <p style={{ fontSize: 12, color: "var(--ash)", marginTop: 2 }}>{sub}</p>}
     </div>
   );
 }
 
 function SkeletonStat() {
   return (
-    <div className="bg-white rounded-xl border border-slate-100 p-5 animate-pulse">
-      <div className="w-10 h-10 rounded-xl bg-slate-100 mb-3" />
-      <div className="h-8 bg-slate-100 rounded w-20 mb-1" />
-      <div className="h-4 bg-slate-100 rounded w-28" />
+    <div
+      style={{
+        background: "var(--ink-soft)",
+        border: "1px solid var(--seam)",
+        borderRadius: 12,
+        padding: 20,
+        animation: "pulse 2s cubic-bezier(0.4,0,0.6,1) infinite",
+      }}
+    >
+      <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--ink-muted)", marginBottom: 12 }} />
+      <div style={{ height: 32, background: "var(--ink-muted)", borderRadius: 6, width: 80, marginBottom: 4 }} />
+      <div style={{ height: 16, background: "var(--ink-muted)", borderRadius: 6, width: 112 }} />
     </div>
   );
 }
@@ -79,27 +117,38 @@ export default function EventOverview() {
 
   return (
     <Layout eventId={eventId}>
-      <div className="p-8 max-w-5xl mx-auto">
-        <div className="mb-7">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+      <div style={{ padding: 32, maxWidth: 960, margin: "0 auto" }}>
+        <div style={{ marginBottom: 28 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: "var(--ash)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>
             Event Overview
           </p>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-            <Activity size={22} className="text-indigo-500" />
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--cream)", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 8 }}>
+            <Activity size={22} style={{ color: "var(--amber)" }} />
             Event Statistics
           </h1>
-          <p className="text-slate-500 mt-1 text-sm">
-            Live snapshot for event <span className="font-mono text-slate-600">{eventId}</span>.
+          <p style={{ color: "var(--fog)", marginTop: 4, fontSize: 14 }}>
+            Live snapshot for event{" "}
+            <span style={{ fontFamily: "monospace", color: "var(--dust)" }}>{eventId}</span>.
           </p>
         </div>
 
         {error ? (
-          <div className="bg-red-50 border border-red-100 rounded-xl p-6 flex items-center gap-3">
-            <AlertCircle size={18} className="text-red-500 shrink-0" />
-            <p className="text-sm text-red-700">Failed to load analytics for this event.</p>
+          <div
+            style={{
+              background: "color-mix(in srgb, var(--cinnabar) 10%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--cinnabar) 25%, transparent)",
+              borderRadius: 12,
+              padding: "20px 24px",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <AlertCircle size={18} style={{ color: "var(--cinnabar)", flexShrink: 0 }} />
+            <p style={{ fontSize: 14, color: "var(--cinnabar)" }}>Failed to load analytics for this event.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
             {isLoading ? (
               Array.from({ length: 6 }).map((_, i) => <SkeletonStat key={i} />)
             ) : data ? (
@@ -108,47 +157,53 @@ export default function EventOverview() {
                   label="Total Registrations"
                   value={data.registrations.total.toLocaleString()}
                   icon={<Users size={18} />}
-                  iconBg="bg-indigo-50"
-                  iconColor="text-indigo-600"
+                  iconBg="color-mix(in srgb, var(--amber) 15%, transparent)"
+                  iconColor="var(--amber)"
                   highlight
                 />
                 <StatCard
                   label="Confirmed"
                   value={data.registrations.confirmed.toLocaleString()}
                   icon={<CheckCircle size={18} />}
-                  iconBg="bg-emerald-50"
-                  iconColor="text-emerald-600"
+                  iconBg="color-mix(in srgb, var(--jade) 15%, transparent)"
+                  iconColor="var(--jade)"
                   sub={`${confirmationRate}% confirmation rate`}
                 />
                 <StatCard
                   label="Attendance Rate"
                   value={`${attendancePct}%`}
                   icon={<UserCheck size={18} />}
-                  iconBg="bg-sky-50"
-                  iconColor="text-sky-600"
+                  iconBg="color-mix(in srgb, var(--sky) 15%, transparent)"
+                  iconColor="var(--sky)"
                   sub="of confirmed attendees"
                 />
                 <StatCard
                   label="Teams"
                   value={data.teams.total.toLocaleString()}
                   icon={<Users size={18} />}
-                  iconBg="bg-violet-50"
-                  iconColor="text-violet-600"
+                  iconBg="color-mix(in srgb, var(--sky) 12%, transparent)"
+                  iconColor="var(--sky)"
                 />
                 <StatCard
                   label="Budget Utilization"
                   value={`${utilizationPct}%`}
                   icon={<Wallet size={18} />}
-                  iconBg={data.finance.utilization > 0.9 ? "bg-red-50" : "bg-amber-50"}
-                  iconColor={data.finance.utilization > 0.9 ? "text-red-600" : "text-amber-600"}
+                  iconBg={
+                    data.finance.utilization > 0.9
+                      ? "color-mix(in srgb, var(--cinnabar) 15%, transparent)"
+                      : "color-mix(in srgb, var(--amber) 15%, transparent)"
+                  }
+                  iconColor={
+                    data.finance.utilization > 0.9 ? "var(--cinnabar)" : "var(--amber)"
+                  }
                   sub={data.finance.utilization > 0.9 ? "Near limit" : "Within budget"}
                 />
                 <StatCard
                   label="NPS Score"
                   value={data.feedback.nps !== null ? data.feedback.nps.toFixed(1) : "—"}
                   icon={<Star size={18} />}
-                  iconBg="bg-yellow-50"
-                  iconColor="text-yellow-600"
+                  iconBg="color-mix(in srgb, var(--amber) 12%, transparent)"
+                  iconColor="var(--amber)"
                   sub={data.feedback.nps !== null ? "Net Promoter Score" : "Not yet collected"}
                 />
               </>
@@ -158,25 +213,41 @@ export default function EventOverview() {
 
         {/* Quick progress bar */}
         {data && (
-          <div className="mt-6 bg-white rounded-xl border border-slate-100 p-5">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                <TrendingUp size={14} className="text-indigo-500" />
+          <div
+            style={{
+              marginTop: 24,
+              background: "var(--ink-soft)",
+              border: "1px solid var(--seam)",
+              borderRadius: 12,
+              padding: 20,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <h2 style={{ fontSize: 14, fontWeight: 600, color: "var(--fog)", display: "flex", alignItems: "center", gap: 8 }}>
+                <TrendingUp size={14} style={{ color: "var(--amber)" }} />
                 Registration Funnel
               </h2>
-              <span className="text-xs text-slate-400">Confirmed vs Total</span>
+              <span style={{ fontSize: 12, color: "var(--ash)" }}>Confirmed vs Total</span>
             </div>
-            <div className="relative h-3 bg-slate-100 rounded-full overflow-hidden">
+            <div style={{ position: "relative", height: 12, background: "var(--ink-muted)", borderRadius: 999, overflow: "hidden" }}>
               <div
-                className="absolute left-0 top-0 h-full bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full transition-all duration-700"
-                style={{ width: `${Math.min(confirmationRate, 100)}%` }}
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  height: "100%",
+                  background: "linear-gradient(to right, var(--amber), var(--amber-glow))",
+                  borderRadius: 999,
+                  transition: "width 0.7s",
+                  width: `${Math.min(confirmationRate, 100)}%`,
+                }}
               />
             </div>
-            <div className="flex justify-between mt-1.5">
-              <span className="text-xs text-indigo-600 font-medium">
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+              <span style={{ fontSize: 12, color: "var(--amber)", fontWeight: 500 }}>
                 {data.registrations.confirmed} confirmed
               </span>
-              <span className="text-xs text-slate-400">
+              <span style={{ fontSize: 12, color: "var(--ash)" }}>
                 {data.registrations.total} total
               </span>
             </div>

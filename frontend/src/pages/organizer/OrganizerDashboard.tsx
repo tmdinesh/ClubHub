@@ -7,12 +7,32 @@ import { useAuthStore } from "@/store/auth.store";
 import type { Event } from "@/types";
 import { fmtDateTimeMedIST } from "@/lib/dateIST";
 
-const STATUS_COLORS: Record<string, string> = {
-  DRAFT:            "bg-slate-100 text-slate-600 border-slate-200",
-  PENDING_APPROVAL: "bg-amber-50 text-amber-700 border-amber-200",
-  PUBLISHED:        "bg-emerald-50 text-emerald-700 border-emerald-200",
-  COMPLETED:        "bg-blue-50 text-blue-700 border-blue-200",
-  ARCHIVED:         "bg-slate-50 text-slate-400 border-slate-100",
+const STATUS_STYLES: Record<string, React.CSSProperties> = {
+  DRAFT: {
+    background: "color-mix(in srgb, var(--dust) 20%, transparent)",
+    color: "var(--ash)",
+    border: "1px solid color-mix(in srgb, var(--dust) 30%, transparent)",
+  },
+  PENDING_APPROVAL: {
+    background: "color-mix(in srgb, var(--amber) 15%, transparent)",
+    color: "var(--amber)",
+    border: "1px solid color-mix(in srgb, var(--amber) 30%, transparent)",
+  },
+  PUBLISHED: {
+    background: "color-mix(in srgb, var(--jade) 15%, transparent)",
+    color: "var(--jade)",
+    border: "1px solid color-mix(in srgb, var(--jade) 30%, transparent)",
+  },
+  COMPLETED: {
+    background: "color-mix(in srgb, var(--sky) 15%, transparent)",
+    color: "var(--sky)",
+    border: "1px solid color-mix(in srgb, var(--sky) 30%, transparent)",
+  },
+  ARCHIVED: {
+    background: "color-mix(in srgb, var(--dust) 20%, transparent)",
+    color: "var(--dust)",
+    border: "1px solid color-mix(in srgb, var(--dust) 20%, transparent)",
+  },
 };
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
@@ -39,34 +59,48 @@ export default function OrganizerDashboard() {
     <Layout>
       <div className="p-8 max-w-5xl mx-auto">
         <div className="mb-8">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
+          <p style={{ color: "var(--dust)", fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "4px" }}>
             {roleLabel}
           </p>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-            <CalendarDays size={22} className="text-indigo-500" />
+          <h1 style={{ color: "var(--cream)", fontSize: "1.5rem", fontWeight: 700, letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: "8px" }}>
+            <CalendarDays size={22} style={{ color: "var(--amber)" }} />
             Assigned Events
           </h1>
-          <p className="text-slate-500 mt-1 text-sm">
+          <p style={{ color: "var(--fog)", marginTop: "4px", fontSize: "14px" }}>
             Events where you have been assigned as an organizer.
           </p>
         </div>
 
         {error ? (
-          <div className="bg-red-50 border border-red-100 rounded-xl p-6 flex items-center gap-3">
-            <AlertCircle size={18} className="text-red-500 shrink-0" />
-            <p className="text-sm text-red-700">Failed to load assigned events.</p>
+          <div style={{
+            background: "color-mix(in srgb, var(--cinnabar) 10%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--cinnabar) 30%, transparent)",
+            borderRadius: "12px",
+            padding: "24px",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+          }}>
+            <AlertCircle size={18} style={{ color: "var(--cinnabar)", flexShrink: 0 }} />
+            <p style={{ fontSize: "14px", color: "var(--cinnabar)" }}>Failed to load assigned events.</p>
           </div>
         ) : isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-xl border border-slate-100 p-5 animate-pulse h-20" />
+              <div key={i} style={{ background: "var(--ink-soft)", borderRadius: "12px", border: "1px solid var(--seam)", padding: "20px", height: "80px" }} className="animate-pulse" />
             ))}
           </div>
         ) : !events?.length ? (
-          <div className="bg-white rounded-xl border border-slate-100 p-16 text-center">
-            <CalendarDays size={32} className="text-slate-200 mx-auto mb-3" />
-            <p className="text-slate-500 font-medium">No events assigned yet</p>
-            <p className="text-sm text-slate-400 mt-1">
+          <div style={{
+            background: "var(--ink-soft)",
+            borderRadius: "12px",
+            border: "1px solid var(--seam)",
+            padding: "64px 24px",
+            textAlign: "center",
+          }}>
+            <CalendarDays size={32} style={{ color: "var(--dust)", margin: "0 auto 12px" }} />
+            <p style={{ color: "var(--fog)", fontWeight: 500 }}>No events assigned yet</p>
+            <p style={{ fontSize: "13px", color: "var(--ash)", marginTop: "4px" }}>
               A Club Admin needs to assign you to an event before it appears here.
             </p>
           </div>
@@ -75,18 +109,33 @@ export default function OrganizerDashboard() {
             {events.map((event) => (
               <div
                 key={event.id}
-                className="bg-white rounded-xl border border-slate-100 p-4 hover:shadow-sm transition-shadow"
+                style={{
+                  background: "var(--ink-soft)",
+                  borderRadius: "12px",
+                  border: "1px solid var(--seam)",
+                  padding: "16px",
+                  transition: "border-color 0.15s",
+                }}
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-slate-800 truncate">{event.title}</p>
-                      <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${STATUS_COLORS[event.status] ?? ""}`}>
+                      <p style={{ fontSize: "14px", fontWeight: 600, color: "var(--cream)" }} className="truncate">{event.title}</p>
+                      <span style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        padding: "2px 8px",
+                        borderRadius: "999px",
+                        ...(STATUS_STYLES[event.status] ?? {}),
+                      }}>
                         {STATUS_ICON[event.status]}
                         {event.status.replace("_", " ")}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p style={{ fontSize: "12px", color: "var(--ash)", marginTop: "2px" }}>
                       {event.start_datetime
                         ? fmtDateTimeMedIST(event.start_datetime)
                         : "No date set"}
@@ -95,7 +144,23 @@ export default function OrganizerDashboard() {
                   </div>
                   <Link
                     to={`/manage/${event.id}/overview`}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg text-xs font-semibold hover:bg-indigo-100 transition-colors shrink-0"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "6px 12px",
+                      background: "var(--amber)",
+                      color: "var(--ink)",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      flexShrink: 0,
+                      textDecoration: "none",
+                      boxShadow: "0 0 18px rgba(245,166,35,0.35)",
+                      transition: "background 0.15s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--amber-glow)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
                   >
                     Manage
                     <ChevronRight size={12} />

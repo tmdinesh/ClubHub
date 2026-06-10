@@ -54,19 +54,25 @@ const TREND_DATA = [
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function BigStat({ value, label, icon, bg, iconColor }: {
-  value: string | number; label: string; icon: React.ReactNode; bg: string; iconColor: string;
+function BigStat({ value, label, icon, iconColor, accentColor }: {
+  value: string | number; label: string; icon: React.ReactNode; iconColor: string; accentColor: string;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-6 relative overflow-hidden">
-      <div className={`absolute top-0 right-0 w-24 h-24 rounded-full -translate-y-8 translate-x-8 ${bg} opacity-40`} />
-      <div className={`w-11 h-11 rounded-xl ${bg} flex items-center justify-center mb-4 relative z-10`}>
-        <span className={iconColor}>{icon}</span>
+    <div className="rounded-2xl p-6 relative overflow-hidden" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
+      <div
+        className="absolute top-0 right-0 w-24 h-24 rounded-full -translate-y-8 translate-x-8 opacity-10"
+        style={{ background: accentColor }}
+      />
+      <div
+        className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 relative z-10"
+        style={{ background: `color-mix(in srgb, ${accentColor} 15%, transparent)` }}
+      >
+        <span style={{ color: iconColor }}>{icon}</span>
       </div>
-      <p className="text-4xl font-bold text-slate-800 tracking-tight mb-1 relative z-10">
+      <p className="text-4xl font-bold tracking-tight mb-1 relative z-10" style={{ color: "var(--cream)" }}>
         {typeof value === "number" ? value.toLocaleString() : value}
       </p>
-      <p className="text-sm font-medium text-slate-600 relative z-10">{label}</p>
+      <p className="text-sm font-medium relative z-10" style={{ color: "var(--fog)" }}>{label}</p>
     </div>
   );
 }
@@ -84,32 +90,37 @@ function MetricsTab() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-slate-100 p-6 animate-pulse h-36" />
+            <div key={i} className="rounded-2xl p-6 animate-pulse h-36" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }} />
           ))
         ) : (
           <>
-            <BigStat value={data?.total_events ?? 0} label="Total Events" icon={<CalendarDays size={20} />} bg="bg-indigo-50" iconColor="text-indigo-600" />
-            <BigStat value={data?.total_users ?? 0} label="Registered Users" icon={<Users size={20} />} bg="bg-emerald-50" iconColor="text-emerald-600" />
-            <BigStat value={data?.total_registrations ?? 0} label="Total Registrations" icon={<Ticket size={20} />} bg="bg-amber-50" iconColor="text-amber-600" />
+            <BigStat value={data?.total_events ?? 0} label="Total Events" icon={<CalendarDays size={20} />} iconColor="#F5A623" accentColor="#F5A623" />
+            <BigStat value={data?.total_users ?? 0} label="Registered Users" icon={<Users size={20} />} iconColor="#3DD68C" accentColor="#3DD68C" />
+            <BigStat value={data?.total_registrations ?? 0} label="Total Registrations" icon={<Ticket size={20} />} iconColor="#F5A623" accentColor="#F5A623" />
           </>
         )}
       </div>
-      <div className="bg-white rounded-2xl border border-slate-100 p-6">
+      <div className="rounded-2xl p-6" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-            <TrendingUp size={15} className="text-indigo-500" />
+          <h2 className="text-sm font-semibold flex items-center gap-2" style={{ color: "var(--fog)" }}>
+            <TrendingUp size={15} style={{ color: "var(--amber)" }} />
             Platform Activity Trend
           </h2>
-          <span className="text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded-full border border-slate-100">Sample data</span>
+          <span
+            className="text-xs px-2 py-1 rounded-full"
+            style={{ color: "var(--dust)", background: "var(--ink-muted)", border: "1px solid var(--seam)" }}
+          >
+            Sample data
+          </span>
         </div>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={TREND_DATA} margin={{ top: 0, right: 0, bottom: 0, left: -15 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-            <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid #e2e8f0", fontSize: 12 }} />
-            <Bar dataKey="registrations" name="Registrations" fill="#6366f1" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="users" name="New Users" fill="#a5b4fc" radius={[4, 4, 0, 0]} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#2A3040" vertical={false} />
+            <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#7A8699" }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: "#7A8699" }} axisLine={false} tickLine={false} />
+            <Tooltip contentStyle={{ background: "#161A23", border: "1px solid #2A3040", color: "#F5F0E8", borderRadius: 10, fontSize: 12 }} />
+            <Bar dataKey="registrations" name="Registrations" fill="#F5A623" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="users" name="New Users" fill="#7A5210" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -118,6 +129,23 @@ function MetricsTab() {
 }
 
 // ── User Management tab ───────────────────────────────────────────────────────
+
+const inputStyle: React.CSSProperties = {
+  background: "var(--ink-muted)",
+  border: "1px solid var(--seam)",
+  color: "var(--cream)",
+};
+
+function focusInput(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) {
+  e.currentTarget.style.borderColor = "var(--amber)";
+  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.12)";
+  e.currentTarget.style.outline = "none";
+}
+
+function blurInput(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) {
+  e.currentTarget.style.borderColor = "var(--seam)";
+  e.currentTarget.style.boxShadow = "none";
+}
 
 function UserManagementTab({ clubs }: { clubs: Club[] }) {
   const qc = useQueryClient();
@@ -163,10 +191,14 @@ function UserManagementTab({ clubs }: { clubs: Club[] }) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-base font-semibold text-slate-800">All Users</h2>
-        <button type="button"
+        <h2 className="text-base font-semibold" style={{ color: "var(--cream)" }}>All Users</h2>
+        <button
+          type="button"
           onClick={() => setShowCreate((v) => !v)}
-          className="flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+          style={{ background: "var(--amber)", color: "var(--ink)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--amber-glow)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
         >
           <Plus size={14} />
           Create User
@@ -174,27 +206,36 @@ function UserManagementTab({ clubs }: { clubs: Club[] }) {
       </div>
 
       {showCreate && (
-        <div className="bg-white rounded-xl border border-indigo-100 ring-1 ring-indigo-100 p-5">
-          <h3 className="text-sm font-semibold text-slate-700 mb-4">New User</h3>
+        <div className="rounded-xl p-5" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
+          <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--fog)" }}>New User</h3>
           <div className="grid grid-cols-2 gap-3">
             <input
               type="email"
               placeholder="Email *"
               value={newUser.email}
               onChange={(e) => setNewUser((p) => ({ ...p, email: e.target.value }))}
-              className="text-sm px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              className="text-sm px-3 py-2 rounded-lg"
+              style={inputStyle}
+              onFocus={focusInput}
+              onBlur={blurInput}
             />
             <input
               type="text"
               placeholder="Full name *"
               value={newUser.name}
               onChange={(e) => setNewUser((p) => ({ ...p, name: e.target.value }))}
-              className="text-sm px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              className="text-sm px-3 py-2 rounded-lg"
+              style={inputStyle}
+              onFocus={focusInput}
+              onBlur={blurInput}
             />
             <select
               value={newUser.role}
               onChange={(e) => setNewUser((p) => ({ ...p, role: e.target.value }))}
-              className="text-sm px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+              className="text-sm px-3 py-2 rounded-lg"
+              style={inputStyle}
+              onFocus={focusInput}
+              onBlur={blurInput}
             >
               {ALL_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
@@ -202,7 +243,10 @@ function UserManagementTab({ clubs }: { clubs: Club[] }) {
               <select
                 value={newUser.club_id}
                 onChange={(e) => setNewUser((p) => ({ ...p, club_id: e.target.value }))}
-                className="text-sm px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+                className="text-sm px-3 py-2 rounded-lg"
+                style={inputStyle}
+                onFocus={focusInput}
+                onBlur={blurInput}
               >
                 <option value="">Assign to club…</option>
                 {clubs.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -210,11 +254,24 @@ function UserManagementTab({ clubs }: { clubs: Club[] }) {
             )}
           </div>
           <div className="flex justify-end gap-2 mt-3">
-            <button type="button" onClick={() => setShowCreate(false)} className="text-sm text-slate-500 px-3 py-1.5 hover:bg-slate-100 rounded-lg">Cancel</button>
-            <button type="button"
+            <button
+              type="button"
+              onClick={() => setShowCreate(false)}
+              className="text-sm px-3 py-1.5 rounded-lg transition-colors"
+              style={{ color: "var(--ash)", border: "1px solid var(--seam)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
               onClick={() => createMutation.mutate({ ...newUser, club_id: newUser.club_id || null })}
               disabled={!newUser.email || !newUser.name || createMutation.isPending}
-              className="flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              className="flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-lg disabled:opacity-50 transition-colors"
+              style={{ background: "var(--amber)", color: "var(--ink)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--amber-glow)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
             >
               {createMutation.isPending && <Loader2 size={13} className="animate-spin" />}
               Create
@@ -223,22 +280,22 @@ function UserManagementTab({ clubs }: { clubs: Club[] }) {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+      <div className="rounded-xl overflow-hidden" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-50/60 border-b border-slate-100">
+              <tr style={{ background: "var(--ink-muted)", borderBottom: "1px solid var(--seam)" }}>
                 {["Name", "Email", "Role", "Club", ""].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--dust)" }}>{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="animate-pulse">
+                  <tr key={i} className="animate-pulse" style={{ borderBottom: "1px solid var(--seam)" }}>
                     {Array.from({ length: 5 }).map((_, j) => (
-                      <td key={j} className="px-4 py-3.5"><div className="h-4 bg-slate-100 rounded w-24" /></td>
+                      <td key={j} className="px-4 py-3.5"><div className="h-4 rounded w-24" style={{ background: "var(--ink-muted)" }} /></td>
                     ))}
                   </tr>
                 ))
@@ -246,20 +303,35 @@ function UserManagementTab({ clubs }: { clubs: Club[] }) {
                 const clubName = clubs.find((c) => c.id === u.club_id)?.name;
                 const isEditing = editingId === u.id;
                 return (
-                  <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-4 py-3.5 font-medium text-slate-800">{u.name}</td>
-                    <td className="px-4 py-3.5 text-slate-500 font-mono text-xs">{u.email}</td>
+                  <tr
+                    key={u.id}
+                    className="transition-colors"
+                    style={{ borderBottom: "1px solid var(--seam)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--cream) 3%, transparent)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <td className="px-4 py-3.5 font-medium" style={{ color: "var(--cream)" }}>{u.name}</td>
+                    <td className="px-4 py-3.5 font-mono text-xs" style={{ color: "var(--fog)" }}>{u.email}</td>
                     <td className="px-4 py-3.5">
                       {isEditing ? (
                         <select
                           value={editRole}
                           onChange={(e) => setEditRole(e.target.value)}
-                          className="text-xs px-2 py-1 rounded border border-slate-200 bg-white"
+                          className="text-xs px-2 py-1 rounded"
+                          style={{ background: "var(--ink-muted)", border: "1px solid var(--seam)", color: "var(--cream)" }}
                         >
                           {ALL_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                         </select>
                       ) : (
-                        <span className="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">{u.role}</span>
+                        <span
+                          className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                          style={{
+                            background: "color-mix(in srgb, var(--amber) 15%, transparent)",
+                            color: "var(--amber)",
+                          }}
+                        >
+                          {u.role}
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-3.5">
@@ -267,25 +339,56 @@ function UserManagementTab({ clubs }: { clubs: Club[] }) {
                         <select
                           value={editClubId}
                           onChange={(e) => setEditClubId(e.target.value)}
-                          className="text-xs px-2 py-1 rounded border border-slate-200 bg-white"
+                          className="text-xs px-2 py-1 rounded"
+                          style={{ background: "var(--ink-muted)", border: "1px solid var(--seam)", color: "var(--cream)" }}
                         >
                           <option value="">None</option>
                           {clubs.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                       ) : (
-                        <span className="text-xs text-slate-500">{clubName ?? "—"}</span>
+                        <span className="text-xs" style={{ color: "var(--fog)" }}>{clubName ?? "—"}</span>
                       )}
                     </td>
                     <td className="px-4 py-3.5">
                       {isEditing ? (
                         <div className="flex gap-1.5">
-                          <button type="button" onClick={() => saveEdit(u.id)} disabled={updateMutation.isPending} className="p-1 rounded text-emerald-600 hover:bg-emerald-50">
+                          <button
+                            type="button"
+                            onClick={() => saveEdit(u.id)}
+                            disabled={updateMutation.isPending}
+                            className="p-1 rounded transition-colors"
+                            style={{ color: "var(--jade)" }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--jade) 12%, transparent)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                          >
                             {updateMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                           </button>
-                          <button type="button" onClick={() => setEditingId(null)} className="p-1 rounded text-slate-400 hover:bg-slate-100"><X size={14} /></button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingId(null)}
+                            className="p-1 rounded transition-colors"
+                            style={{ color: "var(--ash)" }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                          >
+                            <X size={14} />
+                          </button>
                         </div>
                       ) : (
-                        <button type="button" onClick={() => startEdit(u)} className="p-1 rounded text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                        <button
+                          type="button"
+                          onClick={() => startEdit(u)}
+                          className="p-1 rounded transition-colors"
+                          style={{ color: "var(--ash)" }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = "var(--amber)";
+                            e.currentTarget.style.background = "color-mix(in srgb, var(--amber) 10%, transparent)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = "var(--ash)";
+                            e.currentTarget.style.background = "transparent";
+                          }}
+                        >
                           <Pencil size={14} />
                         </button>
                       )}
@@ -342,10 +445,14 @@ function ClubSetupTab({ clubs }: { clubs: Club[]; }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-slate-800">Clubs</h2>
-        <button type="button"
+        <h2 className="text-base font-semibold" style={{ color: "var(--cream)" }}>Clubs</h2>
+        <button
+          type="button"
           onClick={() => setShowCreate((v) => !v)}
-          className="flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+          style={{ background: "var(--amber)", color: "var(--ink)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--amber-glow)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
         >
           <Plus size={14} />
           Create Club
@@ -353,41 +460,63 @@ function ClubSetupTab({ clubs }: { clubs: Club[]; }) {
       </div>
 
       {showCreate && (
-        <div className="bg-white rounded-xl border border-indigo-100 ring-1 ring-indigo-100 p-5">
-          <h3 className="text-sm font-semibold text-slate-700 mb-4">New Club</h3>
+        <div className="rounded-xl p-5" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
+          <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--fog)" }}>New Club</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <input
               type="text"
               placeholder="Club name *"
               value={newClub.name}
               onChange={(e) => setNewClub((p) => ({ ...p, name: e.target.value }))}
-              className="text-sm px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              className="text-sm px-3 py-2 rounded-lg"
+              style={inputStyle}
+              onFocus={focusInput}
+              onBlur={blurInput}
             />
             <input
               type="text"
               placeholder="Department (e.g. CSE)"
               value={newClub.department}
               onChange={(e) => setNewClub((p) => ({ ...p, department: e.target.value }))}
-              className="text-sm px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              className="text-sm px-3 py-2 rounded-lg"
+              style={inputStyle}
+              onFocus={focusInput}
+              onBlur={blurInput}
             />
             <input
               type="text"
               placeholder="Description (optional)"
               value={newClub.description}
               onChange={(e) => setNewClub((p) => ({ ...p, description: e.target.value }))}
-              className="text-sm px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              className="text-sm px-3 py-2 rounded-lg"
+              style={inputStyle}
+              onFocus={focusInput}
+              onBlur={blurInput}
             />
           </div>
           <div className="flex justify-end gap-2 mt-3">
-            <button type="button" onClick={() => setShowCreate(false)} className="text-sm text-slate-500 px-3 py-1.5 hover:bg-slate-100 rounded-lg">Cancel</button>
-            <button type="button"
+            <button
+              type="button"
+              onClick={() => setShowCreate(false)}
+              className="text-sm px-3 py-1.5 rounded-lg transition-colors"
+              style={{ color: "var(--ash)", border: "1px solid var(--seam)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
               onClick={() => createClubMutation.mutate({
                 name: newClub.name,
                 description: newClub.description || null,
                 department: newClub.department || null,
               })}
               disabled={!newClub.name.trim() || createClubMutation.isPending}
-              className="flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              className="flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-lg disabled:opacity-50 transition-colors"
+              style={{ background: "var(--amber)", color: "var(--ink)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--amber-glow)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
             >
               {createClubMutation.isPending && <Loader2 size={13} className="animate-spin" />}
               Create
@@ -396,30 +525,37 @@ function ClubSetupTab({ clubs }: { clubs: Club[]; }) {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+      <div className="rounded-xl overflow-hidden" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-50/60 border-b border-slate-100">
+              <tr style={{ background: "var(--ink-muted)", borderBottom: "1px solid var(--seam)" }}>
                 {["Club", "Department", "Faculty Advisor", ""].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--dust)" }}>{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody>
               {clubs.map((club) => {
                 const advisorName = advisors?.find((a) => a.id === club.faculty_advisor_id)?.name;
                 const isEditing = editingClubId === club.id;
                 return (
-                  <tr key={club.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-4 py-3.5 font-medium text-slate-800">{club.name}</td>
-                    <td className="px-4 py-3.5 text-slate-500 text-xs">{club.department ?? "—"}</td>
+                  <tr
+                    key={club.id}
+                    className="transition-colors"
+                    style={{ borderBottom: "1px solid var(--seam)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--cream) 3%, transparent)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <td className="px-4 py-3.5 font-medium" style={{ color: "var(--cream)" }}>{club.name}</td>
+                    <td className="px-4 py-3.5 text-xs" style={{ color: "var(--fog)" }}>{club.department ?? "—"}</td>
                     <td className="px-4 py-3.5">
                       {isEditing ? (
                         <select
                           value={selectedAdvisorId}
                           onChange={(e) => setSelectedAdvisorId(e.target.value)}
-                          className="text-sm px-2 py-1.5 rounded border border-slate-200 bg-white min-w-[200px]"
+                          className="text-sm px-2 py-1.5 rounded min-w-[200px]"
+                          style={{ background: "var(--ink-muted)", border: "1px solid var(--seam)", color: "var(--cream)" }}
                         >
                           <option value="">No advisor</option>
                           {advisors?.map((a) => (
@@ -427,25 +563,60 @@ function ClubSetupTab({ clubs }: { clubs: Club[]; }) {
                           ))}
                         </select>
                       ) : advisorName ? (
-                        <span className="text-sm font-medium text-slate-700">{advisorName}</span>
+                        <span className="text-sm font-medium" style={{ color: "var(--fog)" }}>{advisorName}</span>
                       ) : (
-                        <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">Not assigned</span>
+                        <span
+                          className="text-xs px-2 py-0.5 rounded-full"
+                          style={{
+                            background: "color-mix(in srgb, var(--amber) 15%, transparent)",
+                            color: "var(--amber)",
+                            border: "1px solid color-mix(in srgb, var(--amber) 30%, transparent)",
+                          }}
+                        >
+                          Not assigned
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-3.5">
                       {isEditing ? (
                         <div className="flex gap-1.5">
-                          <button type="button"
+                          <button
+                            type="button"
                             onClick={() => updateClubMutation.mutate({ clubId: club.id, faculty_advisor_id: selectedAdvisorId || null })}
                             disabled={updateClubMutation.isPending}
-                            className="p-1 rounded text-emerald-600 hover:bg-emerald-50"
+                            className="p-1 rounded transition-colors"
+                            style={{ color: "var(--jade)" }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--jade) 12%, transparent)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                           >
                             {updateClubMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                           </button>
-                          <button type="button" onClick={() => setEditingClubId(null)} className="p-1 rounded text-slate-400 hover:bg-slate-100"><X size={14} /></button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingClubId(null)}
+                            className="p-1 rounded transition-colors"
+                            style={{ color: "var(--ash)" }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                          >
+                            <X size={14} />
+                          </button>
                         </div>
                       ) : (
-                        <button type="button" onClick={() => startEditClub(club)} className="p-1 rounded text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                        <button
+                          type="button"
+                          onClick={() => startEditClub(club)}
+                          className="p-1 rounded transition-colors"
+                          style={{ color: "var(--ash)" }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = "var(--amber)";
+                            e.currentTarget.style.background = "color-mix(in srgb, var(--amber) 10%, transparent)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = "var(--ash)";
+                            e.currentTarget.style.background = "transparent";
+                          }}
+                        >
                           <Pencil size={14} />
                         </button>
                       )}
@@ -455,7 +626,7 @@ function ClubSetupTab({ clubs }: { clubs: Club[]; }) {
               })}
               {clubs.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-400">No clubs found. Create clubs first.</td>
+                  <td colSpan={4} className="px-4 py-10 text-center text-sm" style={{ color: "var(--dust)" }}>No clubs found. Create clubs first.</td>
                 </tr>
               )}
             </tbody>
@@ -493,24 +664,26 @@ export default function AdminDashboard() {
     <Layout>
       <div className="p-8 max-w-6xl mx-auto">
         <div className="mb-6">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Admin</p>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-            <BarChart3 size={22} className="text-indigo-500" />
+          <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--dust)" }}>Admin</p>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: "var(--cream)" }}>
+            <BarChart3 size={22} style={{ color: "var(--amber)" }} />
             Admin Dashboard
           </h1>
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-8 w-fit">
+        <div className="flex gap-1 p-1 rounded-xl mb-8 w-fit" style={{ background: "var(--ink-muted)" }}>
           {TABS.map((t) => (
-            <button type="button"
+            <button
+              type="button"
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+              style={
                 activeTab === t.key
-                  ? "bg-white text-slate-800 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
-              }`}
+                  ? { background: "var(--ink-soft)", color: "var(--cream)", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }
+                  : { color: "var(--fog)" }
+              }
             >
               {t.icon}
               {t.label}

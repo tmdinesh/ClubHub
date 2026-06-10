@@ -30,26 +30,53 @@ interface RejectDialogProps {
 function RejectDialog({ eventTitle, onConfirm, onCancel, isPending }: RejectDialogProps) {
   const [comment, setComment] = useState("");
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-2xl p-6 w-full max-w-md mx-4">
-        <h2 className="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
-          <XCircle size={18} className="text-red-500" /> Reject Event
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm" style={{ background: "rgba(0,0,0,0.7)" }}>
+      <div className="rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
+        <h2 className="text-base font-bold mb-1 flex items-center gap-2" style={{ color: "var(--cream)" }}>
+          <XCircle size={18} style={{ color: "var(--cinnabar)" }} /> Reject Event
         </h2>
-        <p className="text-sm text-slate-500 mb-4">
-          Provide a reason for rejecting <span className="font-semibold text-slate-700">{eventTitle}</span>
+        <p className="text-sm mb-4" style={{ color: "var(--fog)" }}>
+          Provide a reason for rejecting <span className="font-semibold" style={{ color: "var(--cream)" }}>{eventTitle}</span>
         </p>
         <textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           rows={4}
           placeholder="Explain why this event is being rejected…"
-          className="w-full text-sm px-3 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-red-300 resize-none mb-4 placeholder:text-slate-300"
+          className="w-full text-sm px-3 py-2.5 rounded-lg resize-none mb-4 focus:outline-none"
+          style={{
+            background: "var(--ink-muted)",
+            border: "1px solid var(--seam)",
+            color: "var(--cream)",
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "var(--amber)";
+            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.12)";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = "var(--seam)";
+            e.currentTarget.style.boxShadow = "none";
+          }}
           autoFocus
         />
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onCancel} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
-          <button type="button" onClick={() => onConfirm(comment)} disabled={!comment.trim() || isPending}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+            style={{ color: "var(--ash)", border: "1px solid var(--seam)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm(comment)}
+            disabled={!comment.trim() || isPending}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 transition-colors"
+            style={{ background: "var(--cinnabar)", color: "white" }}
+          >
             {isPending && <Loader2 size={13} className="animate-spin" />}
             Reject Event
           </button>
@@ -64,10 +91,10 @@ function RejectDialog({ eventTitle, onConfirm, onCancel, isPending }: RejectDial
 function Detail({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-start gap-2.5">
-      <span className="mt-0.5 shrink-0 text-slate-400">{icon}</span>
+      <span className="mt-0.5 shrink-0" style={{ color: "var(--ash)" }}>{icon}</span>
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">{label}</p>
-        <p className="text-sm text-slate-700 leading-snug">{value}</p>
+        <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: "var(--dust)" }}>{label}</p>
+        <p className="text-sm leading-snug" style={{ color: "var(--fog)" }}>{value}</p>
       </div>
     </div>
   );
@@ -83,8 +110,8 @@ function AttendancePanel({ eventId }: { eventId: string }) {
     queryFn: () => api.get(`/events/${eventId}/attendance/present`).then((r) => r.data),
   });
 
-  if (isLoading) return <div className="h-20 bg-slate-50 rounded-lg animate-pulse" />;
-  if (!data) return <p className="text-xs text-slate-400">No attendance data yet.</p>;
+  if (isLoading) return <div className="h-20 rounded-lg animate-pulse" style={{ background: "var(--ink-muted)" }} />;
+  if (!data) return <p className="text-xs" style={{ color: "var(--dust)" }}>No attendance data yet.</p>;
 
   const pct = data.registered > 0 ? Math.round((data.present / data.registered) * 100) : 0;
 
@@ -92,33 +119,33 @@ function AttendancePanel({ eventId }: { eventId: string }) {
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Registered", value: data.registered, color: "text-indigo-600" },
-          { label: "Present", value: data.present, color: "text-emerald-600" },
-          { label: "Absent", value: data.absent, color: "text-red-500" },
+          { label: "Registered", value: data.registered, color: "var(--amber)" },
+          { label: "Present", value: data.present, color: "var(--jade)" },
+          { label: "Absent", value: data.absent, color: "var(--cinnabar)" },
         ].map((s) => (
-          <div key={s.label} className="bg-slate-50 rounded-lg p-3 text-center">
-            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+          <div key={s.label} className="rounded-lg p-3 text-center" style={{ background: "var(--ink-muted)" }}>
+            <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--dust)" }}>{s.label}</p>
           </div>
         ))}
       </div>
       <div>
-        <div className="flex justify-between text-xs text-slate-500 mb-1">
+        <div className="flex justify-between text-xs mb-1" style={{ color: "var(--dust)" }}>
           <span>Attendance rate</span>
-          <span className="font-semibold text-slate-700">{pct}%</span>
+          <span className="font-semibold" style={{ color: "var(--fog)" }}>{pct}%</span>
         </div>
-        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-          <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--ink-muted)" }}>
+          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: "var(--jade)" }} />
         </div>
       </div>
       {present.length > 0 && (
         <div>
-          <p className="text-xs font-semibold text-slate-600 mb-2">Present attendees ({present.length})</p>
+          <p className="text-xs font-semibold mb-2" style={{ color: "var(--fog)" }}>Present attendees ({present.length})</p>
           <div className="max-h-40 overflow-y-auto space-y-1">
             {present.map((u) => (
-              <div key={u.user_id} className="flex justify-between text-xs px-2 py-1 rounded bg-slate-50">
-                <span className="font-medium text-slate-700">{u.name}</span>
-                <span className="text-slate-400">{u.email}</span>
+              <div key={u.user_id} className="flex justify-between text-xs px-2 py-1 rounded" style={{ background: "var(--ink-muted)" }}>
+                <span className="font-medium" style={{ color: "var(--fog)" }}>{u.name}</span>
+                <span style={{ color: "var(--dust)" }}>{u.email}</span>
               </div>
             ))}
           </div>
@@ -134,36 +161,37 @@ function FinancePanel({ eventId }: { eventId: string }) {
     queryFn: () => api.get(`/events/${eventId}/budget`).then((r) => r.data),
   });
 
-  if (isLoading) return <div className="h-16 bg-slate-50 rounded-lg animate-pulse" />;
-  if (isError || !data) return <p className="text-xs text-slate-400">No budget set for this event.</p>;
+  if (isLoading) return <div className="h-16 rounded-lg animate-pulse" style={{ background: "var(--ink-muted)" }} />;
+  if (isError || !data) return <p className="text-xs" style={{ color: "var(--dust)" }}>No budget set for this event.</p>;
 
   const usedPct = data.total_budget > 0
     ? Math.min((data.total_spent / data.total_budget) * 100, 100) : 0;
   const fmt = (n: number) =>
     new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
+  const barColor = usedPct > 90 ? "var(--cinnabar)" : usedPct > 70 ? "var(--amber)" : "var(--jade)";
+
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Budget", value: fmt(data.total_budget), color: "text-slate-800" },
-          { label: "Spent", value: fmt(data.total_spent), color: "text-rose-600" },
-          { label: "Remaining", value: fmt(data.remaining), color: data.remaining < 0 ? "text-red-600" : "text-emerald-600" },
+          { label: "Budget", value: fmt(data.total_budget), color: "var(--cream)" },
+          { label: "Spent", value: fmt(data.total_spent), color: "var(--cinnabar)" },
+          { label: "Remaining", value: fmt(data.remaining), color: data.remaining < 0 ? "var(--cinnabar)" : "var(--jade)" },
         ].map((s) => (
-          <div key={s.label} className="bg-slate-50 rounded-lg p-3 text-center">
-            <p className={`text-lg font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+          <div key={s.label} className="rounded-lg p-3 text-center" style={{ background: "var(--ink-muted)" }}>
+            <p className="text-lg font-bold" style={{ color: s.color }}>{s.value}</p>
+            <p className="text-xs mt-0.5" style={{ color: "var(--dust)" }}>{s.label}</p>
           </div>
         ))}
       </div>
       <div>
-        <div className="flex justify-between text-xs text-slate-500 mb-1">
+        <div className="flex justify-between text-xs mb-1" style={{ color: "var(--dust)" }}>
           <span>Budget utilization</span>
-          <span className="font-semibold text-slate-700">{usedPct.toFixed(1)}%</span>
+          <span className="font-semibold" style={{ color: "var(--fog)" }}>{usedPct.toFixed(1)}%</span>
         </div>
-        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-          <div className={`h-full rounded-full transition-all ${usedPct > 90 ? "bg-red-500" : usedPct > 70 ? "bg-amber-500" : "bg-emerald-500"}`}
-            style={{ width: `${usedPct}%` }} />
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--ink-muted)" }}>
+          <div className="h-full rounded-full transition-all" style={{ width: `${usedPct}%`, background: barColor }} />
         </div>
       </div>
     </div>
@@ -187,47 +215,83 @@ function EventCard({
     ? `${event.registration_start ? fmtDateTimeCompactIST(event.registration_start) : "—"} → ${event.registration_end ? fmtDateTimeCompactIST(event.registration_end) : "—"}`
     : null;
 
-  const statusColors: Record<string, string> = {
-    DRAFT: "bg-slate-100 text-slate-600 border-slate-200",
-    PENDING_APPROVAL: "bg-amber-50 text-amber-700 border-amber-200",
-    PUBLISHED: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    COMPLETED: "bg-blue-50 text-blue-700 border-blue-200",
-    ARCHIVED: "bg-slate-50 text-slate-400 border-slate-100",
+  const statusStyles: Record<string, React.CSSProperties> = {
+    DRAFT: {
+      background: "color-mix(in srgb, var(--dust) 20%, transparent)",
+      color: "var(--ash)",
+    },
+    PENDING_APPROVAL: {
+      background: "color-mix(in srgb, var(--amber) 15%, transparent)",
+      color: "var(--amber)",
+    },
+    PUBLISHED: {
+      background: "color-mix(in srgb, var(--jade) 15%, transparent)",
+      color: "var(--jade)",
+    },
+    COMPLETED: {
+      background: "color-mix(in srgb, var(--sky) 15%, transparent)",
+      color: "var(--sky)",
+    },
+    ARCHIVED: {
+      background: "color-mix(in srgb, var(--dust) 20%, transparent)",
+      color: "var(--dust)",
+    },
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-md transition-shadow">
+    <div className="rounded-2xl overflow-hidden transition-shadow hover:shadow-lg" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
       <div className={`h-1 ${isPending ? "bg-gradient-to-r from-amber-400 to-orange-400" : "bg-gradient-to-r from-indigo-400 to-blue-400"}`} />
       <div className="p-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h3 className="text-lg font-bold text-slate-800 leading-tight">{event.title}</h3>
-              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${statusColors[event.status] ?? ""}`}>
+              <h3 className="text-lg font-bold leading-tight" style={{ color: "var(--cream)" }}>{event.title}</h3>
+              <span
+                className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                style={statusStyles[event.status] ?? {}}
+              >
                 {event.status.replace(/_/g, " ")}
               </span>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs" style={{ color: "var(--dust)" }}>
               Submitted {fmtDateIST(event.created_at)}
             </p>
           </div>
           <div className="flex gap-2 shrink-0">
             {isPending && onApprove && onReject && (
               <>
-                <button type="button" onClick={onApprove} disabled={approving}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50 transition-colors">
+                <button
+                  type="button"
+                  onClick={onApprove}
+                  disabled={approving}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold disabled:opacity-50 transition-colors"
+                  style={{ background: "var(--jade)", color: "var(--ink)" }}
+                >
                   {approving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
                   Approve
                 </button>
-                <button type="button" onClick={onReject}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl text-sm font-semibold hover:bg-red-100 transition-colors">
+                <button
+                  type="button"
+                  onClick={onReject}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+                  style={{
+                    background: "color-mix(in srgb, var(--cinnabar) 12%, transparent)",
+                    color: "var(--cinnabar)",
+                    border: "1px solid color-mix(in srgb, var(--cinnabar) 30%, transparent)",
+                  }}
+                >
                   <XCircle size={14} /> Reject
                 </button>
               </>
             )}
-            <button type="button" onClick={() => setExpanded((v) => !v)}
-              className="flex items-center gap-1 px-3 py-2 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-100 transition-colors">
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold transition-colors"
+              style={{ background: "var(--ink-muted)", border: "1px solid var(--seam)", color: "var(--ash)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
+            >
               {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               {expanded ? "Less" : "Details"}
             </button>
@@ -247,14 +311,18 @@ function EventCard({
 
         {/* Description toggle */}
         {event.description && (
-          <div className="border-t border-slate-50 mt-4 pt-4">
-            <button type="button" onClick={() => setExpanded((v) => !v)}
-              className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 mb-2 transition-colors">
+          <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--seam)" }}>
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="flex items-center gap-1.5 text-xs font-semibold mb-2 transition-colors"
+              style={{ color: "var(--amber)" }}
+            >
               <FileText size={13} />
               {expanded ? "Hide description" : "Show description & details"}
             </button>
             {expanded && (
-              <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line mb-4">
+              <p className="text-sm leading-relaxed whitespace-pre-line mb-4" style={{ color: "var(--fog)" }}>
                 {event.description}
               </p>
             )}
@@ -263,13 +331,20 @@ function EventCard({
 
         {/* Attendance + Finance panels (for non-DRAFT events) */}
         {expanded && event.status !== "DRAFT" && event.status !== "PENDING_APPROVAL" && (
-          <div className="border-t border-slate-100 mt-4 pt-4">
-            <div className="flex gap-1 bg-slate-50 p-1 rounded-lg mb-4 w-fit">
+          <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--seam)" }}>
+            <div className="flex gap-1 p-1 rounded-lg mb-4 w-fit" style={{ background: "var(--ink-muted)" }}>
               {(["attendance", "finance"] as const).map((t) => (
-                <button key={t} type="button" onClick={() => setDetailTab(t)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                    detailTab === t ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
-                  }`}>
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setDetailTab(t)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all"
+                  style={
+                    detailTab === t
+                      ? { background: "var(--ink-soft)", color: "var(--cream)", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }
+                      : { color: "var(--fog)" }
+                  }
+                >
                   {t === "attendance" ? <Radio size={12} /> : <Wallet size={12} />}
                   {t === "attendance" ? "Attendance" : "Finance"}
                 </button>
@@ -323,11 +398,11 @@ export default function FacultyApprovals() {
     <Layout>
       <div className="p-8 max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-            <ClipboardCheck size={22} className="text-indigo-500" />
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: "var(--cream)" }}>
+            <ClipboardCheck size={22} style={{ color: "var(--amber)" }} />
             Faculty Dashboard
           </h1>
-          <p className="text-slate-500 mt-1 text-sm">
+          <p className="mt-1 text-sm" style={{ color: "var(--fog)" }}>
             {viewTab === "pending"
               ? `${pendingEvents.length} event${pendingEvents.length !== 1 ? "s" : ""} pending review`
               : `${allEvents.length} event${allEvents.length !== 1 ? "s" : ""} assigned to you`}
@@ -335,46 +410,62 @@ export default function FacultyApprovals() {
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 bg-slate-100 p-1 rounded-xl mb-7 w-fit">
-          <button type="button" onClick={() => setViewTab("pending")}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewTab === "pending" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+        <div className="flex gap-1 p-1 rounded-xl mb-7 w-fit" style={{ background: "var(--ink-muted)" }}>
+          <button
+            type="button"
+            onClick={() => setViewTab("pending")}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            style={
+              viewTab === "pending"
+                ? { background: "var(--ink-soft)", color: "var(--cream)", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }
+                : { color: "var(--fog)" }
+            }
+          >
             <ClipboardCheck size={14} />
             Approval Queue
             {pendingEvents.length > 0 && (
-              <span className="ml-1 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+              <span className="ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--amber)", color: "var(--ink)" }}>
                 {pendingEvents.length}
               </span>
             )}
           </button>
-          <button type="button" onClick={() => setViewTab("all")}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewTab === "all" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+          <button
+            type="button"
+            onClick={() => setViewTab("all")}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            style={
+              viewTab === "all"
+                ? { background: "var(--ink-soft)", color: "var(--cream)", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }
+                : { color: "var(--fog)" }
+            }
+          >
             <BarChart3 size={14} />
             All My Events
           </button>
         </div>
 
         {pendingError && viewTab === "pending" && (
-          <div className="bg-red-50 border border-red-100 rounded-xl p-6 flex items-center gap-3 mb-4">
-            <AlertCircle size={18} className="text-red-500 shrink-0" />
-            <p className="text-sm text-red-700">Failed to load events.</p>
+          <div className="rounded-xl p-6 flex items-center gap-3 mb-4" style={{ background: "color-mix(in srgb, var(--cinnabar) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--cinnabar) 30%, transparent)" }}>
+            <AlertCircle size={18} className="shrink-0" style={{ color: "var(--cinnabar)" }} />
+            <p className="text-sm" style={{ color: "var(--cinnabar)" }}>Failed to load events.</p>
           </div>
         )}
 
         {isLoading ? (
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-slate-100 p-6 animate-pulse h-32" />
+              <div key={i} className="rounded-2xl p-6 animate-pulse h-32" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }} />
             ))}
           </div>
         ) : events.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-100 p-16 text-center">
-            <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
-              <CheckCircle size={24} className="text-emerald-500" />
+          <div className="rounded-2xl p-16 text-center" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "color-mix(in srgb, var(--jade) 15%, transparent)" }}>
+              <CheckCircle size={24} style={{ color: "var(--jade)" }} />
             </div>
-            <h3 className="text-slate-700 font-semibold mb-2">
+            <h3 className="font-semibold mb-2" style={{ color: "var(--fog)" }}>
               {viewTab === "pending" ? "All clear!" : "No events yet"}
             </h3>
-            <p className="text-slate-400 text-sm">
+            <p className="text-sm" style={{ color: "var(--dust)" }}>
               {viewTab === "pending"
                 ? "No events are pending approval right now."
                 : "No club events are assigned to you yet."}

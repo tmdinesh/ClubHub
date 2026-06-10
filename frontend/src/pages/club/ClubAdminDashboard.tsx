@@ -88,17 +88,32 @@ function DateTimePicker({ label, value, onChange, required, error }: DateTimePic
 
   const preview = value ? previewIST(value) : "";
 
-  const inputCls = (hasError: boolean) =>
-    `text-center py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 ${
-      hasError
-        ? "border-red-300 focus:ring-red-300"
-        : "border-slate-200 focus:ring-indigo-300"
-    }`;
+  const inputStyle = (hasError: boolean): React.CSSProperties => ({
+    textAlign: "center",
+    padding: "8px 0",
+    fontSize: "14px",
+    borderRadius: "8px",
+    background: "var(--ink-muted)",
+    border: `1px solid ${hasError ? "var(--cinnabar)" : "var(--seam)"}`,
+    color: "var(--cream)",
+    outline: "none",
+  });
+
+  const selectStyle: React.CSSProperties = {
+    padding: "8px 6px",
+    fontSize: "14px",
+    borderRadius: "8px",
+    border: "1px solid var(--seam)",
+    background: "var(--ink-muted)",
+    color: "var(--cream)",
+    colorScheme: "dark",
+    outline: "none",
+  };
 
   return (
     <div className="space-y-1.5">
       <Label>
-        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+        {label}{required && <span style={{ color: "var(--cinnabar)", marginLeft: "2px" }}>*</span>}
       </Label>
 
       <div className="flex items-center gap-1 flex-wrap">
@@ -106,55 +121,72 @@ function DateTimePicker({ label, value, onChange, required, error }: DateTimePic
         <input
           type="text" inputMode="numeric" placeholder="DD" maxLength={2} value={dd}
           onChange={(e) => handleDd(e.target.value)}
-          className={`w-10 ${inputCls(!!error)}`}
+          style={{ ...inputStyle(!!error), width: "40px" }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--amber)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.12)"; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = error ? "var(--cinnabar)" : "var(--seam)"; e.currentTarget.style.boxShadow = "none"; }}
         />
-        <span className="text-slate-400 text-sm font-medium">/</span>
+        <span style={{ color: "var(--ash)", fontSize: "14px", fontWeight: 500 }}>/</span>
         {/* MM */}
         <input
           ref={mmRef}
           type="text" inputMode="numeric" placeholder="MM" maxLength={2} value={mm}
           onChange={(e) => handleMm(e.target.value)}
-          className={`w-10 ${inputCls(!!error)}`}
+          style={{ ...inputStyle(!!error), width: "40px" }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--amber)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.12)"; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = error ? "var(--cinnabar)" : "var(--seam)"; e.currentTarget.style.boxShadow = "none"; }}
         />
-        <span className="text-slate-400 text-sm font-medium">/</span>
+        <span style={{ color: "var(--ash)", fontSize: "14px", fontWeight: 500 }}>/</span>
         {/* YYYY */}
         <input
           ref={yyyyRef}
           type="text" inputMode="numeric" placeholder="YYYY" maxLength={4} value={yyyy}
           onChange={(e) => handleYyyy(e.target.value)}
-          className={`w-16 ${inputCls(!!error)}`}
+          style={{ ...inputStyle(!!error), width: "64px" }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--amber)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.12)"; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = error ? "var(--cinnabar)" : "var(--seam)"; e.currentTarget.style.boxShadow = "none"; }}
         />
 
-        <span className="text-slate-300 mx-1 text-sm">·</span>
+        <span style={{ color: "var(--seam)", margin: "0 4px", fontSize: "14px" }}>·</span>
 
         {/* Hour */}
         <select
           value={hour} onChange={(e) => handleHour(Number(e.target.value))}
-          className="py-2 px-1.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white w-[68px]"
+          style={{ ...selectStyle, width: "68px" }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--amber)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.12)"; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--seam)"; e.currentTarget.style.boxShadow = "none"; }}
         >
           {HOURS.map((h) => <option key={h} value={h}>{pad(h)}</option>)}
         </select>
-        <span className="text-slate-400 font-bold text-sm">:</span>
+        <span style={{ color: "var(--ash)", fontWeight: 700, fontSize: "14px" }}>:</span>
         {/* Minute */}
         <select
           value={minute} onChange={(e) => handleMinute(Number(e.target.value))}
-          className="py-2 px-1.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white w-[60px]"
+          style={{ ...selectStyle, width: "60px" }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--amber)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.12)"; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--seam)"; e.currentTarget.style.boxShadow = "none"; }}
         >
           {MINUTES.map((mi) => <option key={mi} value={mi}>{pad(mi)}</option>)}
         </select>
 
         {value && (
-          <button type="button" onClick={clear} className="ml-1 text-slate-300 hover:text-slate-500 transition-colors" title="Clear">
+          <button
+            type="button"
+            onClick={clear}
+            style={{ marginLeft: "4px", color: "var(--ash)", background: "none", border: "none", cursor: "pointer", transition: "color 0.15s" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--fog)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ash)")}
+            title="Clear"
+          >
             <X size={14} />
           </button>
         )}
       </div>
 
       {preview && !error && (
-        <p className="text-xs text-indigo-600 font-medium">{preview}</p>
+        <p style={{ fontSize: "12px", color: "var(--amber)", fontWeight: 500 }}>{preview}</p>
       )}
       {error && (
-        <p className="text-xs text-red-600 flex items-center gap-1">
+        <p style={{ fontSize: "12px", color: "var(--cinnabar)", display: "flex", alignItems: "center", gap: "4px" }}>
           <AlertCircle size={11} /> {error}
         </p>
       )}
@@ -207,14 +239,34 @@ function validateDates(f: CreateEventForm): Record<string, string> {
   return errs;
 }
 
-// ── Status colours ────────────────────────────────────────────────────────────
+// ── Status styles ─────────────────────────────────────────────────────────────
 
-const STATUS_COLORS: Record<string, string> = {
-  DRAFT:            "bg-slate-100 text-slate-600 border-slate-200",
-  PENDING_APPROVAL: "bg-amber-50 text-amber-700 border-amber-200",
-  PUBLISHED:        "bg-emerald-50 text-emerald-700 border-emerald-200",
-  COMPLETED:        "bg-blue-50 text-blue-700 border-blue-200",
-  ARCHIVED:         "bg-slate-50 text-slate-400 border-slate-100",
+const STATUS_STYLES: Record<string, React.CSSProperties> = {
+  DRAFT: {
+    background: "color-mix(in srgb, var(--dust) 20%, transparent)",
+    color: "var(--ash)",
+    border: "1px solid color-mix(in srgb, var(--dust) 30%, transparent)",
+  },
+  PENDING_APPROVAL: {
+    background: "color-mix(in srgb, var(--amber) 15%, transparent)",
+    color: "var(--amber)",
+    border: "1px solid color-mix(in srgb, var(--amber) 30%, transparent)",
+  },
+  PUBLISHED: {
+    background: "color-mix(in srgb, var(--jade) 15%, transparent)",
+    color: "var(--jade)",
+    border: "1px solid color-mix(in srgb, var(--jade) 30%, transparent)",
+  },
+  COMPLETED: {
+    background: "color-mix(in srgb, var(--sky) 15%, transparent)",
+    color: "var(--sky)",
+    border: "1px solid color-mix(in srgb, var(--sky) 30%, transparent)",
+  },
+  ARCHIVED: {
+    background: "color-mix(in srgb, var(--dust) 20%, transparent)",
+    color: "var(--dust)",
+    border: "1px solid color-mix(in srgb, var(--dust) 20%, transparent)",
+  },
 };
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
@@ -419,11 +471,19 @@ export default function ClubAdminDashboard() {
     return (
       <Layout>
         <div className="p-8 max-w-2xl mx-auto">
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-start gap-3">
-            <AlertTriangle size={20} className="text-amber-600 shrink-0 mt-0.5" />
+          <div style={{
+            background: "color-mix(in srgb, var(--amber) 10%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--amber) 30%, transparent)",
+            borderRadius: "12px",
+            padding: "24px",
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "12px",
+          }}>
+            <AlertTriangle size={20} style={{ color: "var(--amber)", flexShrink: 0, marginTop: "2px" }} />
             <div>
-              <p className="font-semibold text-amber-800">No club assigned</p>
-              <p className="text-sm text-amber-700 mt-1">
+              <p style={{ fontWeight: 600, color: "var(--amber)" }}>No club assigned</p>
+              <p style={{ fontSize: "14px", color: "var(--amber)", marginTop: "4px", opacity: 0.85 }}>
                 Your account is not mapped to a club yet. Contact a Super Admin to assign you to your club.
               </p>
             </div>
@@ -440,9 +500,9 @@ export default function ClubAdminDashboard() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Club Admin</p>
-            <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-              <CalendarDays size={22} className="text-indigo-500" />
+            <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--dust)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "4px" }}>Club Admin</p>
+            <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--cream)", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: "8px" }}>
+              <CalendarDays size={22} style={{ color: "var(--amber)" }} />
               My Events
             </h1>
           </div>
@@ -455,21 +515,32 @@ export default function ClubAdminDashboard() {
         {/* Summary */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
           {(["DRAFT", "PENDING_APPROVAL", "PUBLISHED", "COMPLETED"] as const).map((s) => (
-            <div key={s} className="bg-white rounded-xl border border-slate-100 p-4">
-              <p className="text-2xl font-bold text-slate-800">{counts[s]}</p>
-              <p className="text-xs text-slate-500 mt-0.5 capitalize">{s.replace(/_/g, " ").toLowerCase()}</p>
+            <div key={s} style={{
+              background: "var(--ink-soft)",
+              borderRadius: "12px",
+              border: "1px solid var(--seam)",
+              padding: "16px",
+            }}>
+              <p style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--cream)" }}>{counts[s]}</p>
+              <p style={{ fontSize: "12px", color: "var(--fog)", marginTop: "2px", textTransform: "capitalize" }}>{s.replace(/_/g, " ").toLowerCase()}</p>
             </div>
           ))}
         </div>
 
         {/* Create form */}
         {showCreate && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6 shadow-sm">
-            <h2 className="text-base font-bold text-slate-800 mb-5">Create New Event</h2>
+          <div style={{
+            background: "var(--ink-soft)",
+            borderRadius: "16px",
+            border: "1px solid var(--seam)",
+            padding: "24px",
+            marginBottom: "24px",
+          }}>
+            <h2 style={{ fontSize: "15px", fontWeight: 700, color: "var(--cream)", marginBottom: "20px" }}>Create New Event</h2>
 
             <div className="space-y-5">
               <div className="space-y-1.5">
-                <Label htmlFor="title">Title <span className="text-red-500">*</span></Label>
+                <Label htmlFor="title">Title <span style={{ color: "var(--cinnabar)" }}>*</span></Label>
                 <Input
                   id="title"
                   value={form.title}
@@ -486,7 +557,20 @@ export default function ClubAdminDashboard() {
                   onChange={(e) => field("description", e.target.value)}
                   placeholder="Short description of the event"
                   rows={2}
-                  className="w-full text-sm px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                  style={{
+                    width: "100%",
+                    fontSize: "14px",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    background: "var(--ink-muted)",
+                    border: "1px solid var(--seam)",
+                    color: "var(--cream)",
+                    outline: "none",
+                    resize: "none",
+                    boxSizing: "border-box",
+                  }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "var(--amber)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.12)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--seam)"; e.currentTarget.style.boxShadow = "none"; }}
                 />
               </div>
 
@@ -512,27 +596,46 @@ export default function ClubAdminDashboard() {
               </div>
 
               {/* Team event toggle */}
-              <div className="border-t border-slate-100 pt-4">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Team Settings</p>
+              <div style={{ borderTop: "1px solid var(--seam)", paddingTop: "16px" }}>
+                <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--dust)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "16px" }}>Team Settings</p>
                 <label className="flex items-center gap-3 cursor-pointer select-none mb-4">
                   <div
-                    className={`w-10 h-5 rounded-full transition-colors relative ${form.is_team_event ? "bg-indigo-600" : "bg-slate-200"}`}
+                    style={{
+                      width: "40px",
+                      height: "20px",
+                      borderRadius: "999px",
+                      background: form.is_team_event ? "var(--amber)" : "var(--seam)",
+                      position: "relative",
+                      transition: "background 0.2s",
+                      cursor: "pointer",
+                    }}
                     onClick={() => setForm((f) => ({ ...f, is_team_event: !f.is_team_event }))}
                   >
                     <span
-                      className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${form.is_team_event ? "translate-x-5" : "translate-x-0"}`}
+                      style={{
+                        position: "absolute",
+                        top: "2px",
+                        left: "2px",
+                        width: "16px",
+                        height: "16px",
+                        borderRadius: "50%",
+                        background: "white",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                        transition: "transform 0.2s",
+                        transform: form.is_team_event ? "translateX(20px)" : "translateX(0)",
+                      }}
                     />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-700">Team Event</p>
-                    <p className="text-xs text-slate-400">Participants register as teams instead of individuals</p>
+                    <p style={{ fontSize: "14px", fontWeight: 500, color: "var(--cream)" }}>Team Event</p>
+                    <p style={{ fontSize: "12px", color: "var(--ash)" }}>Participants register as teams instead of individuals</p>
                   </div>
                 </label>
 
                 {form.is_team_event && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label htmlFor="team_min">Min Team Size <span className="text-red-500">*</span></Label>
+                      <Label htmlFor="team_min">Min Team Size <span style={{ color: "var(--cinnabar)" }}>*</span></Label>
                       <Input
                         id="team_min" type="number" min={2}
                         value={form.team_min_size}
@@ -541,7 +644,7 @@ export default function ClubAdminDashboard() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="team_max">Max Team Size <span className="text-red-500">*</span></Label>
+                      <Label htmlFor="team_max">Max Team Size <span style={{ color: "var(--cinnabar)" }}>*</span></Label>
                       <Input
                         id="team_max" type="number" min={2}
                         value={form.team_max_size}
@@ -553,8 +656,8 @@ export default function ClubAdminDashboard() {
                 )}
               </div>
 
-              <div className="border-t border-slate-100 pt-4">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Schedule</p>
+              <div style={{ borderTop: "1px solid var(--seam)", paddingTop: "16px" }}>
+                <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--dust)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "16px" }}>Schedule</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <DateTimePicker
                     key={`start-${pickerKey}`}
@@ -590,7 +693,7 @@ export default function ClubAdminDashboard() {
             </div>
 
             {formError && (
-              <p className="text-sm text-destructive mt-4 flex items-center gap-1.5">
+              <p style={{ fontSize: "14px", color: "var(--cinnabar)", marginTop: "16px", display: "flex", alignItems: "center", gap: "6px" }}>
                 <AlertCircle size={14} /> {formError}
               </p>
             )}
@@ -607,43 +710,72 @@ export default function ClubAdminDashboard() {
 
         {/* Event list */}
         {error ? (
-          <div className="bg-red-50 border border-red-100 rounded-xl p-6 flex items-center gap-3">
-            <AlertCircle size={18} className="text-red-500 shrink-0" />
-            <p className="text-sm text-red-700">Failed to load events.</p>
+          <div style={{
+            background: "color-mix(in srgb, var(--cinnabar) 10%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--cinnabar) 30%, transparent)",
+            borderRadius: "12px",
+            padding: "24px",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+          }}>
+            <AlertCircle size={18} style={{ color: "var(--cinnabar)", flexShrink: 0 }} />
+            <p style={{ fontSize: "14px", color: "var(--cinnabar)" }}>Failed to load events.</p>
           </div>
         ) : isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-xl border border-slate-100 p-5 animate-pulse h-20" />
+              <div key={i} style={{ background: "var(--ink-soft)", borderRadius: "12px", border: "1px solid var(--seam)", padding: "20px", height: "80px" }} className="animate-pulse" />
             ))}
           </div>
         ) : !events?.length ? (
-          <div className="bg-white rounded-xl border border-slate-100 p-16 text-center">
-            <CalendarDays size={32} className="text-slate-200 mx-auto mb-3" />
-            <p className="text-slate-500 font-medium">No events yet</p>
-            <p className="text-sm text-slate-400 mt-1">Click "New Event" to create your first one.</p>
+          <div style={{
+            background: "var(--ink-soft)",
+            borderRadius: "12px",
+            border: "1px solid var(--seam)",
+            padding: "64px 24px",
+            textAlign: "center",
+          }}>
+            <CalendarDays size={32} style={{ color: "var(--dust)", margin: "0 auto 12px" }} />
+            <p style={{ color: "var(--fog)", fontWeight: 500 }}>No events yet</p>
+            <p style={{ fontSize: "13px", color: "var(--ash)", marginTop: "4px" }}>Click "New Event" to create your first one.</p>
           </div>
         ) : (
           <div className="space-y-2">
             {events.map((event) => (
-              <div key={event.id} className="bg-white rounded-xl border border-slate-100 p-4 hover:shadow-sm transition-shadow">
+              <div key={event.id} style={{
+                background: "var(--ink-soft)",
+                borderRadius: "12px",
+                border: "1px solid var(--seam)",
+                padding: "16px",
+                transition: "border-color 0.15s",
+              }}>
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-slate-800 truncate">{event.title}</p>
-                      <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${STATUS_COLORS[event.status] ?? ""}`}>
+                      <p style={{ fontSize: "14px", fontWeight: 600, color: "var(--cream)" }} className="truncate">{event.title}</p>
+                      <span style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        padding: "2px 8px",
+                        borderRadius: "999px",
+                        ...(STATUS_STYLES[event.status] ?? {}),
+                      }}>
                         {STATUS_ICON[event.status]}
                         {event.status.replace(/_/g, " ")}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p style={{ fontSize: "12px", color: "var(--ash)", marginTop: "2px" }}>
                       {event.start_datetime
                         ? fmtDateTimeMedIST(event.start_datetime)
                         : "No date set"}
                       {event.venue ? ` · ${event.venue}` : ""}
                     </p>
                     {submitErrors[event.id] && (
-                      <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                      <p style={{ fontSize: "12px", color: "var(--cinnabar)", marginTop: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
                         <AlertTriangle size={11} /> {submitErrors[event.id]}
                       </p>
                     )}
@@ -655,7 +787,23 @@ export default function ClubAdminDashboard() {
                         type="button"
                         onClick={() => submitMutation.mutate(event.id)}
                         disabled={submitMutation.isPending && submitMutation.variables === event.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs font-semibold hover:bg-amber-100 transition-colors disabled:opacity-50"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "6px 12px",
+                          background: "color-mix(in srgb, var(--amber) 15%, transparent)",
+                          color: "var(--amber)",
+                          border: "1px solid color-mix(in srgb, var(--amber) 30%, transparent)",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          transition: "background 0.15s",
+                          opacity: (submitMutation.isPending && submitMutation.variables === event.id) ? 0.5 : 1,
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--amber) 22%, transparent)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--amber) 15%, transparent)")}
                       >
                         {submitMutation.isPending && submitMutation.variables === event.id
                           ? <Loader2 size={12} className="animate-spin" />
@@ -667,7 +815,22 @@ export default function ClubAdminDashboard() {
                       <button
                         type="button"
                         onClick={() => editingEventId === event.id ? setEditingEventId(null) : startEdit(event)}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-slate-50 text-slate-600 border border-slate-200 rounded-lg text-xs font-semibold hover:bg-slate-100 transition-colors"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          padding: "6px 12px",
+                          background: "transparent",
+                          color: "var(--ash)",
+                          border: "1px solid var(--seam)",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          transition: "background 0.15s",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                       >
                         <Pencil size={12} />
                         Edit
@@ -677,7 +840,22 @@ export default function ClubAdminDashboard() {
                       <button
                         type="button"
                         onClick={() => setCancelConfirm(event.id)}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 border border-red-100 rounded-lg text-xs font-semibold hover:bg-red-100 transition-colors"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          padding: "6px 12px",
+                          background: "color-mix(in srgb, var(--cinnabar) 10%, transparent)",
+                          color: "var(--cinnabar)",
+                          border: "1px solid color-mix(in srgb, var(--cinnabar) 30%, transparent)",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          transition: "background 0.15s",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--cinnabar) 18%, transparent)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--cinnabar) 10%, transparent)")}
                       >
                         <Trash2 size={12} />
                         Cancel
@@ -685,7 +863,22 @@ export default function ClubAdminDashboard() {
                     )}
                     <Link
                       to={`/manage/${event.id}/overview`}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg text-xs font-semibold hover:bg-indigo-100 transition-colors"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        padding: "6px 12px",
+                        background: "var(--amber)",
+                        color: "var(--ink)",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        textDecoration: "none",
+                        boxShadow: "0 0 18px rgba(245,166,35,0.35)",
+                        transition: "background 0.15s",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--amber-glow)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
                     >
                       Manage <ChevronRight size={12} />
                     </Link>
@@ -694,8 +887,8 @@ export default function ClubAdminDashboard() {
 
                 {/* Inline edit panel */}
                 {editingEventId === event.id && (
-                  <div className="mt-4 border-t border-slate-100 pt-4">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Edit Event</p>
+                  <div style={{ marginTop: "16px", borderTop: "1px solid var(--seam)", paddingTop: "16px" }}>
+                    <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--dust)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "12px" }}>Edit Event</p>
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="sm:col-span-2">
@@ -735,13 +928,23 @@ export default function ClubAdminDashboard() {
                           onChange={(v) => setEditForm((f) => ({ ...f, registration_end: v }))} />
                       </div>
                       {event.status === "PUBLISHED" && (
-                        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-center gap-1.5">
+                        <p style={{
+                          fontSize: "12px",
+                          color: "var(--amber)",
+                          background: "color-mix(in srgb, var(--amber) 10%, transparent)",
+                          border: "1px solid color-mix(in srgb, var(--amber) 30%, transparent)",
+                          borderRadius: "8px",
+                          padding: "8px 12px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}>
                           <AlertTriangle size={12} />
                           Registered participants will receive an in-app notification about these changes.
                         </p>
                       )}
                       {submitErrors._edit && (
-                        <p className="text-xs text-red-600">{submitErrors._edit}</p>
+                        <p style={{ fontSize: "12px", color: "var(--cinnabar)" }}>{submitErrors._edit}</p>
                       )}
                     </div>
                     <div className="flex justify-end gap-2 mt-3">
@@ -767,18 +970,35 @@ export default function ClubAdminDashboard() {
 
     {/* Cancel confirmation dialog */}
     {cancelConfirm && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-2xl p-6 w-full max-w-sm mx-4">
-          <h2 className="text-base font-bold text-slate-800 mb-2 flex items-center gap-2">
-            <Trash2 size={16} className="text-red-500" />
+      <div style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 50,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "rgba(0,0,0,0.7)",
+        backdropFilter: "blur(4px)",
+      }}>
+        <div style={{
+          background: "var(--ink-soft)",
+          border: "1px solid var(--seam)",
+          borderRadius: "16px",
+          padding: "24px",
+          width: "100%",
+          maxWidth: "384px",
+          margin: "0 16px",
+        }}>
+          <h2 style={{ fontSize: "15px", fontWeight: 700, color: "var(--cream)", marginBottom: "8px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <Trash2 size={16} style={{ color: "var(--cinnabar)" }} />
             Cancel Event
           </h2>
-          <p className="text-sm text-slate-500 mb-1">
+          <p style={{ fontSize: "14px", color: "var(--fog)", marginBottom: "4px" }}>
             This will permanently cancel the event. All registered participants will receive a notification.
           </p>
-          <p className="text-xs text-slate-400 mb-5">This action cannot be undone.</p>
+          <p style={{ fontSize: "12px", color: "var(--ash)", marginBottom: "20px" }}>This action cannot be undone.</p>
           {submitErrors._cancel && (
-            <p className="text-xs text-red-600 mb-3">{submitErrors._cancel}</p>
+            <p style={{ fontSize: "12px", color: "var(--cinnabar)", marginBottom: "12px" }}>{submitErrors._cancel}</p>
           )}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" size="sm" onClick={() => setCancelConfirm(null)}>
@@ -787,7 +1007,7 @@ export default function ClubAdminDashboard() {
             <Button
               type="button"
               size="sm"
-              className="bg-red-600 hover:bg-red-700 text-white"
+              style={{ background: "var(--cinnabar)", color: "white" }}
               onClick={() => cancelEventMutation.mutate(cancelConfirm)}
               disabled={cancelEventMutation.isPending}
             >

@@ -33,13 +33,35 @@ function MiniStat({ icon, value, label, color, bg }: {
   label: string; color: string; bg: string;
 }) {
   return (
-    <div className={`flex items-center gap-3 p-4 rounded-xl ${bg} border border-white/60`}>
-      <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${color} bg-white/70 shrink-0`}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: 16,
+        borderRadius: 12,
+        background: "var(--ink-muted)",
+        border: "1px solid var(--seam)",
+      }}
+    >
+      <div
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 8,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: bg,
+          color: color,
+          flexShrink: 0,
+        }}
+      >
         {icon}
       </div>
       <div>
-        <p className="text-2xl font-bold text-slate-800 leading-none">{value}</p>
-        <p className="text-xs text-slate-600 mt-0.5">{label}</p>
+        <p style={{ fontSize: 24, fontWeight: 700, color: "var(--cream)", lineHeight: 1 }}>{value}</p>
+        <p style={{ fontSize: 12, color: "var(--fog)", marginTop: 2 }}>{label}</p>
       </div>
     </div>
   );
@@ -118,90 +140,222 @@ export default function AttendanceDashboard() {
 
   return (
     <Layout eventId={eventId}>
-      <div className="p-8 max-w-5xl mx-auto">
+      <div style={{ padding: 32, maxWidth: 960, margin: "0 auto" }}>
 
         {/* Header */}
-        <div className="flex items-start justify-between mb-7">
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-              <Radio size={22} className="text-emerald-500" />
+            <h1
+              style={{
+                fontSize: 24,
+                fontWeight: 700,
+                color: "var(--cream)",
+                letterSpacing: "-0.02em",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <Radio size={22} style={{ color: "var(--jade)" }} />
               Live Attendance
             </h1>
-            <p className="text-slate-500 mt-1 text-sm">
+            <p style={{ color: "var(--fog)", marginTop: 4, fontSize: 14 }}>
               Refreshes every 30s · Last updated: {lastUpdate}
             </p>
           </div>
-          <div className="flex items-center gap-2 text-xs text-emerald-600 font-medium bg-emerald-50 border border-emerald-100 rounded-full px-3 py-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 12,
+              color: "var(--jade)",
+              fontWeight: 500,
+              background: "color-mix(in srgb, var(--jade) 10%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--jade) 30%, transparent)",
+              borderRadius: 999,
+              padding: "6px 12px",
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: "var(--jade)",
+                animation: "pulse 2s cubic-bezier(0.4,0,0.6,1) infinite",
+              }}
+            />
             Live
           </div>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-100 rounded-xl p-6 flex items-center gap-3 mb-6">
-            <AlertCircle size={18} className="text-red-500 shrink-0" />
-            <p className="text-sm text-red-700">Failed to load attendance data.</p>
+          <div
+            style={{
+              background: "color-mix(in srgb, var(--cinnabar) 10%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--cinnabar) 25%, transparent)",
+              borderRadius: 12,
+              padding: "20px 24px",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              marginBottom: 24,
+            }}
+          >
+            <AlertCircle size={18} style={{ color: "var(--cinnabar)", flexShrink: 0 }} />
+            <p style={{ fontSize: 14, color: "var(--cinnabar)" }}>Failed to load attendance data.</p>
           </div>
         )}
 
         {/* Checkpoints */}
-        <div className="bg-white rounded-xl border border-slate-100 p-5 mb-5">
-          <div className="flex items-center justify-between mb-4">
+        <div
+          style={{
+            background: "var(--ink-soft)",
+            border: "1px solid var(--seam)",
+            borderRadius: 12,
+            padding: 20,
+            marginBottom: 20,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
             <div>
-              <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                <MapPin size={14} className="text-indigo-500" />
+              <h2
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "var(--cream)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <MapPin size={14} style={{ color: "var(--amber)" }} />
                 Checkpoints
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p style={{ fontSize: 12, color: "var(--ash)", marginTop: 2 }}>
                 Attendance takers must select a checkpoint before scanning.
               </p>
             </div>
           </div>
-          <form onSubmit={handleCreateCp} className="flex gap-2 mb-4">
+          <form onSubmit={handleCreateCp} style={{ display: "flex", gap: 8, marginBottom: 16 }}>
             <input
               type="text"
               value={newCpName}
               onChange={(e) => { setNewCpName(e.target.value); setCpError(""); }}
               placeholder="e.g. Main Entrance, Hall A, Gate 2…"
-              className="flex-1 text-sm px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              style={{
+                flex: 1,
+                fontSize: 14,
+                padding: "8px 12px",
+                borderRadius: 8,
+                background: "var(--ink-muted)",
+                border: "1px solid var(--seam)",
+                color: "var(--cream)",
+                outline: "none",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "var(--amber)";
+                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.12)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "var(--seam)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
             />
             <button
               type="submit"
               disabled={!newCpName.trim() || createCpMutation.isPending}
-              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shrink-0"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 16px",
+                background: "var(--amber)",
+                color: "var(--ink)",
+                borderRadius: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                border: "none",
+                cursor: "pointer",
+                flexShrink: 0,
+                opacity: (!newCpName.trim() || createCpMutation.isPending) ? 0.5 : 1,
+                transition: "opacity 0.15s",
+              }}
             >
               {createCpMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
               Add
             </button>
           </form>
           {cpError && (
-            <p className="text-xs text-red-600 mb-3 flex items-center gap-1">
+            <p style={{ fontSize: 12, color: "var(--cinnabar)", marginBottom: 12, display: "flex", alignItems: "center", gap: 4 }}>
               <AlertCircle size={11} /> {cpError}
             </p>
           )}
           {loadingCps ? (
-            <div className="space-y-2">
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {Array.from({ length: 2 }).map((_, i) => (
-                <div key={i} className="h-10 bg-slate-50 rounded-lg animate-pulse" />
+                <div
+                  key={i}
+                  style={{
+                    height: 40,
+                    background: "var(--ink-muted)",
+                    borderRadius: 8,
+                    animation: "pulse 2s cubic-bezier(0.4,0,0.6,1) infinite",
+                  }}
+                />
               ))}
             </div>
           ) : checkpoints.length === 0 ? (
-            <div className="text-center py-6 bg-amber-50 border border-amber-100 rounded-xl">
-              <MapPin size={24} className="text-amber-400 mx-auto mb-2" />
-              <p className="text-sm font-medium text-amber-700">No checkpoints yet</p>
-              <p className="text-xs text-amber-600 mt-1">Add at least one — attendance takers need a checkpoint to scan against.</p>
+            <div
+              style={{
+                textAlign: "center",
+                padding: "24px 16px",
+                background: "color-mix(in srgb, var(--amber) 8%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--amber) 20%, transparent)",
+                borderRadius: 12,
+              }}
+            >
+              <MapPin size={24} style={{ color: "var(--amber)", margin: "0 auto 8px" }} />
+              <p style={{ fontSize: 14, fontWeight: 500, color: "var(--amber)" }}>No checkpoints yet</p>
+              <p style={{ fontSize: 12, color: "color-mix(in srgb, var(--amber) 70%, var(--fog))", marginTop: 4 }}>
+                Add at least one — attendance takers need a checkpoint to scan against.
+              </p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-50">
+            <div>
               {checkpoints.map((cp, idx) => (
-                <div key={cp.id} className="flex items-center justify-between py-2.5">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold flex items-center justify-center shrink-0">
+                <div
+                  key={cp.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "10px 0",
+                    borderTop: idx === 0 ? "none" : "1px solid var(--seam)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: "50%",
+                        background: "color-mix(in srgb, var(--amber) 15%, transparent)",
+                        color: "var(--amber)",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
                       {idx + 1}
                     </span>
-                    <span className="text-sm font-medium text-slate-700">{cp.name}</span>
+                    <span style={{ fontSize: 14, fontWeight: 500, color: "var(--cream)" }}>{cp.name}</span>
                   </div>
-                  <span className="text-xs text-slate-400">Checkpoint {idx + 1}</span>
+                  <span style={{ fontSize: 12, color: "var(--ash)" }}>Checkpoint {idx + 1}</span>
                 </div>
               ))}
             </div>
@@ -209,94 +363,206 @@ export default function AttendanceDashboard() {
         </div>
 
         {/* Overall stats */}
-        <div className="bg-white rounded-xl border border-slate-100 p-6 mb-5">
-          <div className="flex items-end justify-between mb-3">
+        <div
+          style={{
+            background: "var(--ink-soft)",
+            border: "1px solid var(--seam)",
+            borderRadius: 12,
+            padding: 24,
+            marginBottom: 20,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 12 }}>
             <div>
-              <p className="text-sm font-semibold text-slate-700">Overall Attendance</p>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--fog)" }}>Overall Attendance</p>
+              <p style={{ fontSize: 12, color: "var(--ash)", marginTop: 2 }}>
                 {isLoading ? "…" : `${data?.present ?? 0} present out of ${data?.registered ?? 0} registered`}
               </p>
             </div>
-            <span className="text-3xl font-bold text-slate-800">
+            <span style={{ fontSize: 30, fontWeight: 700, color: "var(--cream)" }}>
               {isLoading ? "—" : `${attendanceRate}%`}
             </span>
           </div>
           {isLoading ? (
-            <div className="h-5 bg-slate-100 rounded-full animate-pulse" />
+            <div
+              style={{
+                height: 20,
+                background: "var(--ink-muted)",
+                borderRadius: 999,
+                animation: "pulse 2s cubic-bezier(0.4,0,0.6,1) infinite",
+              }}
+            />
           ) : (
-            <div className="relative h-5 bg-slate-100 rounded-full overflow-hidden">
+            <div style={{ position: "relative", height: 20, background: "var(--ink-muted)", borderRadius: 999, overflow: "hidden" }}>
               <div
-                className="absolute left-0 top-0 h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-700"
-                style={{ width: `${progressPct}%` }}
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  height: "100%",
+                  background: "linear-gradient(to right, var(--jade), #2ec87a)",
+                  borderRadius: 999,
+                  transition: "width 0.7s",
+                  width: `${progressPct}%`,
+                }}
               />
               {progressPct >= 20 && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-bold text-white drop-shadow">{attendanceRate}%</span>
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}>
+                    {attendanceRate}%
+                  </span>
                 </div>
               )}
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16, marginBottom: 24 }}>
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-20 bg-slate-100 rounded-xl animate-pulse" />
+              <div
+                key={i}
+                style={{
+                  height: 80,
+                  background: "var(--ink-muted)",
+                  borderRadius: 12,
+                  animation: "pulse 2s cubic-bezier(0.4,0,0.6,1) infinite",
+                }}
+              />
             ))
           ) : (
             <>
-              <MiniStat icon={<UserCheck size={16} />} value={data?.present ?? 0} label="Present" color="text-emerald-600" bg="bg-emerald-50" />
-              <MiniStat icon={<UserX size={16} />} value={data?.absent ?? 0} label="Absent" color="text-red-500" bg="bg-red-50" />
-              <MiniStat icon={<Users size={16} />} value={data?.registered ?? 0} label="Registered" color="text-indigo-600" bg="bg-indigo-50" />
+              <MiniStat
+                icon={<UserCheck size={16} />}
+                value={data?.present ?? 0}
+                label="Present"
+                color="var(--jade)"
+                bg="color-mix(in srgb, var(--jade) 15%, transparent)"
+              />
+              <MiniStat
+                icon={<UserX size={16} />}
+                value={data?.absent ?? 0}
+                label="Absent"
+                color="var(--cinnabar)"
+                bg="color-mix(in srgb, var(--cinnabar) 15%, transparent)"
+              />
+              <MiniStat
+                icon={<Users size={16} />}
+                value={data?.registered ?? 0}
+                label="Registered"
+                color="var(--amber)"
+                bg="color-mix(in srgb, var(--amber) 15%, transparent)"
+              />
             </>
           )}
         </div>
 
         {/* Present participants list */}
-        <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-50 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-              <UserCheck size={14} className="text-emerald-500" />
+        <div
+          style={{
+            background: "var(--ink-soft)",
+            border: "1px solid var(--seam)",
+            borderRadius: 12,
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              padding: "12px 16px",
+              borderBottom: "1px solid var(--seam)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <h2
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: "var(--fog)",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <UserCheck size={14} style={{ color: "var(--jade)" }} />
               Present Participants ({present.length})
             </h2>
             {present.length > 0 && (
               <button
                 type="button"
                 onClick={() => exportXlsx(present, `event-${eventId}`)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "6px 12px",
+                  background: "transparent",
+                  border: "1px solid var(--seam)",
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--ash)",
+                  cursor: "pointer",
+                  transition: "background 0.15s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--ink-muted)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
                 <Download size={13} /> Export CSV
               </button>
             )}
           </div>
           {loadingPresent ? (
-            <div className="divide-y divide-slate-50">
+            <div>
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="px-4 py-3 flex gap-3 animate-pulse">
-                  <div className="h-4 bg-slate-100 rounded w-32" />
-                  <div className="h-4 bg-slate-100 rounded w-40" />
+                <div
+                  key={i}
+                  style={{
+                    padding: "12px 16px",
+                    display: "flex",
+                    gap: 12,
+                    borderTop: i > 0 ? "1px solid var(--seam)" : "none",
+                    animation: "pulse 2s cubic-bezier(0.4,0,0.6,1) infinite",
+                  }}
+                >
+                  <div style={{ height: 16, background: "var(--ink-muted)", borderRadius: 4, width: 128 }} />
+                  <div style={{ height: 16, background: "var(--ink-muted)", borderRadius: 4, width: 160 }} />
                 </div>
               ))}
             </div>
           ) : present.length === 0 ? (
-            <div className="px-4 py-10 text-center text-slate-400 text-sm">
+            <div style={{ padding: "40px 16px", textAlign: "center", color: "var(--ash)", fontSize: 14 }}>
               No participants scanned present yet.
             </div>
           ) : (
-            <table className="w-full text-sm">
+            <table style={{ width: "100%", fontSize: 14, borderCollapse: "collapse" }}>
               <thead>
-                <tr className="bg-slate-50/60 border-b border-slate-100">
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Team</th>
+                <tr style={{ background: "var(--ink-muted)", borderBottom: "1px solid var(--seam)" }}>
+                  <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "var(--dust)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Name</th>
+                  <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "var(--dust)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Email</th>
+                  <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "var(--dust)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Team</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody>
                 {present.map((p) => (
-                  <tr key={p.user_id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-slate-800 text-sm">{p.name}</td>
-                    <td className="px-4 py-3 text-slate-500 text-xs">{p.email}</td>
-                    <td className="px-4 py-3 text-slate-500 text-xs">{p.team_name ?? "—"}</td>
+                  <tr
+                    key={p.user_id}
+                    style={{ borderTop: "1px solid var(--seam)", transition: "background 0.1s" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--cream) 3%, transparent)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <td style={{ padding: "12px 16px", fontWeight: 500, color: "var(--cream)", fontSize: 14 }}>{p.name}</td>
+                    <td style={{ padding: "12px 16px", color: "var(--fog)", fontSize: 12 }}>{p.email}</td>
+                    <td style={{ padding: "12px 16px", color: "var(--fog)", fontSize: 12 }}>{p.team_name ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>
