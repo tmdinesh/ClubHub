@@ -1,0 +1,57 @@
+# ── Environment & secrets ─────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.env
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.hypothesis/
+*.log
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+.python-version
+
+# ── Node / frontend ───────────────────────────────────────────────────────────
+node_modules/
+dist/
+.vite/
+*.local
+
+# ── Docker volumes & local data ───────────────────────────────────────────────
+postgres_data/
+redis_data/
+rabbitmq_data/
+media/
+backend/media/
+
+# ── IDE & OS ──────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Alembic ───────────────────────────────────────────────────────────────────
+# Keep migrations tracked; ignore local test databases
+*.db
+*.sqlite3
