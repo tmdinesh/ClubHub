@@ -7,12 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.attendance.models import AttendanceRecord, Checkpoint
 from app.modules.auth.models import User
-from app.modules.events.models import Event
+from app.modules.events.models import Club, Event
 from app.modules.feedback.models import FeedbackAnswer, NpsScore
 from app.modules.finance.models import Expense, EventBudget
 from app.modules.registration.models import Registration
 from app.modules.teams.models import Team, TeamMember
-from app.shared.enums import RegistrationStatus
+from app.shared.enums import EventStatus, RegistrationStatus
 
 
 class AnalyticsRepository:
@@ -88,6 +88,66 @@ class AnalyticsRepository:
             )
         ).scalar_one()
         return {"club_id": str(club_id), "total_events": events}
+
+    async def all_clubs_analytics(self) -> list[dict]:
+        clubs = (await self.db.execute(select(Club).where(Club.is_active == True).order_by(Club.name))).scalars().all()
+
+        result = []
+        for club in clubs:
+            total_events = (
+                await self.db.execute(
+                    select(func.count(Event.id)).where(Event.organizer_club_id == club.id, Event.is_deleted == False)
+                )
+            ).scalar_one()
+
+            published_events = (
+                await self.db.execute(
+                    select(func.count(Event.id)).where(
+                        Event.organizer_club_id == club.id,
+                        Event.is_deleted == False,
+                        Event.status.in_([EventStatus.PUBLISHED, EventStatus.COMPLETED]),
+                    )
+                )
+            ).scalar_one()
+
+            total_registrations = (
+                await self.db.execute(
+                    select(func.count(Registration.id))
+                    .join(Event, Registration.event_id == Event.id)
+                    .where(Event.organizer_club_id == club.id, Event.is_deleted == False)
+                )
+            ).scalar_one()
+
+            event_rows = (
+                await self.db.execute(
+                    select(Event)
+                    .where(Event.organizer_club_id == club.id, Event.is_deleted == False)
+                    .order_by(Event.start_datetime.desc().nullslast())
+                )
+            ).scalars().all()
+
+            events_list = [
+                {
+                    "id": str(e.id),
+                    "title": e.title,
+                    "status": e.status.value if hasattr(e.status, "value") else e.status,
+                    "start_datetime": e.start_datetime.isoformat() if e.start_datetime else None,
+                    "category": e.category,
+                }
+                for e in event_rows
+            ]
+
+            result.append({
+                "club_id": str(club.id),
+                "club_name": club.name,
+                "department": club.department,
+                "total_events": total_events,
+                "published_events": published_events,
+                "total_registrations": total_registrations,
+                "events": events_list,
+            })
+
+        return result
 
     async def platform_analytics(self) -> dict:
         total_events = (await self.db.execute(select(func.count(Event.id)).where(Event.is_deleted == False))).scalar_one()

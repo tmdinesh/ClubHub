@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/auth.store";
 import {
   LayoutDashboard, CalendarDays, Users, Award, Bell, LogOut,
   ChevronRight, Settings, ShieldCheck, ClipboardCheck, Megaphone,
-  BarChart3, Wallet, ListChecks, Radio, KeyRound,
+  BarChart3, Wallet, ListChecks, Radio, KeyRound, Building2,
 } from "lucide-react";
 import api from "@/lib/api";
 import type { Event } from "@/types";
@@ -19,11 +19,11 @@ interface NavItem {
 function getNavItems(role: string, eventId?: string): NavItem[] {
   if (role === "SUPER_ADMIN") {
     return [
-      { to: "/admin",           label: "Metrics",        icon: <BarChart3 size={15} />, exact: true },
-      { to: "/admin?tab=users", label: "Users",          icon: <Users size={15} /> },
-      { to: "/admin?tab=clubs", label: "Clubs",          icon: <Settings size={15} /> },
-      { to: "/faculty/approvals", label: "Approvals",   icon: <ShieldCheck size={15} /> },
-      { to: "/dashboard",       label: "Dashboard",      icon: <LayoutDashboard size={15} /> },
+      { to: "/admin",              label: "Metrics",        icon: <BarChart3 size={15} />, exact: true },
+      { to: "/admin?tab=analytics",label: "Club Analytics", icon: <Building2 size={15} /> },
+      { to: "/admin?tab=users",    label: "Users",          icon: <Users size={15} /> },
+      { to: "/admin?tab=clubs",    label: "Club Setup",     icon: <Settings size={15} /> },
+      { to: "/faculty/approvals",  label: "Approvals",      icon: <ShieldCheck size={15} /> },
     ];
   }
   if (role === "FACULTY_ADVISOR") {

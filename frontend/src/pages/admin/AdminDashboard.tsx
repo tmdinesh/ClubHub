@@ -13,12 +13,31 @@ import {
 import {
   BarChart3, Users, CalendarDays, Ticket, TrendingUp,
   Plus, Pencil, Check, X, ChevronDown, Loader2,
+  Building2, ChevronRight, Activity,
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
 import type { Club } from "@/types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+
+interface ClubSummary {
+  club_id: string;
+  club_name: string;
+  department: string | null;
+  total_events: number;
+  published_events: number;
+  total_registrations: number;
+  events: ClubEvent[];
+}
+
+interface ClubEvent {
+  id: string;
+  title: string;
+  status: string;
+  start_datetime: string | null;
+  category: string | null;
+}
 
 interface PlatformAnalytics {
   total_events: number;
@@ -637,14 +656,194 @@ function ClubSetupTab({ clubs }: { clubs: Club[]; }) {
   );
 }
 
+// ── Club Analytics tab ────────────────────────────────────────────────────────
+
+const EVENT_STATUS_STYLE: Record<string, React.CSSProperties> = {
+  DRAFT:            { background: "color-mix(in srgb, var(--dust) 20%, transparent)", color: "var(--ash)" },
+  PENDING_APPROVAL: { background: "color-mix(in srgb, var(--amber) 15%, transparent)", color: "var(--amber)" },
+  PUBLISHED:        { background: "color-mix(in srgb, var(--jade) 15%, transparent)", color: "var(--jade)" },
+  COMPLETED:        { background: "color-mix(in srgb, var(--sky) 15%, transparent)", color: "var(--sky)" },
+  ARCHIVED:         { background: "color-mix(in srgb, var(--dust) 20%, transparent)", color: "var(--dust)" },
+};
+
+function ClubCard({ club }: { club: ClubSummary }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
+      {/* Club header row */}
+      <button
+        type="button"
+        className="w-full flex items-center gap-4 p-5 text-left transition-colors"
+        onClick={() => setExpanded((v) => !v)}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--cream) 2%, transparent)")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+      >
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: "color-mix(in srgb, var(--amber) 12%, transparent)" }}
+        >
+          <Building2 size={18} style={{ color: "var(--amber)" }} />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm leading-tight truncate" style={{ color: "var(--cream)" }}>
+            {club.club_name}
+          </p>
+          {club.department && (
+            <p className="text-xs mt-0.5" style={{ color: "var(--dust)" }}>{club.department}</p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-6 shrink-0 mr-2">
+          <div className="text-center">
+            <p className="text-lg font-bold" style={{ color: "var(--cream)" }}>{club.total_events}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--dust)" }}>Events</p>
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-bold" style={{ color: "var(--jade)" }}>{club.published_events}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--dust)" }}>Published</p>
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-bold" style={{ color: "var(--sky)" }}>{club.total_registrations.toLocaleString()}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--dust)" }}>Registrations</p>
+          </div>
+        </div>
+
+        <ChevronRight
+          size={16}
+          style={{
+            color: "var(--ash)",
+            transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
+            transition: "transform 200ms",
+            flexShrink: 0,
+          }}
+        />
+      </button>
+
+      {/* Events drill-down */}
+      {expanded && (
+        <div style={{ borderTop: "1px solid var(--seam)" }}>
+          {club.events.length === 0 ? (
+            <p className="px-5 py-4 text-sm" style={{ color: "var(--dust)" }}>No events yet.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ background: "var(--ink-muted)" }}>
+                  {["Event", "Status", "Date", "Category"].map((h) => (
+                    <th key={h} className="px-5 py-2.5 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--dust)" }}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {club.events.map((ev) => (
+                  <tr
+                    key={ev.id}
+                    style={{ borderTop: "1px solid var(--seam)" }}
+                  >
+                    <td className="px-5 py-3 font-medium" style={{ color: "var(--cream)" }}>{ev.title}</td>
+                    <td className="px-5 py-3">
+                      <span
+                        className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                        style={EVENT_STATUS_STYLE[ev.status] ?? {}}
+                      >
+                        {ev.status.replace(/_/g, " ")}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-xs" style={{ color: "var(--fog)" }}>
+                      {ev.start_datetime
+                        ? new Date(ev.start_datetime).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+                        : "—"}
+                    </td>
+                    <td className="px-5 py-3 text-xs" style={{ color: "var(--fog)" }}>{ev.category ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ClubAnalyticsTab() {
+  const { data: clubs, isLoading, error } = useQuery<ClubSummary[]>({
+    queryKey: ["analytics", "all-clubs"],
+    queryFn: () => api.get("/analytics/clubs").then((r) => r.data),
+  });
+
+  const totalEvents = clubs?.reduce((s, c) => s + c.total_events, 0) ?? 0;
+  const totalRegistrations = clubs?.reduce((s, c) => s + c.total_registrations, 0) ?? 0;
+
+  return (
+    <div className="space-y-5">
+      {/* Summary row */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="rounded-xl p-4" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <Building2 size={14} style={{ color: "var(--amber)" }} />
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--dust)" }}>Clubs</p>
+          </div>
+          <p className="text-3xl font-bold" style={{ color: "var(--cream)" }}>{clubs?.length ?? "—"}</p>
+        </div>
+        <div className="rounded-xl p-4" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <CalendarDays size={14} style={{ color: "var(--jade)" }} />
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--dust)" }}>Total Events</p>
+          </div>
+          <p className="text-3xl font-bold" style={{ color: "var(--cream)" }}>{isLoading ? "—" : totalEvents}</p>
+        </div>
+        <div className="rounded-xl p-4" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <Ticket size={14} style={{ color: "var(--sky)" }} />
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--dust)" }}>Total Registrations</p>
+          </div>
+          <p className="text-3xl font-bold" style={{ color: "var(--cream)" }}>{isLoading ? "—" : totalRegistrations.toLocaleString()}</p>
+        </div>
+      </div>
+
+      {error ? (
+        <div className="rounded-xl p-5" style={{ background: "color-mix(in srgb, var(--cinnabar) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--cinnabar) 25%, transparent)" }}>
+          <p className="text-sm" style={{ color: "var(--cinnabar)" }}>Failed to load club analytics.</p>
+        </div>
+      ) : isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-2xl h-20 animate-pulse" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }} />
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 mb-1">
+            <Activity size={14} style={{ color: "var(--amber)" }} />
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--dust)" }}>
+              Click a club to see its events
+            </p>
+          </div>
+          {clubs?.map((club) => (
+            <ClubCard key={club.club_id} club={club} />
+          ))}
+          {clubs?.length === 0 && (
+            <p className="text-sm text-center py-8" style={{ color: "var(--dust)" }}>No clubs found.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main AdminDashboard ───────────────────────────────────────────────────────
 
-type Tab = "metrics" | "users" | "clubs";
+type Tab = "metrics" | "users" | "clubs" | "analytics";
 
 const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-  { key: "metrics", label: "Platform Metrics", icon: <BarChart3 size={15} /> },
-  { key: "users", label: "User Management", icon: <Users size={15} /> },
-  { key: "clubs", label: "Club Setup", icon: <CalendarDays size={15} /> },
+  { key: "metrics",   label: "Platform Metrics", icon: <BarChart3 size={15} /> },
+  { key: "analytics", label: "Club Analytics",   icon: <Building2 size={15} /> },
+  { key: "users",     label: "User Management",  icon: <Users size={15} /> },
+  { key: "clubs",     label: "Club Setup",        icon: <CalendarDays size={15} /> },
 ];
 
 export default function AdminDashboard() {
@@ -692,6 +891,7 @@ export default function AdminDashboard() {
         </div>
 
         {activeTab === "metrics" && <MetricsTab />}
+        {activeTab === "analytics" && <ClubAnalyticsTab />}
         {activeTab === "users" && <UserManagementTab clubs={clubs} />}
         {activeTab === "clubs" && <ClubSetupTab clubs={clubs} />}
       </div>

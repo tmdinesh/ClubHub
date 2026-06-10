@@ -366,33 +366,30 @@ export default function FacultyApprovals() {
   const [rejectTarget, setRejectTarget] = useState<{ id: string; title: string } | null>(null);
   const [viewTab, setViewTab] = useState<"pending" | "all">("pending");
 
-  const { data: pendingEvents = [], isLoading: loadingPending, error: pendingError } = useQuery<Event[]>({
-    queryKey: ["events", "pending-approval"],
-    queryFn: () => api.get("/events", { params: { status: "PENDING_APPROVAL" } }).then((r) => r.data),
-  });
-
-  const { data: allEvents = [], isLoading: loadingAll } = useQuery<Event[]>({
+  const { data: allEvents = [], isLoading: loadingAll, error: pendingError } = useQuery<Event[]>({
     queryKey: ["events", "faculty-mine"],
     queryFn: () => api.get("/events/faculty/mine").then((r) => r.data),
-    enabled: viewTab === "all",
   });
+
+  const pendingEvents = allEvents.filter((e) => e.status === "PENDING_APPROVAL");
+  const loadingPending = loadingAll;
 
   const approveMutation = useMutation({
     mutationFn: (eventId: string) => api.post(`/events/${eventId}/approve`, {}),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["events", "pending-approval"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["events", "faculty-mine"] }),
   });
 
   const rejectMutation = useMutation({
     mutationFn: ({ eventId, comment }: { eventId: string; comment: string }) =>
       api.post(`/events/${eventId}/reject`, { comment }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["events", "pending-approval"] });
+      queryClient.invalidateQueries({ queryKey: ["events", "faculty-mine"] });
       setRejectTarget(null);
     },
   });
 
   const events = viewTab === "pending" ? pendingEvents : allEvents;
-  const isLoading = viewTab === "pending" ? loadingPending : loadingAll;
+  const isLoading = loadingAll;
 
   return (
     <Layout>
