@@ -44,7 +44,7 @@ export default function CertificateVerify() {
       <div className="mb-8 flex items-center gap-2">
         <ShieldCheck className="h-7 w-7" style={{ color: "var(--amber)" }} />
         <span className="text-xl font-bold" style={{ color: "var(--cream)" }}>
-          ClubOps Certificate Verification
+          ClubHub Certificate Verification
         </span>
       </div>
 
@@ -183,7 +183,7 @@ export default function CertificateVerify() {
       </Card>
 
       <p className="mt-6 text-center text-xs" style={{ color: "var(--dust)" }}>
-        This verification is provided by ClubOps. Certificates are
+        This verification is provided by ClubHub. Certificates are
         cryptographically signed and tamper-evident.
       </p>
     </div>

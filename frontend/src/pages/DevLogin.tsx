@@ -81,7 +81,7 @@ export default function DevLogin() {
               C
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              ClubOps
+              ClubHub
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Development login — not available in production.
@@ -182,7 +182,7 @@ export default function DevLogin() {
       </main>
 
       <footer className="py-6 text-center text-xs text-muted-foreground">
-        &copy; {new Date().getFullYear()} ClubOps &mdash; Dev mode
+        &copy; {new Date().getFullYear()} ClubHub &mdash; Dev mode
       </footer>
     </div>
   );

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
+import type { Event } from "@/types";
 
 interface EventAnalytics {
   registrations: { total: number; confirmed: number };
@@ -108,6 +109,13 @@ export default function EventOverview() {
     enabled: !!eventId,
   });
 
+  const { data: eventData } = useQuery<Event>({
+    queryKey: ["event", eventId],
+    queryFn: () => api.get(`/events/${eventId}`).then((r) => r.data),
+    enabled: !!eventId,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const confirmationRate = data
     ? Math.round((data.registrations.confirmed / Math.max(data.registrations.total, 1)) * 100)
     : 0;
@@ -124,11 +132,10 @@ export default function EventOverview() {
           </p>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--cream)", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 8 }}>
             <Activity size={22} style={{ color: "var(--amber)" }} />
-            Event Statistics
+            {eventData?.title ?? "Event Statistics"}
           </h1>
           <p style={{ color: "var(--fog)", marginTop: 4, fontSize: 14 }}>
-            Live snapshot for event{" "}
-            <span style={{ fontFamily: "monospace", color: "var(--dust)" }}>{eventId}</span>.
+            Live performance snapshot for this event.
           </p>
         </div>
 
