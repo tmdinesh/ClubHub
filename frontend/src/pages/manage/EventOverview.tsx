@@ -111,7 +111,7 @@ export default function EventOverview() {
 
   const { data: eventData } = useQuery<Event>({
     queryKey: ["event", eventId],
-    queryFn: () => api.get(`/events/${eventId}`).then((r) => r.data),
+    queryFn: () => api.get(`/events/by-id/${eventId}`).then((r) => r.data),
     enabled: !!eventId,
     staleTime: 5 * 60 * 1000,
   });
