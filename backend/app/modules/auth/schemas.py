@@ -37,13 +37,6 @@ class RefreshRequest(BaseModel):
 class LogoutRequest(BaseModel):
     refresh_token: str
 
-
-class DevLoginRequest(BaseModel):
-    email: EmailStr
-    name: str = "Dev User"
-    role: UserRole = UserRole.PARTICIPANT
-
-
 class AdminUserCreate(BaseModel):
     email: EmailStr
     name: str

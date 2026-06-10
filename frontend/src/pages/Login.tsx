@@ -110,12 +110,6 @@ export default function Login() {
             </p>
           </div>
 
-          <p style={{ textAlign: "center", marginTop: 24, fontSize: 13, color: "var(--fog)" }}>
-            Developer?{" "}
-            <Link to="/dev-login" style={{ color: "var(--amber)", textDecoration: "none", fontWeight: 500 }}>
-              Dev login →
-            </Link>
-          </p>
         </div>
       </main>
     </div>
