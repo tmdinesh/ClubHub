@@ -16,16 +16,17 @@ from app.modules.events.repos import EventRepository
 from app.modules.registration.events import RegistrationConfirmed, WaitlistPromoted
 from app.modules.registration.models import Registration
 from app.modules.registration.repos import RegistrationRepository
-from app.shared.enums import EventStatus, RegistrationStatus
+from app.shared.enums import EventStatus, RegistrationStatus, TeamStatus
 from app.shared.exceptions import BadRequestError, ConflictError, NotFoundError
 
 
 class RegistrationService:
     def __init__(self, repo: RegistrationRepository, event_repo: EventRepository,
-                 notif_repo=None) -> None:
+                 notif_repo=None, team_repo=None) -> None:
         self.repo = repo
         self.event_repo = event_repo
         self.notif_repo = notif_repo
+        self.team_repo = team_repo
 
     def _make_qr_token(self, reg_id: str, event_id: str) -> str:
         payload = {
@@ -145,6 +146,27 @@ class RegistrationService:
             raise BadRequestError("Already cancelled")
 
         reg = await self.repo.update(reg, status=RegistrationStatus.CANCELLED, qr_token=None)
+
+        # Remove user from all teams in this event
+        if self.team_repo:
+            teams = await self.team_repo.list_teams_for_user_across_event(reg.event_id, actor.id)
+            for team in teams:
+                if team.lead_id == actor.id:
+                    next_member = await self.team_repo.first_other_member(team.id, actor.id)
+                    if next_member is None:
+                        # Only member — delete the team entirely
+                        await self.team_repo.delete_team(team)
+                        continue
+                    # Transfer lead to the earliest-joining other member
+                    await self.team_repo.update_team(team, lead_id=next_member.user_id)
+
+                await self.team_repo.remove_member(team.id, actor.id)
+
+                # Revert SUBMITTED status if now under min_size
+                if team.status == TeamStatus.SUBMITTED:
+                    count = await self.team_repo.count_members(team.id)
+                    new_status = TeamStatus.READY if count >= team.min_size else TeamStatus.FORMING
+                    await self.team_repo.update_team(team, status=new_status)
 
         # Promote first waitlisted participant
         waitlisted = await self.repo.first_waitlisted(reg.event_id)

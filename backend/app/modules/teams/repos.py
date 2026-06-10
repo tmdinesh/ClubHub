@@ -204,6 +204,29 @@ class TeamRepository:
         )
         return result.scalar_one()
 
+    async def first_other_member(self, team_id: UUID, exclude_user_id: UUID) -> TeamMember | None:
+        """Return the earliest-joining member that is not the given user."""
+        result = await self.db.execute(
+            select(TeamMember)
+            .where(TeamMember.team_id == team_id, TeamMember.user_id != exclude_user_id)
+            .order_by(TeamMember.joined_at.asc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    async def list_teams_for_user_across_event(self, event_id: UUID, user_id: UUID) -> list[Team]:
+        """All teams in an event where the user is a member."""
+        q = (
+            select(Team)
+            .join(TeamMember, TeamMember.team_id == Team.id)
+            .where(Team.event_id == event_id, TeamMember.user_id == user_id)
+        )
+        return list((await self.db.execute(q)).scalars().all())
+
+    async def delete_team(self, team: Team) -> None:
+        await self.db.delete(team)
+        await self.db.flush()
+
     async def update_team(self, team: Team, **kwargs) -> Team:
         for k, v in kwargs.items():
             setattr(team, k, v)

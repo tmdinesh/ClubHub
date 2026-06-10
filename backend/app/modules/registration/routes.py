@@ -16,6 +16,7 @@ from app.modules.registration.schemas import (
     QRResponse, RegistrationDetailOut, RegistrationOut, RegistrationWithEventOut,
 )
 from app.modules.registration.services import RegistrationService
+from app.modules.teams.repos import TeamRepository
 from app.shared.enums import UserRole
 from app.shared.exceptions import ForbiddenError
 
@@ -23,8 +24,12 @@ router = APIRouter(tags=["registration"])
 
 
 def _svc(db: AsyncSession = Depends(get_db)) -> RegistrationService:
-    return RegistrationService(RegistrationRepository(db), EventRepository(db),
-                               NotificationRepository(db))
+    return RegistrationService(
+        RegistrationRepository(db),
+        EventRepository(db),
+        NotificationRepository(db),
+        TeamRepository(db),
+    )
 
 
 def _require_club_admin(actor: User = Depends(get_current_user)) -> User:
