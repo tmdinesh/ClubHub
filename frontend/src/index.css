@@ -1,0 +1,259 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design tokens ───────────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    /* Palette */
+    --ink:        #0D0F14;
+    --ink-soft:   #161A23;
+    --ink-muted:  #1F2533;
+    --seam:       #2A3040;
+    --dust:       #3D4A5C;
+    --fog:        #7A8699;
+    --ash:        #B0BBC8;
+    --cream:      #F5F0E8;
+    --cream-dim:  #C8C3BC;
+
+    --amber:      #F5A623;
+    --amber-glow: #FFB83F;
+    --amber-dim:  #7A5210;
+
+    --jade:       #3DD68C;
+    --jade-dim:   #1A6B45;
+
+    --cinnabar:   #E8412A;
+    --sky:        #3B9EF5;
+
+    /* Shadcn compat — map to our palette */
+    --background:         220 14% 7%;    /* ink */
+    --foreground:         40 33% 94%;    /* cream */
+    --card:               220 17% 10%;  /* ink-soft */
+    --card-foreground:    40 33% 94%;
+    --popover:            220 17% 10%;
+    --popover-foreground: 40 33% 94%;
+    --primary:            37 90% 55%;   /* amber */
+    --primary-foreground: 220 14% 7%;
+    --secondary:          220 18% 16%;
+    --secondary-foreground: 220 10% 70%;
+    --muted:              220 18% 16%;
+    --muted-foreground:   220 10% 55%;
+    --accent:             220 18% 16%;
+    --accent-foreground:  40 33% 94%;
+    --destructive:        10 78% 54%;
+    --destructive-foreground: 40 33% 94%;
+    --border:             220 16% 20%;
+    --input:              220 16% 20%;
+    --ring:               37 90% 55%;
+    --radius:             0.5rem;
+  }
+}
+
+/* ── Typography ──────────────────────────────────────────────────────────── */
+@layer base {
+  html {
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-feature-settings: 'ss01', 'ss02';
+  }
+
+  body {
+    background: var(--ink);
+    color: var(--cream);
+    @apply antialiased;
+  }
+
+  h1, h2, h3, .serif {
+    font-family: 'DM Serif Display', Georgia, serif;
+  }
+
+  code, kbd, .mono, .font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+  }
+
+  * { @apply border-border; }
+}
+
+/* ── Page entrance animation ─────────────────────────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-right {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes pulse-amber {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245,166,35,0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(245,166,35,0); }
+}
+
+.animate-fade-up   { animation: fade-up   0.45s cubic-bezier(.22,.68,0,1.2) both; }
+.animate-fade-in   { animation: fade-in   0.35s ease both; }
+.animate-slide-right { animation: slide-right 0.4s cubic-bezier(.22,.68,0,1.2) both; }
+.animate-scale-in  { animation: scale-in  0.35s cubic-bezier(.22,.68,0,1.2) both; }
+
+/* Stagger helpers */
+.delay-50  { animation-delay: 50ms; }
+.delay-100 { animation-delay: 100ms; }
+.delay-150 { animation-delay: 150ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-250 { animation-delay: 250ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* ── Grain texture overlay ───────────────────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.018;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+}
+
+/* ── Custom scrollbar ────────────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--ink-muted); }
+::-webkit-scrollbar-thumb { background: var(--dust); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--fog); }
+
+/* ── Card surface ────────────────────────────────────────────────────────── */
+.card-surface {
+  background: var(--ink-soft);
+  border: 1px solid var(--seam);
+  border-radius: 12px;
+}
+
+.card-surface-raised {
+  background: var(--ink-muted);
+  border: 1px solid var(--seam);
+  border-radius: 12px;
+}
+
+/* ── Amber accent utilities ──────────────────────────────────────────────── */
+.text-amber  { color: var(--amber); }
+.bg-amber    { background: var(--amber); }
+.border-amber { border-color: var(--amber); }
+.ring-amber  { --tw-ring-color: var(--amber); }
+
+/* ── Sidebar nav item ────────────────────────────────────────────────────── */
+.nav-item {
+  @apply flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium
+         transition-all duration-150 cursor-pointer select-none;
+  color: color-mix(in srgb, var(--cream) 40%, transparent);
+}
+
+.nav-item:hover {
+  background: color-mix(in srgb, var(--amber) 8%, transparent);
+  color: color-mix(in srgb, var(--cream) 70%, transparent);
+}
+
+.nav-item.active {
+  background: color-mix(in srgb, var(--amber) 14%, transparent);
+  color: var(--amber);
+  font-weight: 600;
+}
+
+/* ── Button ──────────────────────────────────────────────────────────────── */
+.btn-primary {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold
+         transition-all duration-150 active:scale-95;
+  background: var(--amber);
+  color: var(--ink);
+}
+.btn-primary:hover {
+  background: var(--amber-glow);
+  box-shadow: 0 0 18px rgba(245,166,35,0.35);
+}
+.btn-primary:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.btn-ghost {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+         transition-all duration-150 active:scale-95;
+  color: var(--ash);
+  border: 1px solid var(--seam);
+}
+.btn-ghost:hover {
+  background: var(--ink-muted);
+  border-color: var(--dust);
+  color: var(--cream);
+}
+
+/* ── Input ───────────────────────────────────────────────────────────────── */
+.input-field {
+  @apply w-full text-sm px-3 py-2.5 rounded-lg outline-none transition-all duration-150;
+  background: var(--ink-muted);
+  border: 1px solid var(--seam);
+  color: var(--cream);
+  font-family: 'Outfit', sans-serif;
+}
+.input-field::placeholder { color: var(--dust); }
+.input-field:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(245,166,35,0.12);
+}
+
+/* ── Status pill ─────────────────────────────────────────────────────────── */
+.pill {
+  @apply inline-flex items-center text-[10px] font-bold tracking-wider uppercase
+         px-2.5 py-1 rounded-full;
+  letter-spacing: 0.06em;
+}
+
+/* ── Amber shimmer for loading ───────────────────────────────────────────── */
+.shimmer {
+  background: linear-gradient(90deg,
+    var(--ink-muted) 25%,
+    var(--seam) 50%,
+    var(--ink-muted) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 6px;
+}
+
+/* ── Dotted grid background ──────────────────────────────────────────────── */
+.dot-grid {
+  background-image: radial-gradient(circle, var(--seam) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ── Amber scan pulse ────────────────────────────────────────────────────── */
+.pulse-amber { animation: pulse-amber 2s infinite; }
+
+/* ── Accordion ───────────────────────────────────────────────────────────── */
+.accordion-down { animation: accordion-down 0.2s ease-out; }
+.accordion-up   { animation: accordion-up   0.2s ease-out; }
+
+@keyframes accordion-down {
+  from { height: 0; }
+  to   { height: var(--radix-accordion-content-height); }
+}
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to   { height: 0; }
+}
