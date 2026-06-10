@@ -29,7 +29,6 @@ function getNavItems(role: string, eventId?: string): NavItem[] {
   if (role === "FACULTY_ADVISOR") {
     return [
       { to: "/faculty/approvals", label: "Approval Queue", icon: <ClipboardCheck size={15} /> },
-      { to: "/dashboard",         label: "Dashboard",       icon: <LayoutDashboard size={15} /> },
     ];
   }
   if (role === "CLUB_ADMIN") {
