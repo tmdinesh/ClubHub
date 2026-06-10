@@ -80,14 +80,22 @@ interface BankDetails {
 }
 
 function exportCertsCsv(certs: Certificate[]) {
-  const headers = ["Recipient", "Type", "Code", "Issued", "PDF URL"];
-  const rows = certs.map((c) => [
-    c.recipient_name || c.recipient_id,
-    c.certificate_type,
-    c.unique_code,
-    fmtDateIST(c.issued_at),
-    c.pdf_url || "",
-  ]);
+  const headers = ["Recipient", "Type", "Position", "Account Number", "Bank Name", "IFSC", "UPI", "Code", "Issued", "PDF URL"];
+  const rows = certs.map((c) => {
+    const m = c.metadata_ ?? {};
+    return [
+      c.recipient_name || c.recipient_id,
+      c.certificate_type,
+      m.position || "",
+      m.bank_account || "",
+      m.bank_name || "",
+      m.ifsc || "",
+      m.upi || "",
+      c.unique_code,
+      fmtDateIST(c.issued_at),
+      c.pdf_url || "",
+    ];
+  });
   const csv = [headers, ...rows]
     .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
     .join("\n");
@@ -399,6 +407,23 @@ function TemplateEditor({ certType, onClose, eventId }: PlaceholderEditorProps) 
   );
 }
 
+// ── Indian bank list ──────────────────────────────────────────────────────────
+
+const INDIAN_BANKS = [
+  "State Bank of India", "Bank of Baroda", "Bank of India", "Bank of Maharashtra",
+  "Canara Bank", "Central Bank of India", "Indian Bank", "Indian Overseas Bank",
+  "Punjab & Sind Bank", "Punjab National Bank", "UCO Bank", "Union Bank of India",
+  "HDFC Bank", "ICICI Bank", "Axis Bank", "Kotak Mahindra Bank", "IndusInd Bank",
+  "Yes Bank", "IDFC First Bank", "Federal Bank", "South Indian Bank",
+  "Karnataka Bank", "Karur Vysya Bank", "City Union Bank", "Lakshmi Vilas Bank",
+  "Dhanlaxmi Bank", "Jammu & Kashmir Bank", "Tamilnad Mercantile Bank",
+  "CSB Bank", "RBL Bank", "Bandhan Bank", "AU Small Finance Bank",
+  "Ujjivan Small Finance Bank", "Equitas Small Finance Bank",
+  "ESAF Small Finance Bank", "Suryoday Small Finance Bank",
+  "PayTm Payments Bank", "Airtel Payments Bank", "India Post Payments Bank",
+  "Fino Payments Bank", "NSDL Payments Bank",
+];
+
 // ── Bank Details Modal ────────────────────────────────────────────────────────
 
 interface BankModalProps {
@@ -409,12 +434,60 @@ interface BankModalProps {
 
 function BankModal({ winnerName, onConfirm, onCancel }: BankModalProps) {
   const [details, setDetails] = useState<BankDetails>({ bank_account: "", bank_name: "", ifsc: "", upi: "" });
+  const [bankSearch, setBankSearch] = useState("");
+  const [showBankList, setShowBankList] = useState(false);
+  const [errors, setErrors] = useState<Partial<Record<keyof BankDetails, string>>>({});
 
   function set(k: keyof BankDetails, v: string) {
     setDetails((prev) => ({ ...prev, [k]: v }));
+    setErrors((prev) => { const n = { ...prev }; delete n[k]; return n; });
+  }
+
+  const filteredBanks = bankSearch.trim()
+    ? INDIAN_BANKS.filter((b) => b.toLowerCase().includes(bankSearch.toLowerCase()))
+    : INDIAN_BANKS;
+
+  function selectBank(name: string) {
+    set("bank_name", name);
+    setBankSearch(name);
+    setShowBankList(false);
   }
 
   const hasAny = details.bank_account || details.bank_name || details.ifsc || details.upi;
+  const hasBankFields = details.bank_account || details.bank_name || details.ifsc;
+
+  function validate(): boolean {
+    const errs: Partial<Record<keyof BankDetails, string>> = {};
+
+    if (hasBankFields) {
+      if (!details.bank_account.trim()) {
+        errs.bank_account = "Required when providing bank details.";
+      } else if (!/^\d{9,18}$/.test(details.bank_account.replace(/\s/g, ""))) {
+        errs.bank_account = "Must be 9–18 digits.";
+      }
+      if (!details.bank_name.trim()) {
+        errs.bank_name = "Required when providing bank details.";
+      }
+      if (!details.ifsc.trim()) {
+        errs.ifsc = "Required when providing bank details.";
+      } else if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(details.ifsc.trim())) {
+        errs.ifsc = "Invalid IFSC — format: XXXX0XXXXXX (e.g. SBIN0001234).";
+      }
+    }
+
+    if (details.upi.trim() && !/^[\w.\-+]+@[\w.\-]+$/.test(details.upi.trim())) {
+      errs.upi = "Invalid UPI ID — format: handle@provider (e.g. name@upi).";
+    }
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
+  function handleConfirm() {
+    if (!hasAny) { onConfirm(null); return; }
+    if (!validate()) return;
+    onConfirm(details);
+  }
 
   const modalInputStyle: React.CSSProperties = {
     display: "block",
@@ -430,6 +503,10 @@ function BankModal({ winnerName, onConfirm, onCancel }: BankModalProps) {
     boxSizing: "border-box",
   };
 
+  function inputStyle(hasError: boolean): React.CSSProperties {
+    return { ...modalInputStyle, borderColor: hasError ? "var(--cinnabar)" : "var(--seam)" };
+  }
+
   return (
     <div
       style={{ background: "rgba(0,0,0,0.8)" }}
@@ -441,34 +518,147 @@ function BankModal({ winnerName, onConfirm, onCancel }: BankModalProps) {
       >
         <div style={{ borderBottom: "1px solid var(--seam)" }} className="px-6 py-4">
           <h2 style={{ color: "var(--cream)" }} className="text-base font-bold">Bank Details for {winnerName}</h2>
-          <p style={{ color: "var(--dust)" }} className="text-xs mt-0.5">Optional — only if this winner has a cash prize.</p>
+          <p style={{ color: "var(--dust)" }} className="text-xs mt-0.5">
+            Optional — only fill if this winner has a cash prize. If any bank field is filled, all three (account, bank, IFSC) are required.
+          </p>
         </div>
         <div className="p-6 space-y-4">
-          <label style={{ color: "var(--fog)" }} className="block text-xs font-semibold">
-            Account Number
-            <input type="text" value={details.bank_account} onChange={(e) => set("bank_account", e.target.value)}
-              placeholder="e.g. 123456789012"
-              style={modalInputStyle} />
-          </label>
-          <label style={{ color: "var(--fog)" }} className="block text-xs font-semibold">
-            Bank Name
-            <input type="text" value={details.bank_name} onChange={(e) => set("bank_name", e.target.value)}
-              placeholder="e.g. State Bank of India"
-              style={modalInputStyle} />
-          </label>
-          <label style={{ color: "var(--fog)" }} className="block text-xs font-semibold">
-            IFSC Code
-            <input type="text" value={details.ifsc} onChange={(e) => set("ifsc", e.target.value.toUpperCase())}
+
+          {/* Account Number */}
+          <div>
+            <label style={{ color: "var(--fog)", fontSize: 12, fontWeight: 600 }}>Account Number</label>
+            <input
+              type="text"
+              value={details.bank_account}
+              onChange={(e) => set("bank_account", e.target.value.replace(/\D/g, ""))}
+              placeholder="9–18 digit account number"
+              style={inputStyle(!!errors.bank_account)}
+              onFocus={(e) => { if (!errors.bank_account) e.currentTarget.style.borderColor = "var(--amber)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.12)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = errors.bank_account ? "var(--cinnabar)" : "var(--seam)"; e.currentTarget.style.boxShadow = "none"; }}
+            />
+            {errors.bank_account && (
+              <p style={{ color: "var(--cinnabar)", fontSize: 11, marginTop: 3, display: "flex", alignItems: "center", gap: 4 }}>
+                <AlertCircle size={10} /> {errors.bank_account}
+              </p>
+            )}
+          </div>
+
+          {/* Bank Name — searchable */}
+          <div style={{ position: "relative" }}>
+            <label style={{ color: "var(--fog)", fontSize: 12, fontWeight: 600 }}>Bank Name</label>
+            <div style={{ position: "relative" }}>
+              <Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--dust)", pointerEvents: "none" }} />
+              <input
+                type="text"
+                value={bankSearch}
+                onChange={(e) => { setBankSearch(e.target.value); set("bank_name", e.target.value); setShowBankList(true); }}
+                onFocus={() => setShowBankList(true)}
+                onBlur={() => setTimeout(() => setShowBankList(false), 150)}
+                placeholder="Search Indian banks…"
+                style={{ ...inputStyle(!!errors.bank_name), paddingLeft: 30 }}
+              />
+            </div>
+            {showBankList && filteredBanks.length > 0 && (
+              <div style={{
+                position: "absolute",
+                zIndex: 10,
+                top: "100%",
+                left: 0,
+                right: 0,
+                background: "var(--ink-soft)",
+                border: "1px solid var(--seam)",
+                borderRadius: 8,
+                maxHeight: 180,
+                overflowY: "auto",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+                marginTop: 2,
+              }}>
+                {filteredBanks.map((bank) => (
+                  <button
+                    key={bank}
+                    type="button"
+                    onMouseDown={() => selectBank(bank)}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "8px 12px",
+                      fontSize: 13,
+                      color: details.bank_name === bank ? "var(--amber)" : "var(--fog)",
+                      background: details.bank_name === bank ? "color-mix(in srgb, var(--amber) 8%, transparent)" : "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                    }}
+                    onMouseEnter={(e) => { if (details.bank_name !== bank) e.currentTarget.style.background = "var(--ink-muted)"; }}
+                    onMouseLeave={(e) => { if (details.bank_name !== bank) e.currentTarget.style.background = "transparent"; }}
+                  >
+                    {bank}
+                  </button>
+                ))}
+              </div>
+            )}
+            {errors.bank_name && (
+              <p style={{ color: "var(--cinnabar)", fontSize: 11, marginTop: 3, display: "flex", alignItems: "center", gap: 4 }}>
+                <AlertCircle size={10} /> {errors.bank_name}
+              </p>
+            )}
+          </div>
+
+          {/* IFSC */}
+          <div>
+            <label style={{ color: "var(--fog)", fontSize: 12, fontWeight: 600 }}>IFSC Code</label>
+            <input
+              type="text"
+              value={details.ifsc}
+              onChange={(e) => set("ifsc", e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
               placeholder="e.g. SBIN0001234"
-              style={{ ...modalInputStyle, fontFamily: "monospace" }} />
-          </label>
-          <label style={{ color: "var(--fog)" }} className="block text-xs font-semibold">
-            UPI ID
-            <input type="text" value={details.upi} onChange={(e) => set("upi", e.target.value)}
-              placeholder="e.g. name@upi"
-              style={modalInputStyle} />
-          </label>
+              maxLength={11}
+              style={{ ...inputStyle(!!errors.ifsc), fontFamily: "monospace", letterSpacing: "0.05em" }}
+              onFocus={(e) => { if (!errors.ifsc) e.currentTarget.style.borderColor = "var(--amber)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.12)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = errors.ifsc ? "var(--cinnabar)" : "var(--seam)"; e.currentTarget.style.boxShadow = "none"; }}
+            />
+            {details.ifsc && !errors.ifsc && /^[A-Z]{4}0[A-Z0-9]{6}$/.test(details.ifsc) && (
+              <p style={{ color: "var(--jade)", fontSize: 11, marginTop: 3, display: "flex", alignItems: "center", gap: 4 }}>
+                <CheckCircle size={10} /> Valid IFSC format
+              </p>
+            )}
+            {errors.ifsc && (
+              <p style={{ color: "var(--cinnabar)", fontSize: 11, marginTop: 3, display: "flex", alignItems: "center", gap: 4 }}>
+                <AlertCircle size={10} /> {errors.ifsc}
+              </p>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div style={{ borderTop: "1px solid var(--seam)", paddingTop: 4 }}>
+            <p style={{ color: "var(--dust)", fontSize: 11, marginBottom: 8 }}>— or —</p>
+          </div>
+
+          {/* UPI */}
+          <div>
+            <label style={{ color: "var(--fog)", fontSize: 12, fontWeight: 600 }}>UPI ID</label>
+            <input
+              type="text"
+              value={details.upi}
+              onChange={(e) => set("upi", e.target.value)}
+              placeholder="e.g. name@okicici"
+              style={inputStyle(!!errors.upi)}
+              onFocus={(e) => { if (!errors.upi) e.currentTarget.style.borderColor = "var(--amber)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.12)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = errors.upi ? "var(--cinnabar)" : "var(--seam)"; e.currentTarget.style.boxShadow = "none"; }}
+            />
+            {details.upi && !errors.upi && /^[\w.\-+]+@[\w.\-]+$/.test(details.upi.trim()) && (
+              <p style={{ color: "var(--jade)", fontSize: 11, marginTop: 3, display: "flex", alignItems: "center", gap: 4 }}>
+                <CheckCircle size={10} /> Valid UPI format
+              </p>
+            )}
+            {errors.upi && (
+              <p style={{ color: "var(--cinnabar)", fontSize: 11, marginTop: 3, display: "flex", alignItems: "center", gap: 4 }}>
+                <AlertCircle size={10} /> {errors.upi}
+              </p>
+            )}
+          </div>
         </div>
+
         <div style={{ borderTop: "1px solid var(--seam)" }} className="px-6 py-4 flex gap-3 justify-end">
           <button
             type="button"
@@ -492,7 +682,7 @@ function BankModal({ winnerName, onConfirm, onCancel }: BankModalProps) {
           </button>
           <button
             type="button"
-            onClick={() => onConfirm(hasAny ? details : null)}
+            onClick={handleConfirm}
             style={{ background: "var(--amber)", color: "var(--ink)" }}
             className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-colors"
             onMouseEnter={(e) => (e.currentTarget.style.background = "var(--amber-glow)")}
@@ -985,7 +1175,7 @@ export default function CertificatesManage() {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ background: "var(--ink-muted)", borderBottom: "1px solid var(--seam)" }}>
-                  {["Recipient", "Type", "Code", "Issued", ""].map((h) => (
+                  {["Recipient", "Type", "Bank / UPI", "Code", "Issued", ""].map((h) => (
                     <th key={h} style={{ color: "var(--dust)" }} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
@@ -994,7 +1184,7 @@ export default function CertificatesManage() {
                 {loadingCerts ? (
                   Array.from({ length: 4 }).map((_, i) => (
                     <tr key={i} style={{ borderTop: "1px solid var(--seam)" }} className="animate-pulse">
-                      {[1,2,3,4,5].map((j) => (
+                      {[1,2,3,4,5,6].map((j) => (
                         <td key={j} className="px-4 py-3.5">
                           <div style={{ background: "var(--ink-muted)" }} className="h-4 rounded w-20" />
                         </td>
@@ -1003,12 +1193,15 @@ export default function CertificatesManage() {
                   ))
                 ) : certificates.length === 0 ? (
                   <tr>
-                    <td colSpan={5} style={{ color: "var(--dust)" }} className="px-4 py-10 text-center text-sm">
+                    <td colSpan={6} style={{ color: "var(--dust)" }} className="px-4 py-10 text-center text-sm">
                       No certificates issued yet.
                     </td>
                   </tr>
                 ) : (
-                  certificates.map((cert) => (
+                  certificates.map((cert) => {
+                    const meta = cert.metadata_ ?? {};
+                    const hasBankDetails = meta.bank_account || meta.upi;
+                    return (
                     <tr
                       key={cert.id}
                       style={{ borderTop: "1px solid var(--seam)" }}
@@ -1018,8 +1211,8 @@ export default function CertificatesManage() {
                     >
                       <td style={{ color: "var(--cream)" }} className="px-4 py-3.5 font-medium text-sm">
                         {cert.recipient_name || cert.recipient_id.slice(0, 12) + "…"}
-                        {cert.metadata_?.position && (
-                          <span style={{ color: "var(--amber)" }} className="ml-2 text-xs font-normal">{cert.metadata_.position}</span>
+                        {meta.position && (
+                          <span style={{ color: "var(--amber)" }} className="ml-2 text-xs font-normal">{meta.position}</span>
                         )}
                       </td>
                       <td className="px-4 py-3.5">
@@ -1028,6 +1221,30 @@ export default function CertificatesManage() {
                         >
                           {cert.certificate_type}
                         </span>
+                      </td>
+                      <td className="px-4 py-3.5" style={{ minWidth: 180 }}>
+                        {hasBankDetails ? (
+                          <div style={{ fontSize: 12 }}>
+                            {meta.bank_account && (
+                              <div style={{ color: "var(--cream)", fontFamily: "monospace" }}>
+                                {meta.bank_account}
+                                {meta.bank_name && <span style={{ color: "var(--ash)", fontFamily: "sans-serif" }}> · {meta.bank_name}</span>}
+                              </div>
+                            )}
+                            {meta.ifsc && (
+                              <div style={{ color: "var(--fog)", fontFamily: "monospace", fontSize: 11, marginTop: 2 }}>
+                                IFSC: {meta.ifsc}
+                              </div>
+                            )}
+                            {meta.upi && (
+                              <div style={{ color: "var(--sky)", fontSize: 11, marginTop: 2 }}>
+                                UPI: {meta.upi}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span style={{ color: "var(--seam)", fontSize: 12 }}>—</span>
+                        )}
                       </td>
                       <td style={{ color: "var(--fog)", fontFamily: "monospace", fontSize: 12 }} className="px-4 py-3.5">{cert.unique_code}</td>
                       <td style={{ color: "var(--fog)", fontSize: 12 }} className="px-4 py-3.5">{fmtDateIST(cert.issued_at)}</td>
@@ -1060,7 +1277,8 @@ export default function CertificatesManage() {
                         </div>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>
