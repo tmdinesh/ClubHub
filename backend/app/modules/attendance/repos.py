@@ -109,6 +109,7 @@ class AttendanceRepository:
 
     async def get_registration_by_roll(self, event_id: UUID, roll_number: str) -> dict | None:
         """Look up a confirmed registration by roll number for the given event."""
+        from sqlalchemy import func as sqlfunc
         from app.modules.teams.models import Team
         q = (
             select(
@@ -123,7 +124,7 @@ class AttendanceRepository:
             .outerjoin(Team, Registration.team_id == Team.id)
             .where(
                 Registration.event_id == event_id,
-                User.roll_number == roll_number,
+                sqlfunc.upper(User.roll_number) == roll_number.upper(),
             )
         )
         row = (await self.db.execute(q)).one_or_none()
