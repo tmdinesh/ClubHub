@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import csv
 import io
-from datetime import date
+from datetime import date, datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -168,7 +168,7 @@ class AnalyticsRepository:
             q = q.where(cond)
         return (await self.db.execute(q)).scalar_one()
 
-    async def winners_bank_export(self, from_date: date, to_date: date) -> str:        from datetime import datetime, timezone
+    async def winners_bank_export(self, from_date: date, to_date: date) -> str:
         from_dt = datetime(from_date.year, from_date.month, from_date.day, 0, 0, 0, tzinfo=timezone.utc)
         to_dt = datetime(to_date.year, to_date.month, to_date.day, 23, 59, 59, tzinfo=timezone.utc)
 
@@ -217,7 +217,6 @@ class AnalyticsRepository:
         return buf.getvalue()
 
     async def winners_bank_list(self, from_date: date, to_date: date) -> list[dict]:
-        from datetime import datetime, timezone
         from_dt = datetime(from_date.year, from_date.month, from_date.day, 0, 0, 0, tzinfo=timezone.utc)
         to_dt = datetime(to_date.year, to_date.month, to_date.day, 23, 59, 59, tzinfo=timezone.utc)
 
