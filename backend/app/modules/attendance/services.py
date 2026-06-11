@@ -75,7 +75,54 @@ class AttendanceService:
         finally:
             await redis.delete(lock_key)
 
-    async def list_present_users(self, event_id: UUID) -> list[dict]:
+    async def lookup_by_roll(self, roll_number: str, event_id: UUID) -> dict:
+        row = await self.repo.get_registration_by_roll(event_id, roll_number.strip().upper())
+        if not row:
+            raise NotFoundError("Participant with roll number", roll_number)
+        return row
+
+    async def scan_by_roll(self, roll_number: str, event_id: UUID, checkpoint_id: UUID, scanner: User) -> dict:
+        row = await self.repo.get_registration_by_roll(event_id, roll_number.strip().upper())
+        if not row:
+            raise NotFoundError("Participant with roll number", roll_number)
+
+        from app.shared.enums import RegistrationStatus as RS
+        if row["status"] != RS.CONFIRMED:
+            raise BadRequestError("Registration is not confirmed")
+
+        cp = await self.repo.get_checkpoint(checkpoint_id)
+        if not cp:
+            raise NotFoundError("Checkpoint", checkpoint_id)
+
+        reg_id = UUID(row["reg_id"])
+        participant_info = {
+            "participant_name": row["participant_name"],
+            "roll_number": row["roll_number"],
+            "team_name": row["team_name"],
+        }
+
+        redis = get_redis_client()
+        lock_key = f"attendance_lock:{reg_id}:{checkpoint_id}"
+        acquired = await redis.set(lock_key, "1", nx=True, ex=5)
+
+        if not acquired:
+            return {"is_duplicate": True, "message": "Scan in progress", **participant_info}
+
+        try:
+            existing = await self.repo.existing_record(reg_id, checkpoint_id)
+            if existing:
+                return {"is_duplicate": True, "record_id": str(existing.id), **participant_info}
+
+            record = await self.repo.create_record(
+                registration_id=reg_id,
+                checkpoint_id=checkpoint_id,
+                scanned_at=datetime.now(timezone.utc),
+                scanned_by=scanner.id,
+                is_duplicate=False,
+            )
+            return {"is_duplicate": False, "record_id": str(record.id), **participant_info}
+        finally:
+            await redis.delete(lock_key)
         return await self.repo.list_present_users(event_id)
 
     async def get_dashboard(self, event_id: UUID) -> dict:
