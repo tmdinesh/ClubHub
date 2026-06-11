@@ -72,7 +72,7 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div style={{ padding: "40px 40px 60px", maxWidth: 900, margin: "0 auto" }}>
+      <div className="px-4 pt-6 pb-12 sm:px-10 sm:pt-10 sm:pb-16" style={{ maxWidth: 900, margin: "0 auto" }}>
 
         {/* Welcome */}
         <div className="animate-fade-up" style={{ marginBottom: 36 }}>
@@ -88,14 +88,14 @@ export default function Dashboard() {
         </div>
 
         {/* Stats */}
-        <div className="animate-fade-up delay-100" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 36 }}>
+        <div className="animate-fade-up delay-100 grid grid-cols-3 gap-3" style={{ marginBottom: 36 }}>
           <StatBox icon={<Ticket size={17} />} value={registrations?.length ?? 0} label="Registered Events" accent="var(--amber)" to="/dashboard/events" />
           <StatBox icon={<Award size={17} />} value={certificates?.length ?? 0} label="Certificates Earned" accent="var(--jade)" to="/dashboard/certificates" />
           <StatBox icon={<Bell size={17} />} value={unread} label="Unread Notifications" accent="var(--sky)" to="/dashboard/notifications" />
         </div>
 
         {/* Two-col */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
           {/* Active registrations */}
           <section className="animate-fade-up delay-200">
@@ -123,7 +123,7 @@ export default function Dashboard() {
                     }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <Link to={`/events/${reg.event_slug}`} style={{ textDecoration: "none" }}>
-                          <p style={{ fontSize: 13, fontWeight: 600, color: "var(--cream)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{reg.event_title}</p>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: "var(--cream)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} className="truncate">{reg.event_title}</p>
                         </Link>
                         <p style={{ fontSize: 11, color: "var(--fog)", marginTop: 2 }}>
                           {reg.club_name}

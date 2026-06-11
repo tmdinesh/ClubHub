@@ -13,10 +13,11 @@ import {
 import {
   BarChart3, Users, CalendarDays, Ticket, TrendingUp,
   Plus, Pencil, Check, X, ChevronDown, Loader2,
-  Building2, ChevronRight, Activity,
+  Building2, ChevronRight, Activity, Download, FileSpreadsheet,
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
+import { useAuthStore } from "@/store/auth.store";
 import type { Club } from "@/types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -227,7 +228,7 @@ function UserManagementTab({ clubs }: { clubs: Club[] }) {
       {showCreate && (
         <div className="rounded-xl p-5" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
           <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--fog)" }}>New User</h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input
               type="email"
               placeholder="Email *"
@@ -781,7 +782,7 @@ function ClubAnalyticsTab() {
   return (
     <div className="space-y-5">
       {/* Summary row */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-xl p-4" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
           <div className="flex items-center gap-2 mb-1">
             <Building2 size={14} style={{ color: "var(--amber)" }} />
@@ -835,15 +836,138 @@ function ClubAnalyticsTab() {
   );
 }
 
+// ── Bank Export tab ───────────────────────────────────────────────────────────
+
+function BankExportTab() {
+  const today = new Date().toISOString().slice(0, 10);
+  const firstOfMonth = today.slice(0, 8) + "01";
+  const [fromDate, setFromDate] = useState(firstOfMonth);
+  const [toDate, setToDate] = useState(today);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleExport() {
+    if (!fromDate || !toDate) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const token = useAuthStore.getState().accessToken ?? "";
+      const res = await fetch(
+        `/api/analytics/bank-export?from_date=${fromDate}&to_date=${toDate}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bank-details-${fromDate}-to-${toDate}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Export failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const inputStyle: React.CSSProperties = {
+    background: "var(--ink-muted)",
+    border: "1px solid var(--seam)",
+    borderRadius: 8,
+    padding: "8px 12px",
+    fontSize: 14,
+    color: "var(--cream)",
+    colorScheme: "dark",
+    width: "100%",
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl p-6" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
+        <div className="flex items-center gap-2 mb-1">
+          <FileSpreadsheet size={18} style={{ color: "var(--jade)" }} />
+          <h2 className="text-base font-semibold" style={{ color: "var(--cream)" }}>Bank Details Export</h2>
+        </div>
+        <p className="text-sm mb-6" style={{ color: "var(--fog)" }}>
+          Downloads a CSV of all event winners with bank account details and prize amounts for the selected date range. Filter is based on event start date.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div>
+            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "var(--dust)" }}>
+              From Date
+            </label>
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "var(--dust)" }}>
+              To Date
+            </label>
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+        </div>
+
+        {error && (
+          <p className="text-sm mb-4 px-3 py-2 rounded-lg" style={{ color: "var(--cinnabar)", background: "color-mix(in srgb, var(--cinnabar) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--cinnabar) 25%, transparent)" }}>
+            {error}
+          </p>
+        )}
+
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={loading || !fromDate || !toDate}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+          style={{ background: "var(--jade)", color: "#0D0F14" }}
+        >
+          {loading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+          {loading ? "Generating…" : "Download CSV"}
+        </button>
+      </div>
+
+      <div className="rounded-xl p-4" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
+        <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--dust)" }}>Columns in the export</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {[
+            "Event", "Position", "Participant Name", "Email",
+            "Roll Number", "Prize Amount (₹)",
+            "Bank Account Name", "Account Number", "IFSC Code",
+          ].map((col) => (
+            <div key={col} className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg" style={{ background: "var(--ink-muted)", color: "var(--fog)" }}>
+              <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--amber)" }} />
+              {col}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main AdminDashboard ───────────────────────────────────────────────────────
 
-type Tab = "metrics" | "users" | "clubs" | "analytics";
+type Tab = "metrics" | "users" | "clubs" | "analytics" | "bank-export";
 
 const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-  { key: "metrics",   label: "Platform Metrics", icon: <BarChart3 size={15} /> },
-  { key: "analytics", label: "Club Analytics",   icon: <Building2 size={15} /> },
-  { key: "users",     label: "User Management",  icon: <Users size={15} /> },
-  { key: "clubs",     label: "Club Setup",        icon: <CalendarDays size={15} /> },
+  { key: "metrics",     label: "Platform Metrics", icon: <BarChart3 size={15} /> },
+  { key: "analytics",  label: "Club Analytics",   icon: <Building2 size={15} /> },
+  { key: "users",      label: "User Management",  icon: <Users size={15} /> },
+  { key: "clubs",      label: "Club Setup",        icon: <CalendarDays size={15} /> },
+  { key: "bank-export",label: "Bank Export",       icon: <FileSpreadsheet size={15} /> },
 ];
 
 export default function AdminDashboard() {
@@ -861,7 +985,7 @@ export default function AdminDashboard() {
 
   return (
     <Layout>
-      <div className="p-8 max-w-6xl mx-auto">
+      <div className="px-4 py-6 sm:px-8 sm:py-8 max-w-6xl mx-auto">
         <div className="mb-6">
           <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--dust)" }}>Admin</p>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: "var(--cream)" }}>
@@ -871,7 +995,8 @@ export default function AdminDashboard() {
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 p-1 rounded-xl mb-8 w-fit" style={{ background: "var(--ink-muted)" }}>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 mb-8">
+          <div className="flex gap-1 p-1 rounded-xl w-max min-w-full sm:w-fit" style={{ background: "var(--ink-muted)" }}>
           {TABS.map((t) => (
             <button
               type="button"
@@ -889,11 +1014,13 @@ export default function AdminDashboard() {
             </button>
           ))}
         </div>
+        </div>
 
         {activeTab === "metrics" && <MetricsTab />}
         {activeTab === "analytics" && <ClubAnalyticsTab />}
         {activeTab === "users" && <UserManagementTab clubs={clubs} />}
         {activeTab === "clubs" && <ClubSetupTab clubs={clubs} />}
+        {activeTab === "bank-export" && <BankExportTab />}
       </div>
     </Layout>
   );

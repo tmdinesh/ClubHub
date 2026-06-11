@@ -57,7 +57,7 @@ export default function OrganizerDashboard() {
 
   return (
     <Layout>
-      <div className="p-8 max-w-5xl mx-auto">
+      <div className="px-4 py-6 sm:px-8 sm:py-8 max-w-5xl mx-auto">
         <div className="mb-8">
           <p style={{ color: "var(--dust)", fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "4px" }}>
             {roleLabel}

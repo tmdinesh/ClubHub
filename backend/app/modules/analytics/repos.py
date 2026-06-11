@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import csv
+import io
+from datetime import date
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -9,7 +12,7 @@ from app.modules.attendance.models import AttendanceRecord, Checkpoint
 from app.modules.auth.models import User
 from app.modules.events.models import Club, Event
 from app.modules.feedback.models import FeedbackAnswer, NpsScore
-from app.modules.finance.models import Expense, EventBudget
+from app.modules.finance.models import Expense, EventBudget, EventWinner
 from app.modules.registration.models import Registration
 from app.modules.teams.models import Team, TeamMember
 from app.shared.enums import EventStatus, RegistrationStatus
@@ -164,3 +167,52 @@ class AnalyticsRepository:
         for cond in conditions:
             q = q.where(cond)
         return (await self.db.execute(q)).scalar_one()
+
+    async def winners_bank_export(self, from_date: date, to_date: date) -> str:
+        from datetime import datetime, timezone
+        from_dt = datetime(from_date.year, from_date.month, from_date.day, 0, 0, 0, tzinfo=timezone.utc)
+        to_dt = datetime(to_date.year, to_date.month, to_date.day, 23, 59, 59, tzinfo=timezone.utc)
+
+        q = (
+            select(
+                Event.title.label("event"),
+                EventWinner.position,
+                EventWinner.prize_amount,
+                User.name.label("participant_name"),
+                User.email.label("participant_email"),
+                User.roll_number,
+                User.bank_account_name,
+                User.bank_account_number,
+                User.bank_ifsc,
+            )
+            .join(Event, EventWinner.event_id == Event.id)
+            .join(User, EventWinner.user_id == User.id)
+            .where(
+                Event.is_deleted == False,
+                Event.start_datetime >= from_dt,
+                Event.start_datetime <= to_dt,
+            )
+            .order_by(Event.start_datetime, Event.title, EventWinner.position)
+        )
+        rows = (await self.db.execute(q)).all()
+
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow([
+            "Event", "Position", "Participant Name", "Email",
+            "Roll Number", "Prize Amount (₹)",
+            "Bank Account Name", "Account Number", "IFSC Code",
+        ])
+        for r in rows:
+            writer.writerow([
+                r.event,
+                r.position,
+                r.participant_name,
+                r.participant_email,
+                r.roll_number or "",
+                float(r.prize_amount) if r.prize_amount else "",
+                r.bank_account_name or "",
+                r.bank_account_number or "",
+                r.bank_ifsc or "",
+            ])
+        return buf.getvalue()

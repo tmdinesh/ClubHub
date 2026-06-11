@@ -125,7 +125,7 @@ export default function EventOverview() {
 
   return (
     <Layout eventId={eventId}>
-      <div style={{ padding: 32, maxWidth: 960, margin: "0 auto" }}>
+      <div className="px-4 py-6 sm:px-8 sm:py-8" style={{ maxWidth: 960, margin: "0 auto" }}>
         <div style={{ marginBottom: 28 }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: "var(--ash)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>
             Event Overview

@@ -143,9 +143,9 @@ function AttendancePanel({ eventId }: { eventId: string }) {
           <p className="text-xs font-semibold mb-2" style={{ color: "var(--fog)" }}>Present attendees ({present.length})</p>
           <div className="max-h-40 overflow-y-auto space-y-1">
             {present.map((u) => (
-              <div key={u.user_id} className="flex justify-between text-xs px-2 py-1 rounded" style={{ background: "var(--ink-muted)" }}>
-                <span className="font-medium" style={{ color: "var(--fog)" }}>{u.name}</span>
-                <span style={{ color: "var(--dust)" }}>{u.email}</span>
+              <div key={u.user_id} className="flex flex-col sm:flex-row sm:justify-between text-xs px-2 py-1.5 rounded gap-0.5" style={{ background: "var(--ink-muted)" }}>
+                <span className="font-medium truncate" style={{ color: "var(--fog)" }}>{u.name}</span>
+                <span className="truncate" style={{ color: "var(--dust)", fontSize: 10 }}>{u.email}</span>
               </div>
             ))}
           </div>
@@ -198,7 +198,8 @@ function FinancePanel({ eventId }: { eventId: string }) {
         <div>
           <p className="text-xs font-semibold mb-2" style={{ color: "var(--fog)" }}>Expenses ({expenses.length})</p>
           <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--seam)" }}>
-            <table className="w-full text-xs">
+            <div className="overflow-x-auto">
+            <table className="w-full text-xs min-w-[380px]">
               <thead>
                 <tr style={{ background: "var(--ink-muted)" }}>
                   {["Title", "Category", "Amount"].map((h) => (
@@ -219,6 +220,7 @@ function FinancePanel({ eventId }: { eventId: string }) {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       ) : (
@@ -423,7 +425,7 @@ export default function FacultyApprovals() {
 
   return (
     <Layout>
-      <div className="p-8 max-w-4xl mx-auto">
+      <div className="px-4 py-6 sm:px-8 sm:py-8 max-w-4xl mx-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: "var(--cream)" }}>
             <ClipboardCheck size={22} style={{ color: "var(--amber)" }} />

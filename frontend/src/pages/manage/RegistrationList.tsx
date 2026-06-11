@@ -425,7 +425,7 @@ export default function RegistrationList() {
 
   return (
     <Layout eventId={eventId}>
-      <div style={{ padding: 32, maxWidth: 960, margin: "0 auto" }}>
+      <div className="px-4 py-6 sm:px-8 sm:py-8" style={{ maxWidth: 960, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24 }}>
           <div>
             <h1
