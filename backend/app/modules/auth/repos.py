@@ -1,13 +1,20 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.auth.models import User
 from app.shared.enums import UserRole
+
+
+def _roll_from_email(email: str) -> str | None:
+    """Extract roll number from institutional email (e.g. 23z320@psgtech.ac.in → 23Z320)."""
+    local = email.split("@")[0].upper()
+    return local if re.match(r"^[0-9]{2}[A-Z][0-9A-Z]+$", local) else None
 
 
 class UserRepository:
@@ -49,6 +56,7 @@ class UserRepository:
                 avatar_url=avatar_url,
                 role=UserRole.PARTICIPANT,
                 last_login=datetime.now(timezone.utc),
+                roll_number=_roll_from_email(email),
             )
             self.db.add(user)
             await self.db.flush()
@@ -58,6 +66,8 @@ class UserRepository:
             user.name = name
             user.avatar_url = avatar_url
             user.last_login = datetime.now(timezone.utc)
+            if not user.roll_number:
+                user.roll_number = _roll_from_email(email)
             await self.db.flush()
         return user, created
 
@@ -72,6 +82,8 @@ class UserRepository:
         user = await self.get_by_email(email)
         if user is not None:
             user.last_login = datetime.now(timezone.utc)
+            if not user.roll_number:
+                user.roll_number = _roll_from_email(email)
             await self.db.flush()
             return user, False
         user = User(
@@ -81,6 +93,7 @@ class UserRepository:
             avatar_url=None,
             role=role,
             last_login=datetime.now(timezone.utc),
+            roll_number=_roll_from_email(email),
         )
         self.db.add(user)
         await self.db.flush()
