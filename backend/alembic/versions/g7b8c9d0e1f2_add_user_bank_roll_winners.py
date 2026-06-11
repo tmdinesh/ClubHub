@@ -1,7 +1,7 @@
 """add user bank/roll fields and winners table
 
-Revision ID: a1b2c3d4e5f6
-Revises: f6a7b8c9d0e1
+Revision ID: g7b8c9d0e1f2
+Revises: a2b3c4d5e6f7
 Create Date: 2026-06-10
 
 """
@@ -9,8 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
 
-revision = "a1b2c3d4e5f6"
-down_revision = "f6a7b8c9d0e1"
+revision = "g7b8c9d0e1f2"
+down_revision = "a2b3c4d5e6f7"
 branch_labels = None
 depends_on = None
 
