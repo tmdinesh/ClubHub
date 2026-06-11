@@ -611,9 +611,9 @@ export default function ClubAdminDashboard() {
   return (
     <>
     <Layout>
-      <div className="p-8 max-w-5xl mx-auto">
+      <div className="px-4 py-6 sm:px-8 sm:py-8 max-w-5xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div>
             <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--dust)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "4px" }}>Club Admin</p>
             <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--cream)", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: "8px" }}>
@@ -878,7 +878,7 @@ export default function ClubAdminDashboard() {
                 padding: "16px",
                 transition: "border-color 0.15s",
               }}>
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p style={{ fontSize: "14px", fontWeight: 600, color: "var(--cream)" }} className="truncate">{event.title}</p>
@@ -909,7 +909,7 @@ export default function ClubAdminDashboard() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-auto">
                     {event.status === "DRAFT" && (
                       <button
                         type="button"

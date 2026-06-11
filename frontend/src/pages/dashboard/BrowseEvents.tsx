@@ -123,7 +123,7 @@ export default function BrowseEvents() {
 
   return (
     <Layout>
-      <div style={{ padding: "32px 32px 48px", maxWidth: 1080, margin: "0 auto" }}>
+      <div className="px-4 py-6 sm:px-8 sm:pb-12" style={{ maxWidth: 1080, margin: "0 auto" }}>
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: "var(--ash)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>

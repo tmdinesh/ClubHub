@@ -140,10 +140,10 @@ export default function AttendanceDashboard() {
 
   return (
     <Layout eventId={eventId}>
-      <div style={{ padding: 32, maxWidth: 960, margin: "0 auto" }}>
+      <div className="px-4 py-6 sm:px-8 sm:py-8" style={{ maxWidth: 960, margin: "0 auto" }}>
 
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3" style={{ marginBottom: 28 }}>
           <div>
             <h1
               style={{
@@ -471,7 +471,6 @@ export default function AttendanceDashboard() {
             background: "var(--ink-soft)",
             border: "1px solid var(--seam)",
             borderRadius: 12,
-            overflow: "hidden",
           }}
         >
           <div
@@ -544,7 +543,8 @@ export default function AttendanceDashboard() {
               No participants scanned present yet.
             </div>
           ) : (
-            <table style={{ width: "100%", fontSize: 14, borderCollapse: "collapse" }}>
+            <div className="overflow-x-auto">
+            <table style={{ width: "100%", minWidth: 480, fontSize: 14, borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "var(--ink-muted)", borderBottom: "1px solid var(--seam)" }}>
                   <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "var(--dust)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Name</th>
@@ -567,6 +567,7 @@ export default function AttendanceDashboard() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

@@ -80,7 +80,7 @@ export default function EventDiscovery() {
           <nav style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {isAuthenticated ? (
               <>
-                <span style={{ fontSize: 13, color: "var(--fog)" }}>{user?.name}</span>
+                <span className="hidden sm:inline" style={{ fontSize: 13, color: "var(--fog)" }}>{user?.name}</span>
                 <Link to="/dashboard" className="btn-primary" style={{ textDecoration: "none", fontSize: 13 }}>
                   Dashboard
                 </Link>

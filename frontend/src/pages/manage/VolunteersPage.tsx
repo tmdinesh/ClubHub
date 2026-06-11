@@ -34,7 +34,7 @@ export default function VolunteersPage() {
 
   return (
     <Layout eventId={eventId}>
-      <div className="p-8 max-w-4xl mx-auto">
+      <div className="px-4 py-6 sm:px-8 sm:py-8 max-w-4xl mx-auto">
         <div className="mb-6">
           <h1
             className="text-2xl font-bold tracking-tight flex items-center gap-2"

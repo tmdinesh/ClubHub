@@ -159,7 +159,7 @@ export default function Notifications() {
 
   return (
     <Layout>
-      <div className="p-8 max-w-3xl mx-auto">
+      <div className="px-4 py-6 sm:px-8 sm:py-8 max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1

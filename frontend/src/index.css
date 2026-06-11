@@ -257,3 +257,10 @@ body::before {
   from { height: var(--radix-accordion-content-height); }
   to   { height: 0; }
 }
+
+/* ── Mobile nav ──────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .nav-item { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
+}
+
+body.drawer-open { overflow: hidden; }

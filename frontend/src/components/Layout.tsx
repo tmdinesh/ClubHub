@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth.store";
@@ -5,6 +6,7 @@ import {
   LayoutDashboard, CalendarDays, Users, Award, Bell, LogOut,
   ChevronRight, Settings, ShieldCheck, ClipboardCheck, Megaphone,
   BarChart3, Wallet, ListChecks, Radio, KeyRound, Building2,
+  Menu, X,
 } from "lucide-react";
 import api from "@/lib/api";
 import type { Event } from "@/types";
@@ -84,6 +86,7 @@ export default function Layout({ children, eventId }: LayoutProps) {
   const role = user?.role ?? "PARTICIPANT";
   const navItems = getNavItems(role, eventId);
   const section = eventId ? "Event" : (SECTION_LABEL[role] ?? "Portal");
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const { data: eventData } = useQuery<Event>({
     queryKey: ["event", eventId],
@@ -91,6 +94,11 @@ export default function Layout({ children, eventId }: LayoutProps) {
     enabled: !!eventId,
     staleTime: 5 * 60 * 1000,
   });
+
+  useEffect(() => {
+    document.body.classList.toggle("drawer-open", mobileOpen);
+    return () => { document.body.classList.remove("drawer-open"); };
+  }, [mobileOpen]);
 
   const initials = user?.name
     ? user.name.split(" ").map((p) => p[0]).join("").toUpperCase().slice(0, 2)
@@ -101,28 +109,9 @@ export default function Layout({ children, eventId }: LayoutProps) {
     navigate("/");
   }
 
-  return (
-    <div className="flex h-screen overflow-hidden" style={{ background: "var(--ink)", fontFamily: "'Outfit', sans-serif" }}>
-
-      {/* ── Sidebar ── */}
-      <aside className="w-56 shrink-0 flex flex-col h-full" style={{
-        background: "var(--ink-soft)",
-        borderRight: "1px solid var(--seam)",
-      }}>
-
-        {/* Logo */}
-        <div className="px-5 pt-6 pb-5" style={{ borderBottom: "1px solid var(--seam)" }}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: "var(--amber)" }}>
-              <span style={{ color: "var(--ink)", fontFamily: "'DM Serif Display', serif", fontSize: 13, fontWeight: 700, lineHeight: 1 }}>C</span>
-            </div>
-            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>
-              ClubHub
-            </span>
-          </div>
-        </div>
-
+  function SidebarContents({ onNavClick }: { onNavClick?: () => void }) {
+    return (
+      <>
         {/* Section */}
         <div className="px-5 pt-5 pb-2">
           <span style={{
@@ -166,6 +155,7 @@ export default function Layout({ children, eventId }: LayoutProps) {
               key={item.to}
               to={item.to}
               end={item.exact}
+              onClick={onNavClick}
               className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
             >
               {({ isActive }) => (
@@ -217,12 +207,109 @@ export default function Layout({ children, eventId }: LayoutProps) {
             </button>
           </div>
         </div>
+      </>
+    );
+  }
+
+  return (
+    <div className="flex h-screen overflow-hidden relative" style={{ background: "var(--ink)", fontFamily: "'Outfit', sans-serif" }}>
+
+      {/* ── Desktop Sidebar (hidden on mobile) ── */}
+      <aside className="hidden md:flex md:w-56 md:shrink-0 flex-col h-full" style={{
+        background: "var(--ink-soft)",
+        borderRight: "1px solid var(--seam)",
+      }}>
+        {/* Logo */}
+        <div className="px-5 pt-6 pb-5" style={{ borderBottom: "1px solid var(--seam)" }}>
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+              style={{ background: "var(--amber)" }}>
+              <span style={{ color: "var(--ink)", fontFamily: "'DM Serif Display', serif", fontSize: 13, fontWeight: 700, lineHeight: 1 }}>C</span>
+            </div>
+            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>
+              ClubHub
+            </span>
+          </div>
+        </div>
+
+        <SidebarContents />
       </aside>
 
       {/* ── Main content ── */}
       <main className="flex-1 overflow-y-auto min-w-0 dot-grid">
+        {/* Mobile top bar */}
+        <div className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4"
+          style={{
+            height: 52,
+            background: "var(--ink-soft)",
+            borderBottom: "1px solid var(--seam)",
+          }}>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
+              style={{ background: "var(--amber)" }}>
+              <span style={{ color: "var(--ink)", fontFamily: "'DM Serif Display', serif", fontSize: 11, fontWeight: 700, lineHeight: 1 }}>C</span>
+            </div>
+            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 14, letterSpacing: "-0.02em" }}>
+              ClubHub
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            className="flex items-center justify-center rounded-lg transition-colors"
+            style={{ color: "var(--dust)", minHeight: 44, minWidth: 44 }}
+            aria-label="Open navigation"
+          >
+            <Menu size={20} />
+          </button>
+        </div>
+
         {children}
       </main>
+
+      {/* ── Mobile drawer backdrop ── */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40"
+          style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(2px)" }}
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* ── Mobile drawer panel ── */}
+      <aside
+        className="md:hidden fixed inset-y-0 left-0 z-50 w-64 flex flex-col h-full"
+        style={{
+          background: "var(--ink-soft)",
+          borderRight: "1px solid var(--seam)",
+          transform: mobileOpen ? "translateX(0)" : "translateX(-100%)",
+          transition: "transform 250ms cubic-bezier(.22,.68,0,1.2)",
+        }}
+      >
+        {/* Drawer header with logo + close */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-5" style={{ borderBottom: "1px solid var(--seam)" }}>
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+              style={{ background: "var(--amber)" }}>
+              <span style={{ color: "var(--ink)", fontFamily: "'DM Serif Display', serif", fontSize: 13, fontWeight: 700, lineHeight: 1 }}>C</span>
+            </div>
+            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>
+              ClubHub
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            className="flex items-center justify-center rounded-lg transition-colors"
+            style={{ color: "var(--dust)", minHeight: 36, minWidth: 36 }}
+            aria-label="Close navigation"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <SidebarContents onNavClick={() => setMobileOpen(false)} />
+      </aside>
     </div>
   );
 }

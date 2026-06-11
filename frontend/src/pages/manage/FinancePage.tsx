@@ -117,7 +117,7 @@ export default function FinancePage() {
 
   return (
     <Layout eventId={eventId}>
-      <div className="p-8 max-w-5xl mx-auto">
+      <div className="px-4 py-6 sm:px-8 sm:py-8 max-w-5xl mx-auto">
         <div className="flex items-start justify-between mb-6">
           <div>
             <h1 style={{ color: "var(--cream)" }} className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -157,7 +157,7 @@ export default function FinancePage() {
             style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}
             className="rounded-xl p-6 mb-5"
           >
-            <div className="grid grid-cols-3 gap-4 mb-5">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-5">
               <div>
                 <p style={{ color: "var(--dust)" }} className="text-xs uppercase tracking-wider font-semibold mb-1">Total Budget</p>
                 <p style={{ color: "var(--cream)" }} className="text-2xl font-bold">{formatCurrency(budget.total_budget)}</p>
@@ -200,7 +200,7 @@ export default function FinancePage() {
               New Expense
             </h2>
             <form onSubmit={handleSubmit((d) => addExpense.mutate(d))} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label style={{ color: "var(--fog)" }} className="text-xs font-semibold block mb-1">Category</label>
                   <select
@@ -233,7 +233,7 @@ export default function FinancePage() {
                   {errors.amount && <p style={{ color: "var(--cinnabar)" }} className="text-xs mt-0.5">{errors.amount.message}</p>}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label style={{ color: "var(--fog)" }} className="text-xs font-semibold block mb-1">Title</label>
                   <input
