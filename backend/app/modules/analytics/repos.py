@@ -168,8 +168,7 @@ class AnalyticsRepository:
             q = q.where(cond)
         return (await self.db.execute(q)).scalar_one()
 
-    async def winners_bank_export(self, from_date: date, to_date: date) -> str:
-        from datetime import datetime, timezone
+    async def winners_bank_export(self, from_date: date, to_date: date) -> str:        from datetime import datetime, timezone
         from_dt = datetime(from_date.year, from_date.month, from_date.day, 0, 0, 0, tzinfo=timezone.utc)
         to_dt = datetime(to_date.year, to_date.month, to_date.day, 23, 59, 59, tzinfo=timezone.utc)
 
@@ -216,3 +215,47 @@ class AnalyticsRepository:
                 r.bank_ifsc or "",
             ])
         return buf.getvalue()
+
+    async def winners_bank_list(self, from_date: date, to_date: date) -> list[dict]:
+        from datetime import datetime, timezone
+        from_dt = datetime(from_date.year, from_date.month, from_date.day, 0, 0, 0, tzinfo=timezone.utc)
+        to_dt = datetime(to_date.year, to_date.month, to_date.day, 23, 59, 59, tzinfo=timezone.utc)
+
+        q = (
+            select(
+                Event.title.label("event"),
+                Event.start_datetime.label("event_date"),
+                EventWinner.position,
+                EventWinner.prize_amount,
+                User.name.label("participant_name"),
+                User.email.label("participant_email"),
+                User.roll_number,
+                User.bank_account_name,
+                User.bank_account_number,
+                User.bank_ifsc,
+            )
+            .join(Event, EventWinner.event_id == Event.id)
+            .join(User, EventWinner.user_id == User.id)
+            .where(
+                Event.is_deleted == False,
+                Event.start_datetime >= from_dt,
+                Event.start_datetime <= to_dt,
+            )
+            .order_by(Event.start_datetime, Event.title, EventWinner.position)
+        )
+        rows = (await self.db.execute(q)).all()
+        return [
+            {
+                "event": r.event,
+                "event_date": r.event_date.isoformat() if r.event_date else None,
+                "position": r.position,
+                "prize_amount": float(r.prize_amount) if r.prize_amount else None,
+                "participant_name": r.participant_name,
+                "participant_email": r.participant_email,
+                "roll_number": r.roll_number,
+                "bank_account_name": r.bank_account_name,
+                "bank_account_number": r.bank_account_number,
+                "bank_ifsc": r.bank_ifsc,
+            }
+            for r in rows
+        ]

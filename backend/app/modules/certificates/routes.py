@@ -59,6 +59,7 @@ class WinnerEntry(BaseModel):
     user_id: str
     name: str
     position: str  # "1st" | "2nd" | "3rd" | "4th"
+    prize_amount: float | None = None
     bank_account: str | None = None
     bank_name: str | None = None
     ifsc: str | None = None
@@ -174,6 +175,7 @@ async def generate_winners(
     winners = [
         {
             "user_id": w.user_id, "name": w.name, "position": w.position,
+            "prize_amount": w.prize_amount,
             "bank_account": w.bank_account, "bank_name": w.bank_name,
             "ifsc": w.ifsc, "upi": w.upi,
         }
