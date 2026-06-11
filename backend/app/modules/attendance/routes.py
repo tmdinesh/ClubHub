@@ -10,6 +10,7 @@ from app.core.database import get_db
 from app.modules.attendance.repos import AttendanceRepository
 from app.modules.attendance.schemas import (
     AttendanceDashboard, CheckpointCreate, CheckpointOut, ScanRequest, ScanResponse,
+    RollLookupRequest, RollLookupResponse, RollScanRequest,
 )
 from app.modules.attendance.services import AttendanceService
 from app.modules.auth.deps import get_current_user
@@ -34,6 +35,26 @@ async def scan(
     scanner: User = Depends(get_current_user),
 ) -> ScanResponse:
     result = await svc.scan(body.qr_token, body.checkpoint_id, scanner)
+    return ScanResponse(**result)
+
+
+@router.post("/lookup-roll", response_model=RollLookupResponse)
+async def lookup_roll(
+    body: RollLookupRequest,
+    svc: AttendanceService = Depends(_svc),
+    scanner: User = Depends(get_current_user),
+) -> RollLookupResponse:
+    result = await svc.lookup_by_roll(body.roll_number, body.event_id)
+    return RollLookupResponse(**result)
+
+
+@router.post("/scan-by-roll", response_model=ScanResponse)
+async def scan_by_roll(
+    body: RollScanRequest,
+    svc: AttendanceService = Depends(_svc),
+    scanner: User = Depends(get_current_user),
+) -> ScanResponse:
+    result = await svc.scan_by_roll(body.roll_number, body.event_id, body.checkpoint_id, scanner)
     return ScanResponse(**result)
 
 

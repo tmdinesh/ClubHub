@@ -106,3 +106,34 @@ class AttendanceRepository:
             "roll_number": row.roll_number,
             "team_name": row.team_name,
         }
+
+    async def get_registration_by_roll(self, event_id: UUID, roll_number: str) -> dict | None:
+        """Look up a confirmed registration by roll number for the given event."""
+        from app.modules.teams.models import Team
+        q = (
+            select(
+                Registration.id.label("reg_id"),
+                User.name,
+                User.roll_number,
+                User.email,
+                Team.name.label("team_name"),
+                Registration.status,
+            )
+            .join(User, Registration.user_id == User.id)
+            .outerjoin(Team, Registration.team_id == Team.id)
+            .where(
+                Registration.event_id == event_id,
+                User.roll_number == roll_number,
+            )
+        )
+        row = (await self.db.execute(q)).one_or_none()
+        if not row:
+            return None
+        return {
+            "reg_id": str(row.reg_id),
+            "participant_name": row.name,
+            "roll_number": row.roll_number,
+            "email": row.email,
+            "team_name": row.team_name,
+            "status": row.status,
+        }

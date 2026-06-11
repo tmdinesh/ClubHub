@@ -20,6 +20,26 @@ class ScanResponse(BaseModel):
     team_name: str | None = None
 
 
+class RollLookupRequest(BaseModel):
+    roll_number: str
+    event_id: UUID
+
+
+class RollLookupResponse(BaseModel):
+    reg_id: str
+    participant_name: str
+    roll_number: str
+    email: str
+    team_name: str | None = None
+    status: str
+
+
+class RollScanRequest(BaseModel):
+    roll_number: str
+    event_id: UUID
+    checkpoint_id: UUID
+
+
 class AttendanceDashboard(BaseModel):
     registered: int
     present: int
