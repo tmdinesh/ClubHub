@@ -838,18 +838,45 @@ function ClubAnalyticsTab() {
 
 // ── Bank Export tab ───────────────────────────────────────────────────────────
 
+interface BankRow {
+  event: string;
+  event_date: string | null;
+  position: string;
+  prize_amount: number | null;
+  participant_name: string;
+  participant_email: string;
+  roll_number: string | null;
+  bank_account_name: string | null;
+  bank_account_number: string | null;
+  bank_ifsc: string | null;
+}
+
 function BankExportTab() {
   const today = new Date().toISOString().slice(0, 10);
   const firstOfMonth = today.slice(0, 8) + "01";
   const [fromDate, setFromDate] = useState(firstOfMonth);
   const [toDate, setToDate] = useState(today);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [csvLoading, setCsvLoading] = useState(false);
+  const [csvError, setCsvError] = useState<string | null>(null);
+
+  const { data: rows, isFetching, error: tableError } = useQuery<BankRow[]>({
+    queryKey: ["bank-details", fromDate, toDate],
+    queryFn: async () => {
+      const token = useAuthStore.getState().accessToken ?? "";
+      const res = await fetch(
+        `/api/analytics/bank-details?from_date=${fromDate}&to_date=${toDate}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    },
+    enabled: !!fromDate && !!toDate,
+  });
 
   async function handleExport() {
     if (!fromDate || !toDate) return;
-    setLoading(true);
-    setError(null);
+    setCsvLoading(true);
+    setCsvError(null);
     try {
       const token = useAuthStore.getState().accessToken ?? "";
       const res = await fetch(
@@ -868,9 +895,9 @@ function BankExportTab() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Export failed");
+      setCsvError(e instanceof Error ? e.message : "Export failed");
     } finally {
-      setLoading(false);
+      setCsvLoading(false);
     }
   }
 
@@ -885,74 +912,122 @@ function BankExportTab() {
     width: "100%",
   };
 
+  const COLS = [
+    { label: "Event", key: "event" },
+    { label: "Date", key: "event_date" },
+    { label: "Position", key: "position" },
+    { label: "Name", key: "participant_name" },
+    { label: "Roll No.", key: "roll_number" },
+    { label: "Prize (₹)", key: "prize_amount" },
+    { label: "Bank Account Name", key: "bank_account_name" },
+    { label: "Account Number", key: "bank_account_number" },
+    { label: "IFSC", key: "bank_ifsc" },
+  ] as const;
+
   return (
     <div className="space-y-6">
       <div className="rounded-2xl p-6" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
         <div className="flex items-center gap-2 mb-1">
           <FileSpreadsheet size={18} style={{ color: "var(--jade)" }} />
-          <h2 className="text-base font-semibold" style={{ color: "var(--cream)" }}>Bank Details Export</h2>
+          <h2 className="text-base font-semibold" style={{ color: "var(--cream)" }}>Bank Details</h2>
         </div>
         <p className="text-sm mb-6" style={{ color: "var(--fog)" }}>
-          Downloads a CSV of all event winners with bank account details and prize amounts for the selected date range. Filter is based on event start date.
+          All event winners with bank account details and prize amounts for the selected date range. Filter is based on event start date.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <div>
-            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "var(--dust)" }}>
-              From Date
-            </label>
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              style={inputStyle}
-            />
+            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "var(--dust)" }}>From Date</label>
+            <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} style={inputStyle} />
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "var(--dust)" }}>
-              To Date
-            </label>
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              style={inputStyle}
-            />
+            <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: "var(--dust)" }}>To Date</label>
+            <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} style={inputStyle} />
           </div>
         </div>
 
-        {error && (
+        {csvError && (
           <p className="text-sm mb-4 px-3 py-2 rounded-lg" style={{ color: "var(--cinnabar)", background: "color-mix(in srgb, var(--cinnabar) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--cinnabar) 25%, transparent)" }}>
-            {error}
+            {csvError}
           </p>
         )}
 
         <button
           type="button"
           onClick={handleExport}
-          disabled={loading || !fromDate || !toDate}
+          disabled={csvLoading || !fromDate || !toDate}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
           style={{ background: "var(--jade)", color: "#0D0F14" }}
         >
-          {loading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
-          {loading ? "Generating…" : "Download CSV"}
+          {csvLoading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+          {csvLoading ? "Generating…" : "Download CSV"}
         </button>
       </div>
 
-      <div className="rounded-xl p-4" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
-        <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--dust)" }}>Columns in the export</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          {[
-            "Event", "Position", "Participant Name", "Email",
-            "Roll Number", "Prize Amount (₹)",
-            "Bank Account Name", "Account Number", "IFSC Code",
-          ].map((col) => (
-            <div key={col} className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg" style={{ background: "var(--ink-muted)", color: "var(--fog)" }}>
-              <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--amber)" }} />
-              {col}
-            </div>
-          ))}
+      {/* Live table */}
+      <div className="rounded-2xl" style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}>
+        <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: "var(--seam)" }}>
+          <span className="text-sm font-semibold" style={{ color: "var(--cream)" }}>
+            Winners &amp; Bank Details
+          </span>
+          {isFetching && <Loader2 size={14} className="animate-spin" style={{ color: "var(--fog)" }} />}
+          {rows && (
+            <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "var(--ink-muted)", color: "var(--dust)" }}>
+              {rows.length} {rows.length === 1 ? "record" : "records"}
+            </span>
+          )}
         </div>
+
+        {tableError && (
+          <p className="text-sm px-5 py-4" style={{ color: "var(--cinnabar)" }}>
+            Failed to load data.
+          </p>
+        )}
+
+        {!isFetching && rows?.length === 0 && (
+          <p className="text-sm px-5 py-8 text-center" style={{ color: "var(--dust)" }}>
+            No winners with bank details found for this date range.
+          </p>
+        )}
+
+        {rows && rows.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs" style={{ minWidth: 860 }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--seam)", background: "var(--ink-muted)" }}>
+                  {COLS.map((c) => (
+                    <th key={c.key} className="text-left px-4 py-3 font-semibold uppercase tracking-wider whitespace-nowrap" style={{ color: "var(--dust)" }}>
+                      {c.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, i) => (
+                  <tr
+                    key={i}
+                    style={{ borderBottom: "1px solid var(--seam)" }}
+                    className="hover:bg-white/[0.03] transition-colors"
+                  >
+                    <td className="px-4 py-3 font-medium max-w-[160px] truncate" style={{ color: "var(--cream)" }}>{row.event}</td>
+                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: "var(--fog)" }}>
+                      {row.event_date ? new Date(row.event_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap" style={{ color: "var(--amber)" }}>{row.position}</td>
+                    <td className="px-4 py-3 max-w-[140px] truncate" style={{ color: "var(--cream)" }}>{row.participant_name}</td>
+                    <td className="px-4 py-3 font-mono whitespace-nowrap" style={{ color: "var(--fog)" }}>{row.roll_number ?? "—"}</td>
+                    <td className="px-4 py-3 whitespace-nowrap font-semibold" style={{ color: row.prize_amount ? "var(--jade)" : "var(--dust)" }}>
+                      {row.prize_amount ? `₹${Number(row.prize_amount).toLocaleString("en-IN")}` : "—"}
+                    </td>
+                    <td className="px-4 py-3 max-w-[140px] truncate" style={{ color: "var(--fog)" }}>{row.bank_account_name ?? "—"}</td>
+                    <td className="px-4 py-3 font-mono whitespace-nowrap" style={{ color: "var(--fog)" }}>{row.bank_account_number ?? "—"}</td>
+                    <td className="px-4 py-3 font-mono whitespace-nowrap" style={{ color: "var(--fog)" }}>{row.bank_ifsc ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

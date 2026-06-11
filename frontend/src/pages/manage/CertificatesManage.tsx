@@ -66,6 +66,7 @@ interface WinnerAssignment {
   user_id: string;
   name: string;
   position: Position;
+  prize_amount?: number | null;
   bank_account?: string;
   bank_name?: string;
   ifsc?: string;
@@ -73,6 +74,7 @@ interface WinnerAssignment {
 }
 
 interface BankDetails {
+  prize_amount: string;
   bank_account: string;
   bank_name: string;
   ifsc: string;
@@ -433,7 +435,7 @@ interface BankModalProps {
 }
 
 function BankModal({ winnerName, onConfirm, onCancel }: BankModalProps) {
-  const [details, setDetails] = useState<BankDetails>({ bank_account: "", bank_name: "", ifsc: "", upi: "" });
+  const [details, setDetails] = useState<BankDetails>({ prize_amount: "", bank_account: "", bank_name: "", ifsc: "", upi: "" });
   const [bankSearch, setBankSearch] = useState("");
   const [showBankList, setShowBankList] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof BankDetails, string>>>({});
@@ -453,7 +455,7 @@ function BankModal({ winnerName, onConfirm, onCancel }: BankModalProps) {
     setShowBankList(false);
   }
 
-  const hasAny = details.bank_account || details.bank_name || details.ifsc || details.upi;
+  const hasAny = details.prize_amount || details.bank_account || details.bank_name || details.ifsc || details.upi;
   const hasBankFields = details.bank_account || details.bank_name || details.ifsc;
 
   function validate(): boolean {
@@ -523,6 +525,22 @@ function BankModal({ winnerName, onConfirm, onCancel }: BankModalProps) {
           </p>
         </div>
         <div className="p-6 space-y-4">
+
+          {/* Prize Amount */}
+          <div>
+            <label style={{ color: "var(--fog)", fontSize: 12, fontWeight: 600 }}>Prize Amount (₹)</label>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={details.prize_amount}
+              onChange={(e) => set("prize_amount", e.target.value)}
+              placeholder="e.g. 5000"
+              style={inputStyle(false)}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--amber)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.12)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--seam)"; e.currentTarget.style.boxShadow = "none"; }}
+            />
+          </div>
 
           {/* Account Number */}
           <div>
@@ -789,7 +807,8 @@ export default function CertificatesManage() {
   function handleBankConfirm(details: BankDetails | null) {
     if (pendingWinnerIdx === null) return;
     if (details) {
-      setWinners((prev) => prev.map((w, i) => i === pendingWinnerIdx ? { ...w, ...details } : w));
+      const prize_amount = details.prize_amount ? parseFloat(details.prize_amount) : null;
+      setWinners((prev) => prev.map((w, i) => i === pendingWinnerIdx ? { ...w, ...details, prize_amount } : w));
     }
     // Move to next winner or submit
     const next = pendingWinnerIdx + 1;
@@ -1201,6 +1220,7 @@ export default function CertificatesManage() {
                   certificates.map((cert) => {
                     const meta = cert.metadata_ ?? {};
                     const hasBankDetails = meta.bank_account || meta.upi;
+                    const hasPrize = meta.prize_amount != null;
                     return (
                     <tr
                       key={cert.id}
@@ -1225,6 +1245,11 @@ export default function CertificatesManage() {
                       <td className="px-4 py-3.5" style={{ minWidth: 180 }}>
                         {hasBankDetails ? (
                           <div style={{ fontSize: 12 }}>
+                            {hasPrize && (
+                              <div style={{ color: "var(--jade)", fontWeight: 600, marginBottom: 3 }}>
+                                ₹{Number(meta.prize_amount).toLocaleString("en-IN")}
+                              </div>
+                            )}
                             {meta.bank_account && (
                               <div style={{ color: "var(--cream)", fontFamily: "monospace" }}>
                                 {meta.bank_account}

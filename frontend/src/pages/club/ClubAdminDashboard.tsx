@@ -626,9 +626,9 @@ export default function ClubAdminDashboard() {
               type="button"
               onClick={() => setShowReport(true)}
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
-              style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)", color: "var(--fog)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = "var(--cream)"; e.currentTarget.style.borderColor = "var(--amber)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--fog)"; e.currentTarget.style.borderColor = "var(--seam)"; }}
+              style={{ background: "var(--ink-soft)", border: "1px solid var(--amber)", color: "var(--amber)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "color-mix(in srgb, var(--amber) 12%, transparent)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "var(--ink-soft)"; }}
             >
               <FileDown size={15} />
               Generate Report

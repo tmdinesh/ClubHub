@@ -81,3 +81,16 @@ async def bank_export(
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
+
+
+@router.get("/bank-details")
+async def bank_details(
+    from_date: date = Query(..., description="Start date (YYYY-MM-DD)"),
+    to_date: date = Query(..., description="End date (YYYY-MM-DD)"),
+    db: AsyncSession = Depends(get_db),
+    actor: User = Depends(get_current_user),
+) -> list[dict]:
+    if actor.role != UserRole.SUPER_ADMIN:
+        raise ForbiddenError("Super Admin required")
+    repo = AnalyticsRepository(db)
+    return await repo.winners_bank_list(from_date, to_date)

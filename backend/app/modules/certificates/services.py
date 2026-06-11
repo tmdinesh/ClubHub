@@ -242,7 +242,7 @@ class CertificateService:
                 "name": w["name"], "event_name": event_name,
                 "certificate_type": "Winner", "position": position_label,
             }
-            for field in ("bank_account", "bank_name", "ifsc", "upi"):
+            for field in ("prize_amount", "bank_account", "bank_name", "ifsc", "upi"):
                 if w.get(field):
                     meta[field] = w[field]
             cert = await self.repo.create_certificate(
