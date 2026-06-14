@@ -42,12 +42,6 @@ class LogoutRequest(BaseModel):
     refresh_token: str
 
 
-class DevLoginRequest(BaseModel):
-    email: EmailStr
-    name: str = "Dev User"
-    role: UserRole = UserRole.PARTICIPANT
-
-
 class SuperAdminLoginRequest(BaseModel):
     email: EmailStr
     password: str

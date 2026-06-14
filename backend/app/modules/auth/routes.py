@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import secrets
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,9 +11,8 @@ from app.core.database import get_db
 from app.modules.auth.deps import get_current_user
 from app.modules.auth.models import User
 from app.modules.auth.repos import UserRepository
-from app.modules.auth.schemas import DevLoginRequest, LogoutRequest, RefreshRequest, SuperAdminLoginRequest, TokenPair, UserOut
+from app.modules.auth.schemas import LogoutRequest, RefreshRequest, SuperAdminLoginRequest, TokenPair, UserOut
 from app.modules.auth.services import AuthService
-from app.shared.exceptions import ForbiddenError
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -74,19 +73,4 @@ async def super_admin_login(
 ) -> TokenPair:
     """Password-based login for the super admin account configured in environment variables."""
     access_token, refresh_token = await service.super_admin_login(body.email, body.password)
-    return TokenPair(access_token=access_token, refresh_token=refresh_token)
-
-
-@router.post("/dev-login", response_model=TokenPair, tags=["auth (dev)"])
-async def dev_login(
-    body: DevLoginRequest,
-    service: AuthService = Depends(_get_service),
-) -> TokenPair:
-    """
-    Development-only login. Returns a real token pair without Google OAuth.
-    Only available when ENVIRONMENT=development.
-    """
-    if settings.ENVIRONMENT != "development":
-        raise ForbiddenError("Dev login is only available in development mode")
-    access_token, refresh_token = await service.dev_login(body.email, body.name, body.role)
     return TokenPair(access_token=access_token, refresh_token=refresh_token)

@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     GOOGLE_REDIRECT_URI: str = "http://localhost/api/auth/google/callback"
 
     # ── JWT ───────────────────────────────────────────────────────────────────
-    JWT_SECRET: str = "dev-secret-change-in-production"
+    JWT_SECRET: str = Field(..., description="Required: set a strong secret in production")
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -54,8 +54,8 @@ class Settings(BaseSettings):
 
     # ── App ───────────────────────────────────────────────────────────────────
     FRONTEND_URL: str = "http://localhost"
-    ENVIRONMENT: Literal["development", "staging", "production"] = "development"
-    DEBUG: bool = True
+    ENVIRONMENT: Literal["development", "staging", "production"] = "production"
+    DEBUG: bool = False
 
     # Accepts either CORS_ORIGINS or CORS_ORIGINS_STR from env.
     cors_origins_raw: str = Field(

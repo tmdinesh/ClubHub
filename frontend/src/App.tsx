@@ -7,7 +7,6 @@ import EventDetail from "@/pages/EventDetail";
 import CertificateVerify from "@/pages/CertificateVerify";
 import Login from "@/pages/Login";
 import AuthCallback from "@/pages/AuthCallback";
-import DevLogin from "@/pages/DevLogin";
 import AttendanceLogin from "@/pages/AttendanceLogin";
 import AttendanceScan from "@/pages/AttendanceScan";
 
@@ -48,7 +47,6 @@ export default function App() {
         <Route path="/" element={<EventDiscovery />} />
         <Route path="/login" element={<Login />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="/dev-login" element={<DevLogin />} />
         <Route path="/attendance-login" element={<AttendanceLogin />} />
         <Route path="/attendance/:eventId" element={<AttendanceScan />} />
         <Route path="/events/:slug" element={<EventDetail />} />
