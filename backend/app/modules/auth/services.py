@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 
 import httpx
 from jose import JWTError, jwt
+import bcrypt as _bcrypt
 
 from app.core.config import settings
 from app.core.redis import get_redis_client
@@ -19,6 +20,10 @@ from app.shared.exceptions import ForbiddenError, UnauthorizedError
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+
+
+def _verify_password(plain: str, hashed: str) -> bool:
+    return _bcrypt.checkpw(plain.encode(), hashed.encode())
 
 
 def _clean_google_name(raw: str) -> str:
@@ -203,6 +208,24 @@ class AuthService:
         if not user or not user.is_active:
             raise UnauthorizedError("User not found or inactive")
         return user
+
+    async def super_admin_login(self, email: str, password: str) -> tuple[str, str]:
+        """Password-based login exclusively for the configured super-admin account."""
+        configured_email = settings.SUPER_ADMIN_EMAIL
+        configured_password = settings.SUPER_ADMIN_PASSWORD
+        if not configured_email or not configured_password:
+            raise ForbiddenError("Super admin credentials are not configured")
+        if email != configured_email or not _verify_password(password, configured_password):
+            raise ForbiddenError("Invalid credentials")
+        user, _ = await self.repo.get_or_create_by_email(
+            configured_email, "Super Admin", UserRole.SUPER_ADMIN
+        )
+        if user.role != UserRole.SUPER_ADMIN:
+            user.role = UserRole.SUPER_ADMIN
+            await self.repo.db.flush()
+        access_token = self._create_access_token(user)
+        refresh_token = await self._create_refresh_token(user)
+        return access_token, refresh_token
 
     async def dev_login(self, email: str, name: str, role: UserRole) -> tuple[str, str]:
         """Dev-only: upsert a user by email and issue a real token pair. No OAuth required."""

@@ -11,7 +11,7 @@ from app.core.database import get_db
 from app.modules.auth.deps import get_current_user
 from app.modules.auth.models import User
 from app.modules.auth.repos import UserRepository
-from app.modules.auth.schemas import DevLoginRequest, LogoutRequest, RefreshRequest, TokenPair, UserOut
+from app.modules.auth.schemas import DevLoginRequest, LogoutRequest, RefreshRequest, SuperAdminLoginRequest, TokenPair, UserOut
 from app.modules.auth.services import AuthService
 from app.shared.exceptions import ForbiddenError
 
@@ -65,6 +65,16 @@ async def logout(
 @router.get("/me", response_model=UserOut)
 async def me(current_user: User = Depends(get_current_user)) -> UserOut:
     return UserOut.model_validate(current_user)
+
+
+@router.post("/super-admin/login", response_model=TokenPair, tags=["auth"])
+async def super_admin_login(
+    body: SuperAdminLoginRequest,
+    service: AuthService = Depends(_get_service),
+) -> TokenPair:
+    """Password-based login for the super admin account configured in environment variables."""
+    access_token, refresh_token = await service.super_admin_login(body.email, body.password)
+    return TokenPair(access_token=access_token, refresh_token=refresh_token)
 
 
 @router.post("/dev-login", response_model=TokenPair, tags=["auth (dev)"])

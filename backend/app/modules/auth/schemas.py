@@ -48,6 +48,11 @@ class DevLoginRequest(BaseModel):
     role: UserRole = UserRole.PARTICIPANT
 
 
+class SuperAdminLoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
 class AdminUserCreate(BaseModel):
     email: EmailStr
     name: str

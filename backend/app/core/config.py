@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     def ALLOWED_EMAIL_DOMAINS(self) -> List[str]:
         return [d.strip() for d in self.allowed_domains_raw.split(",") if d.strip()]
 
+    # ── Super Admin Credentials ───────────────────────────────────────────────
+    SUPER_ADMIN_EMAIL: str = ""
+    SUPER_ADMIN_PASSWORD: str = ""
+
     # ── App ───────────────────────────────────────────────────────────────────
     FRONTEND_URL: str = "http://localhost"
     ENVIRONMENT: Literal["development", "staging", "production"] = "development"
