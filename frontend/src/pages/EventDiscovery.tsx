@@ -66,26 +66,31 @@ export default function EventDiscovery() {
       {/* ── Nav ── */}
       <header style={{
         position: "sticky", top: 0, zIndex: 50,
-        background: "rgba(13,15,20,0.85)",
-        backdropFilter: "blur(12px)",
-        borderBottom: "1px solid var(--seam)",
+        background: "#e8eef5",
+        borderBottom: "1px solid #c8d5e8",
+        boxShadow: "0 1px 4px rgba(30,45,74,0.08)",
       }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 88, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Link to="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-            <div style={{ background: "#ffffff", borderRadius: 6, padding: "3px 6px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG College of Technology" style={{ height: 78, width: "auto", display: "block" }} />
+          <Link to="/" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
+            <img
+              src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png"
+              alt="PSG College of Technology"
+              style={{ height: 64, width: "auto", display: "block", flexShrink: 0 }}
+            />
+            <div style={{ width: 1, height: 44, background: "#b0c4d8", flexShrink: 0 }} />
+            <div>
+              <p style={{ fontFamily: "'DM Serif Display', serif", fontSize: 15, color: "#1e2d4a", letterSpacing: "-0.02em", lineHeight: 1.2, margin: 0 }}>
+                PSG College of Technology
+              </p>
+              <p style={{ fontSize: 10, color: "#4a6080", margin: "2px 0 0", letterSpacing: "0.04em" }}>
+                ClubHub · Event Portal
+              </p>
             </div>
-            <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 16, color: "var(--cream)", letterSpacing: "-0.02em" }}>PSG Tech</span>
-            <span style={{ color: "var(--seam)", fontSize: 18, fontWeight: 200, margin: "0 2px" }}>|</span>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--amber)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>C</span>
-            </div>
-            <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 16, color: "var(--cream)", letterSpacing: "-0.02em" }}>ClubHub</span>
           </Link>
           <nav style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {isAuthenticated ? (
               <>
-                <span className="hidden sm:inline" style={{ fontSize: 13, color: "var(--fog)" }}>{user?.name}</span>
+                <span className="hidden sm:inline" style={{ fontSize: 13, color: "#4a6080" }}>{user?.name}</span>
                 <Link to="/dashboard" className="btn-primary" style={{ textDecoration: "none", fontSize: 13 }}>
                   Dashboard
                 </Link>
@@ -223,14 +228,14 @@ export default function EventDiscovery() {
         padding: "24px",
         marginTop: 48,
       }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ background: "#ffffff", borderRadius: 8, padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" style={{ height: 114, width: "auto", display: "block" }} />
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ background: "#e8eef5", borderRadius: 6, padding: "3px 6px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" style={{ height: 52, width: "auto", display: "block" }} />
             </div>
             <div>
-              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--cream)", margin: 0 }}>PSG College of Technology</p>
-              <p style={{ fontSize: 10, color: "var(--fog)", margin: "2px 0 0" }}>Peelamedu, Coimbatore – 641 004</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--cream)", margin: 0 }}>PSG College of Technology</p>
+              <p style={{ fontSize: 11, color: "var(--fog)", margin: "3px 0 0" }}>Peelamedu, Coimbatore – 641 004</p>
             </div>
           </div>
           <p style={{ fontSize: 11, color: "var(--dust)", textAlign: "center", margin: 0 }}>

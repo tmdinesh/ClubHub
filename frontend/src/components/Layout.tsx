@@ -215,27 +215,30 @@ export default function Layout({ children, eventId }: LayoutProps) {
     <div className="flex h-screen overflow-hidden relative" style={{ background: "var(--ink)", fontFamily: "'Outfit', sans-serif" }}>
 
       {/* ── Desktop Sidebar (hidden on mobile) ── */}
-      <aside className="hidden md:flex md:w-56 md:shrink-0 flex-col h-full" style={{
+      <aside className="hidden md:flex md:w-64 md:shrink-0 flex-col h-full" style={{
         background: "var(--ink-soft)",
         borderRight: "1px solid var(--seam)",
       }}>
-        {/* Logo */}
-        <div className="px-5 pt-6 pb-5" style={{ borderBottom: "1px solid var(--seam)" }}>
+        {/* Logo — light header band */}
+        <div className="px-4 pt-4 pb-4" style={{
+          background: "#e8eef5",
+          borderBottom: "1px solid #c8d5e8",
+        }}>
           <div className="flex items-center gap-2">
-            <div style={{ background: "#ffffff", borderRadius: 5, padding: "2px 5px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG College of Technology" style={{ height: 66, width: "auto", display: "block" }} />
+            <img
+              src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png"
+              alt="PSG College of Technology"
+              style={{ height: 92, width: "auto", display: "block", flexShrink: 0 }}
+            />
+            <div style={{ width: 1, height: 56, background: "#b0c4d8", flexShrink: 0 }} />
+            <div>
+              <p style={{ fontFamily: "'DM Serif Display', serif", fontSize: 13, color: "#1e2d4a", letterSpacing: "-0.02em", lineHeight: 1.2, margin: 0 }}>
+                PSG College of Technology
+              </p>
+              <p style={{ fontSize: 9, color: "#4a6080", margin: "2px 0 0", letterSpacing: "0.04em" }}>
+                ClubHub Portal
+              </p>
             </div>
-            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>
-              PSG Tech
-            </span>
-            <span style={{ color: "var(--seam)", fontSize: 16, fontWeight: 200, margin: "0 1px" }}>|</span>
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: "var(--amber)" }}>
-              <span style={{ color: "var(--ink)", fontFamily: "'DM Serif Display', serif", fontSize: 13, fontWeight: 700, lineHeight: 1 }}>C</span>
-            </div>
-            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>
-              ClubHub
-            </span>
           </div>
         </div>
 
@@ -244,30 +247,32 @@ export default function Layout({ children, eventId }: LayoutProps) {
 
       {/* ── Main content ── */}
       <main className="flex-1 overflow-y-auto min-w-0 dot-grid">
-        {/* Mobile top bar */}
+        {/* Mobile top bar — light header */}
         <div className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4"
           style={{
-            height: 76,
-            background: "var(--ink-soft)",
-            borderBottom: "1px solid var(--seam)",
+            height: 80,
+            background: "#e8eef5",
+            borderBottom: "1px solid #c8d5e8",
           }}>
-          <div className="flex items-center gap-2">
-            <div style={{ background: "#ffffff", borderRadius: 5, padding: "2px 4px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG College of Technology" style={{ height: 60, width: "auto", display: "block" }} />
+          <div className="flex items-center gap-2.5">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png"
+              alt="PSG College of Technology"
+              style={{ height: 56, width: "auto", display: "block", flexShrink: 0 }}
+            />
+            <div style={{ width: 1, height: 36, background: "#b0c4d8", flexShrink: 0 }} />
+            <div>
+              <p style={{ fontFamily: "'DM Serif Display', serif", fontSize: 12, color: "#1e2d4a", letterSpacing: "-0.02em", lineHeight: 1.2, margin: 0 }}>
+                PSG College of Technology
+              </p>
+              <p style={{ fontSize: 9, color: "#4a6080", margin: "1px 0 0" }}>ClubHub Portal</p>
             </div>
-            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 13, letterSpacing: "-0.02em" }}>PSG Tech</span>
-            <span style={{ color: "var(--seam)", fontSize: 14, fontWeight: 200, margin: "0 1px" }}>|</span>
-            <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
-              style={{ background: "var(--amber)" }}>
-              <span style={{ color: "var(--ink)", fontFamily: "'DM Serif Display', serif", fontSize: 11, fontWeight: 700, lineHeight: 1 }}>C</span>
-            </div>
-            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 14, letterSpacing: "-0.02em" }}>ClubHub</span>
           </div>
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
             className="flex items-center justify-center rounded-lg transition-colors"
-            style={{ color: "var(--dust)", minHeight: 44, minWidth: 44 }}
+            style={{ color: "#2c4060", minHeight: 44, minWidth: 44 }}
             aria-label="Open navigation"
           >
             <Menu size={20} />
@@ -286,13 +291,13 @@ export default function Layout({ children, eventId }: LayoutProps) {
           justifyContent: "space-between",
           gap: 8,
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ background: "#ffffff", borderRadius: 7, padding: "4px 7px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" style={{ height: 78, width: "auto", display: "block" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ background: "#e8eef5", borderRadius: 6, padding: "3px 6px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" style={{ height: 52, width: "auto", display: "block" }} />
             </div>
             <div>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "var(--fog)", margin: 0 }}>PSG College of Technology</p>
-              <p style={{ fontSize: 9, color: "var(--dust)", margin: 0 }}>© All rights reserved · PSG Tech Students' Union</p>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--fog)", margin: 0 }}>PSG College of Technology</p>
+              <p style={{ fontSize: 10, color: "var(--dust)", margin: "2px 0 0" }}>© All rights reserved · PSG Tech Students' Union</p>
             </div>
           </div>
           <p style={{ fontSize: 9, color: "var(--dust)", margin: 0 }}>
@@ -312,7 +317,7 @@ export default function Layout({ children, eventId }: LayoutProps) {
 
       {/* ── Mobile drawer panel ── */}
       <aside
-        className="md:hidden fixed inset-y-0 left-0 z-50 w-64 flex flex-col h-full"
+        className="md:hidden fixed inset-y-0 left-0 z-50 w-72 flex flex-col h-full"
         style={{
           background: "var(--ink-soft)",
           borderRight: "1px solid var(--seam)",
@@ -320,25 +325,30 @@ export default function Layout({ children, eventId }: LayoutProps) {
           transition: "transform 250ms cubic-bezier(.22,.68,0,1.2)",
         }}
       >
-        {/* Drawer header with logo + close */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-5" style={{ borderBottom: "1px solid var(--seam)" }}>
+        {/* Drawer header — light */}
+        <div className="flex items-center justify-between px-4 pt-4 pb-4" style={{
+          background: "#e8eef5",
+          borderBottom: "1px solid #c8d5e8",
+        }}>
           <div className="flex items-center gap-2">
-            <div style={{ background: "#ffffff", borderRadius: 5, padding: "2px 5px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG College of Technology" style={{ height: 66, width: "auto", display: "block" }} />
+            <img
+              src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png"
+              alt="PSG College of Technology"
+              style={{ height: 72, width: "auto", display: "block", flexShrink: 0 }}
+            />
+            <div style={{ width: 1, height: 44, background: "#b0c4d8", flexShrink: 0 }} />
+            <div>
+              <p style={{ fontFamily: "'DM Serif Display', serif", fontSize: 13, color: "#1e2d4a", letterSpacing: "-0.02em", lineHeight: 1.2, margin: 0 }}>
+                PSG College of Technology
+              </p>
+              <p style={{ fontSize: 9, color: "#4a6080", margin: "2px 0 0" }}>ClubHub Portal</p>
             </div>
-            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>PSG Tech</span>
-            <span style={{ color: "var(--seam)", fontSize: 16, fontWeight: 200, margin: "0 1px" }}>|</span>
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: "var(--amber)" }}>
-              <span style={{ color: "var(--ink)", fontFamily: "'DM Serif Display', serif", fontSize: 13, fontWeight: 700, lineHeight: 1 }}>C</span>
-            </div>
-            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>ClubHub</span>
           </div>
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
             className="flex items-center justify-center rounded-lg transition-colors"
-            style={{ color: "var(--dust)", minHeight: 36, minWidth: 36 }}
+            style={{ color: "#2c4060", minHeight: 36, minWidth: 36 }}
             aria-label="Close navigation"
           >
             <X size={16} />
