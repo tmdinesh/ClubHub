@@ -7,7 +7,7 @@ import { useAuthStore } from "@/store/auth.store";
 export default function AdminLogin() {
   const navigate = useNavigate();
   const { setAuth, isAuthenticated } = useAuthStore();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,8 +22,8 @@ export default function AdminLogin() {
     setLoading(true);
     try {
       const { data } = await api.post<{ access_token: string; refresh_token: string }>(
-        "/auth/admin-login",
-        { username, password }
+        "/auth/super-admin/login",
+        { email, password }
       );
       const me = await api.get("/auth/me", {
         headers: { Authorization: `Bearer ${data.access_token}` },
@@ -87,15 +87,15 @@ export default function AdminLogin() {
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <label style={{ fontSize: 12, fontWeight: 600, color: "var(--fog)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  Username
+                  Email
                 </label>
                 <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  autoComplete="username"
-                  placeholder="Enter username"
+                  autoComplete="email"
+                  placeholder="admin@example.com"
                   style={{
                     background: "var(--ink)", border: "1px solid var(--seam)", borderRadius: 8,
                     padding: "10px 14px", fontSize: 14, color: "var(--cream)", outline: "none",
@@ -135,13 +135,13 @@ export default function AdminLogin() {
 
               <button
                 type="submit"
-                disabled={loading || !username || !password}
+                disabled={loading || !email || !password}
                 style={{
                   width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
                   gap: 8, padding: "12px 20px", borderRadius: 10,
-                  background: loading || !username || !password ? "var(--ink-muted)" : "var(--amber)",
+                  background: loading || !email || !password ? "var(--ink-muted)" : "var(--amber)",
                   color: "var(--ink)", border: "none",
-                  cursor: loading || !username || !password ? "not-allowed" : "pointer",
+                  cursor: loading || !email || !password ? "not-allowed" : "pointer",
                   fontSize: 14, fontWeight: 600, transition: "all 150ms",
                   marginTop: 4,
                 }}

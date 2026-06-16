@@ -31,6 +31,7 @@ import AttendanceTakersPage from "@/pages/manage/AttendanceTakersPage";
 // Faculty / Admin
 import FacultyApprovals from "@/pages/faculty/FacultyApprovals";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminLogin from "@/pages/AdminLogin";
 import ClubAdminDashboard from "@/pages/club/ClubAdminDashboard";
 import OrganizerDashboard from "@/pages/organizer/OrganizerDashboard";
 
@@ -74,6 +75,7 @@ export default function App() {
         <Route path="/faculty/approvals" element={<ProtectedRoute><FacultyApprovals /></ProtectedRoute>} />
 
         {/* Admin */}
+        <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
         <Route path="/club" element={<ProtectedRoute><ClubAdminDashboard /></ProtectedRoute>} />
         <Route path="/organizer" element={<ProtectedRoute><OrganizerDashboard /></ProtectedRoute>} />
