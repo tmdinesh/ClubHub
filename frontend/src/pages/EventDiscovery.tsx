@@ -72,16 +72,15 @@ export default function EventDiscovery() {
       }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 58, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Link to="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+            <div style={{ background: "#ffffff", borderRadius: 6, padding: "3px 6px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG College of Technology" style={{ height: 22, width: "auto", display: "block" }} />
+            </div>
+            <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 16, color: "var(--cream)", letterSpacing: "-0.02em" }}>PSG Tech</span>
+            <span style={{ color: "var(--seam)", fontSize: 18, fontWeight: 200, margin: "0 2px" }}>|</span>
             <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--amber)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>C</span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
-              <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 16, color: "var(--cream)", letterSpacing: "-0.02em" }}>ClubHub</span>
-              <span style={{ fontSize: 9, color: "var(--fog)", letterSpacing: "0.04em", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
-                <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" style={{ height: 10, width: "auto", opacity: 0.7 }} />
-                PSG College of Technology
-              </span>
-            </div>
+            <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 16, color: "var(--cream)", letterSpacing: "-0.02em" }}>ClubHub</span>
           </Link>
           <nav style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {isAuthenticated ? (

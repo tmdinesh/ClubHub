@@ -221,20 +221,21 @@ export default function Layout({ children, eventId }: LayoutProps) {
       }}>
         {/* Logo */}
         <div className="px-5 pt-6 pb-5" style={{ borderBottom: "1px solid var(--seam)" }}>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
+            <div style={{ background: "#ffffff", borderRadius: 5, padding: "2px 5px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG College of Technology" style={{ height: 18, width: "auto", display: "block" }} />
+            </div>
+            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>
+              PSG Tech
+            </span>
+            <span style={{ color: "var(--seam)", fontSize: 16, fontWeight: 200, margin: "0 1px" }}>|</span>
             <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
               style={{ background: "var(--amber)" }}>
               <span style={{ color: "var(--ink)", fontFamily: "'DM Serif Display', serif", fontSize: 13, fontWeight: 700, lineHeight: 1 }}>C</span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
-              <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>
-                ClubHub
-              </span>
-              <span style={{ fontSize: 8, color: "var(--fog)", letterSpacing: "0.04em", marginTop: 2, display: "flex", alignItems: "center", gap: 3 }}>
-                <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" style={{ height: 9, width: "auto", opacity: 0.7 }} />
-                PSG College of Technology
-              </span>
-            </div>
+            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>
+              ClubHub
+            </span>
           </div>
         </div>
 
@@ -251,14 +252,16 @@ export default function Layout({ children, eventId }: LayoutProps) {
             borderBottom: "1px solid var(--seam)",
           }}>
           <div className="flex items-center gap-2">
+            <div style={{ background: "#ffffff", borderRadius: 5, padding: "2px 4px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG College of Technology" style={{ height: 16, width: "auto", display: "block" }} />
+            </div>
+            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 13, letterSpacing: "-0.02em" }}>PSG Tech</span>
+            <span style={{ color: "var(--seam)", fontSize: 14, fontWeight: 200, margin: "0 1px" }}>|</span>
             <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
               style={{ background: "var(--amber)" }}>
               <span style={{ color: "var(--ink)", fontFamily: "'DM Serif Display', serif", fontSize: 11, fontWeight: 700, lineHeight: 1 }}>C</span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
-              <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 14, letterSpacing: "-0.02em" }}>ClubHub</span>
-              <span style={{ fontSize: 7, color: "var(--fog)", marginTop: 2 }}>PSG College of Technology</span>
-            </div>
+            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 14, letterSpacing: "-0.02em" }}>ClubHub</span>
           </div>
           <button
             type="button"
@@ -317,18 +320,17 @@ export default function Layout({ children, eventId }: LayoutProps) {
       >
         {/* Drawer header with logo + close */}
         <div className="flex items-center justify-between px-5 pt-5 pb-5" style={{ borderBottom: "1px solid var(--seam)" }}>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
+            <div style={{ background: "#ffffff", borderRadius: 5, padding: "2px 5px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG College of Technology" style={{ height: 18, width: "auto", display: "block" }} />
+            </div>
+            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>PSG Tech</span>
+            <span style={{ color: "var(--seam)", fontSize: 16, fontWeight: 200, margin: "0 1px" }}>|</span>
             <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
               style={{ background: "var(--amber)" }}>
               <span style={{ color: "var(--ink)", fontFamily: "'DM Serif Display', serif", fontSize: 13, fontWeight: 700, lineHeight: 1 }}>C</span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
-              <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>ClubHub</span>
-              <span style={{ fontSize: 8, color: "var(--fog)", letterSpacing: "0.04em", marginTop: 2, display: "flex", alignItems: "center", gap: 3 }}>
-                <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" style={{ height: 9, width: "auto", opacity: 0.7 }} />
-                PSG College of Technology
-              </span>
-            </div>
+            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>ClubHub</span>
           </div>
           <button
             type="button"
