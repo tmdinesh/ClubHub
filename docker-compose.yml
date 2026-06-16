@@ -75,6 +75,26 @@ services:
     command: >
       sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
+  worker:
+    build:
+      context: ./backend
+      target: runtime
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-ccops}:${POSTGRES_PASSWORD:-ccops_pass}@postgres:5432/${POSTGRES_DB:-ccops}
+      REDIS_URL: redis://redis:6379/0
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER:-ccops}:${RABBITMQ_DEFAULT_PASS:-ccops_pass}@rabbitmq:5672/
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python -m app.worker
+
   frontend:
     build:
       context: ./frontend

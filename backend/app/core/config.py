@@ -52,6 +52,13 @@ class Settings(BaseSettings):
     SUPER_ADMIN_EMAIL: str = ""
     SUPER_ADMIN_PASSWORD: str = ""
 
+    # ── Email / SMTP ──────────────────────────────────────────────────────────
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_NAME: str = "ClubHub"
+
     # ── App ───────────────────────────────────────────────────────────────────
     FRONTEND_URL: str = "http://localhost"
     ENVIRONMENT: Literal["development", "staging", "production"] = "production"

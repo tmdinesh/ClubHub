@@ -4,6 +4,7 @@ import json
 import logging
 from typing import Any
 
+from app.core.email import send_certificate_email
 from app.core.rabbitmq import Consumer
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,17 @@ async def _handle_attendance_marked(payload: dict[str, Any]) -> None:
 
 
 async def _handle_certificate_generated(payload: dict[str, Any]) -> None:
-    logger.info("Sending certificate email for cert at %s", payload.get("pdf_url"))
+    await send_certificate_email(
+        recipient_email=payload["recipient_email"],
+        recipient_name=payload["recipient_name"],
+        event_name=payload["event_name"],
+        club_name=payload["club_name"],
+        event_date=payload["event_date"],
+        certificate_type=payload["certificate_type"],
+        pdf_path=payload["pdf_path"],
+        unique_code=payload["unique_code"],
+        position=payload.get("position"),
+    )
 
 
 async def _handle_event_reminder(payload: dict[str, Any]) -> None:
@@ -94,6 +105,8 @@ class NotificationConsumer(Consumer):
         CERTIFICATE_GENERATED,
         EVENT_REMINDER,
         EVENT_COMPLETED,
+        EVENT_UPDATED,
+        EVENT_CANCELLED,
     ]
 
     async def handle(self, payload: dict[str, Any]) -> None:

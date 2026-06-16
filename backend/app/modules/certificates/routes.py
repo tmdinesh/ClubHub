@@ -11,10 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.rabbitmq import publish_event
 from app.modules.attendance.repos import AttendanceRepository
 from app.modules.attendance.services import AttendanceService
 from app.modules.auth.deps import get_current_user
 from app.modules.auth.models import User
+from app.modules.auth.repos import UserRepository
 from app.modules.certificates.repos import CertificateRepository
 from app.modules.certificates.schemas import (
     BulkGenerateRequest, CertificateOut, VerifyResponse,
@@ -145,9 +147,13 @@ async def generate_participation(
     present = await att_svc.list_present_users(event_id)
     club_name = event.organizer_club.name if event and event.organizer_club else ""
     event_name = event.title if event else str(event_id)
+    event_date = (
+        event.start_datetime.strftime("%B %d, %Y")
+        if event and event.start_datetime else ""
+    )
     certs = await svc.generate_participation(event_id, event_name, club_name, present)
-    # Notify each recipient
     notif_repo = NotificationRepository(db)
+    user_repo = UserRepository(db)
     for cert in certs:
         await notif_repo.create(
             user_id=cert.recipient_id,
@@ -156,6 +162,19 @@ async def generate_participation(
             body="Your participation certificate has been issued. View it in your dashboard.",
             metadata_={"event_id": str(event_id), "cert_id": str(cert.id)},
         )
+        user = await user_repo.get_by_id(cert.recipient_id)
+        if user:
+            meta = cert.metadata_ or {}
+            await publish_event("CERTIFICATE_GENERATED", {
+                "recipient_email": user.email,
+                "recipient_name": meta.get("name", user.name),
+                "event_name": event_name,
+                "club_name": club_name,
+                "event_date": event_date,
+                "certificate_type": "Participation",
+                "pdf_path": cert.pdf_url,
+                "unique_code": cert.unique_code,
+            })
     return [_cert_out(c) for c in certs]
 
 
@@ -172,6 +191,10 @@ async def generate_winners(
     event = await event_repo.get_event(event_id)
     club_name = event.organizer_club.name if event and event.organizer_club else ""
     event_name = event.title if event else str(event_id)
+    event_date = (
+        event.start_datetime.strftime("%B %d, %Y")
+        if event and event.start_datetime else ""
+    )
     winners = [
         {
             "user_id": w.user_id, "name": w.name, "position": w.position,
@@ -183,6 +206,7 @@ async def generate_winners(
     ]
     certs = await svc.generate_winners(event_id, event_name, club_name, winners)
     notif_repo = NotificationRepository(db)
+    user_repo = UserRepository(db)
     for cert in certs:
         meta = cert.metadata_ or {}
         await notif_repo.create(
@@ -192,6 +216,19 @@ async def generate_winners(
             body=f"Congratulations! You've been awarded {meta.get('position', 'a prize')} at {event_name}.",
             metadata_={"event_id": str(event_id), "cert_id": str(cert.id)},
         )
+        user = await user_repo.get_by_id(cert.recipient_id)
+        if user:
+            await publish_event("CERTIFICATE_GENERATED", {
+                "recipient_email": user.email,
+                "recipient_name": meta.get("name", user.name),
+                "event_name": event_name,
+                "club_name": club_name,
+                "event_date": event_date,
+                "certificate_type": "Winner",
+                "pdf_path": cert.pdf_url,
+                "unique_code": cert.unique_code,
+                "position": meta.get("position"),
+            })
     return [_cert_out(c) for c in certs]
 
 
