@@ -70,10 +70,10 @@ export default function EventDiscovery() {
         backdropFilter: "blur(12px)",
         borderBottom: "1px solid var(--seam)",
       }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 58, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 88, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Link to="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <div style={{ background: "#ffffff", borderRadius: 6, padding: "3px 6px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG College of Technology" style={{ height: 26, width: "auto", display: "block" }} />
+              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG College of Technology" style={{ height: 78, width: "auto", display: "block" }} />
             </div>
             <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 16, color: "var(--cream)", letterSpacing: "-0.02em" }}>PSG Tech</span>
             <span style={{ color: "var(--seam)", fontSize: 18, fontWeight: 200, margin: "0 2px" }}>|</span>
@@ -226,7 +226,7 @@ export default function EventDiscovery() {
         <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ background: "#ffffff", borderRadius: 8, padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" style={{ height: 38, width: "auto", display: "block" }} />
+              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" style={{ height: 114, width: "auto", display: "block" }} />
             </div>
             <div>
               <p style={{ fontSize: 13, fontWeight: 700, color: "var(--cream)", margin: 0 }}>PSG College of Technology</p>
