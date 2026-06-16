@@ -71,11 +71,17 @@ export default function EventDiscovery() {
         borderBottom: "1px solid var(--seam)",
       }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 58, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Link to="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--amber)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Link to="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, background: "var(--amber)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>C</span>
             </div>
-            <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 16, color: "var(--cream)", letterSpacing: "-0.02em" }}>ClubHub</span>
+            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+              <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 16, color: "var(--cream)", letterSpacing: "-0.02em" }}>ClubHub</span>
+              <span style={{ fontSize: 9, color: "var(--fog)", letterSpacing: "0.04em", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
+                <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" style={{ height: 10, width: "auto", opacity: 0.7 }} />
+                PSG College of Technology
+              </span>
+            </div>
           </Link>
           <nav style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {isAuthenticated ? (
@@ -211,6 +217,29 @@ export default function EventDiscovery() {
           </>
         )}
       </main>
+
+      {/* ── Footer ── */}
+      <footer style={{
+        borderTop: "1px solid var(--seam)",
+        padding: "24px",
+        marginTop: 48,
+      }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" style={{ height: 32, width: "auto", opacity: 0.85 }} />
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--cream)", margin: 0 }}>PSG College of Technology</p>
+              <p style={{ fontSize: 10, color: "var(--fog)", margin: "2px 0 0" }}>Peelamedu, Coimbatore – 641 004</p>
+            </div>
+          </div>
+          <p style={{ fontSize: 11, color: "var(--dust)", textAlign: "center", margin: 0 }}>
+            © All rights reserved · PSG Tech Students' Union
+          </p>
+          <p style={{ fontSize: 10, color: "var(--dust)", margin: 0 }}>
+            Developed by Dinesh T M (23Z320)
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

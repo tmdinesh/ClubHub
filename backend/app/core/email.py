@@ -55,24 +55,50 @@ def _build_html(
         <table width="600" cellpadding="0" cellspacing="0"
                style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:600px;width:100%;">
 
-          <!-- Header bar -->
+          <!-- Institutional header -->
           <tr>
-            <td style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4f46e5 100%);padding:36px 40px 28px;">
-              <p style="margin:0 0 4px;font-size:12px;color:#a5b4fc;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">
+            <td style="background:#ffffff;padding:20px 32px 16px;border-bottom:1px solid #e5e7eb;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="vertical-align:middle;width:48px;">
+                    <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png"
+                         alt="PSG Tech" width="40" height="40"
+                         style="display:block;width:40px;height:auto;" />
+                  </td>
+                  <td style="vertical-align:middle;padding-left:12px;">
+                    <p style="margin:0;font-size:15px;font-weight:700;color:#111827;line-height:1.2;">
+                      PSG College of Technology
+                    </p>
+                    <p style="margin:3px 0 0;font-size:11px;color:#6b7280;">
+                      Peelamedu, Coimbatore – 641 004
+                    </p>
+                  </td>
+                  <td align="right" style="vertical-align:middle;">
+                    <span style="font-size:11px;color:#9ca3af;font-style:italic;">via ClubHub</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Certificate type header bar -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4f46e5 100%);padding:28px 32px 22px;">
+              <p style="margin:0 0 4px;font-size:11px;color:#a5b4fc;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">
                 {club_name}
               </p>
-              <h1 style="margin:0;font-size:26px;font-weight:700;color:#ffffff;line-height:1.2;">
+              <h1 style="margin:0;font-size:24px;font-weight:700;color:#ffffff;line-height:1.2;">
                 {cert_label}
               </h1>
-              <p style="margin:10px 0 0;font-size:14px;color:#c7d2fe;">{event_name} &nbsp;·&nbsp; {event_date}</p>
+              <p style="margin:8px 0 0;font-size:13px;color:#c7d2fe;">{event_name} &nbsp;·&nbsp; {event_date}</p>
             </td>
           </tr>
 
           <!-- Body -->
           <tr>
-            <td style="padding:36px 40px 28px;">
+            <td style="padding:32px 32px 24px;">
 
-              <p style="margin:0 0 24px;font-size:16px;color:#374151;line-height:1.6;">
+              <p style="margin:0 0 20px;font-size:16px;color:#374151;line-height:1.6;">
                 Dear <strong style="color:#111827;">{recipient_name}</strong>,
               </p>
               <p style="margin:0 0 24px;font-size:15px;color:#4b5563;line-height:1.7;">
@@ -82,23 +108,23 @@ def _build_html(
               </p>
 
               <!-- Details table -->
-              <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:20px 24px;margin-bottom:28px;">
+              <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:18px 22px;margin-bottom:24px;">
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr>
-                    <td style="padding:6px 0;color:#6b7280;font-size:14px;width:40%;">Event</td>
-                    <td style="padding:6px 0;color:#111827;font-size:14px;font-weight:600;">{event_name}</td>
+                    <td style="padding:6px 0;color:#6b7280;font-size:13px;width:40%;">Event</td>
+                    <td style="padding:6px 0;color:#111827;font-size:13px;font-weight:600;">{event_name}</td>
                   </tr>
                   <tr>
-                    <td style="padding:6px 0;color:#6b7280;font-size:14px;">Organised by</td>
-                    <td style="padding:6px 0;color:#111827;font-size:14px;font-weight:600;">{club_name}</td>
+                    <td style="padding:6px 0;color:#6b7280;font-size:13px;">Organised by</td>
+                    <td style="padding:6px 0;color:#111827;font-size:13px;font-weight:600;">{club_name}</td>
                   </tr>
                   <tr>
-                    <td style="padding:6px 0;color:#6b7280;font-size:14px;">Date</td>
-                    <td style="padding:6px 0;color:#111827;font-size:14px;font-weight:600;">{event_date}</td>
+                    <td style="padding:6px 0;color:#6b7280;font-size:13px;">Date</td>
+                    <td style="padding:6px 0;color:#111827;font-size:13px;font-weight:600;">{event_date}</td>
                   </tr>
                   <tr>
-                    <td style="padding:6px 0;color:#6b7280;font-size:14px;">Certificate</td>
-                    <td style="padding:6px 0;color:#111827;font-size:14px;font-weight:600;">{cert_label}</td>
+                    <td style="padding:6px 0;color:#6b7280;font-size:13px;">Certificate</td>
+                    <td style="padding:6px 0;color:#111827;font-size:13px;font-weight:600;">{cert_label}</td>
                   </tr>{position_row}
                 </table>
               </div>
@@ -113,11 +139,21 @@ def _build_html(
 
           <!-- Footer -->
           <tr>
-            <td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:20px 40px;">
-              <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6;">
-                This is an automated message from <strong style="color:#6b7280;">{settings.SMTP_FROM_NAME}</strong>.
-                Please do not reply to this email. For queries, contact your club coordinator.
-              </p>
+            <td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:18px 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <p style="margin:0 0 6px;font-size:11px;color:#9ca3af;line-height:1.6;">
+                      This is an automated message sent via <strong style="color:#6b7280;">ClubHub</strong> on behalf of {club_name}.
+                      Please do not reply to this email.
+                      If you encounter any issues with your certificate, please contact your Club Admin.
+                    </p>
+                    <p style="margin:0;font-size:10px;color:#d1d5db;">
+                      © All rights reserved · PSG Tech Students' Union &nbsp;·&nbsp; Developed by Dinesh T M (23Z320)
+                    </p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 

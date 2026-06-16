@@ -226,9 +226,15 @@ export default function Layout({ children, eventId }: LayoutProps) {
               style={{ background: "var(--amber)" }}>
               <span style={{ color: "var(--ink)", fontFamily: "'DM Serif Display', serif", fontSize: 13, fontWeight: 700, lineHeight: 1 }}>C</span>
             </div>
-            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>
-              ClubHub
-            </span>
+            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+              <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>
+                ClubHub
+              </span>
+              <span style={{ fontSize: 8, color: "var(--fog)", letterSpacing: "0.04em", marginTop: 2, display: "flex", alignItems: "center", gap: 3 }}>
+                <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" style={{ height: 9, width: "auto", opacity: 0.7 }} />
+                PSG College of Technology
+              </span>
+            </div>
           </div>
         </div>
 
@@ -249,9 +255,10 @@ export default function Layout({ children, eventId }: LayoutProps) {
               style={{ background: "var(--amber)" }}>
               <span style={{ color: "var(--ink)", fontFamily: "'DM Serif Display', serif", fontSize: 11, fontWeight: 700, lineHeight: 1 }}>C</span>
             </div>
-            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 14, letterSpacing: "-0.02em" }}>
-              ClubHub
-            </span>
+            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+              <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 14, letterSpacing: "-0.02em" }}>ClubHub</span>
+              <span style={{ fontSize: 7, color: "var(--fog)", marginTop: 2 }}>PSG College of Technology</span>
+            </div>
           </div>
           <button
             type="button"
@@ -265,6 +272,28 @@ export default function Layout({ children, eventId }: LayoutProps) {
         </div>
 
         {children}
+
+        {/* ── Page footer ── */}
+        <footer style={{
+          borderTop: "1px solid var(--seam)",
+          padding: "16px 24px",
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 8,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" style={{ height: 22, width: "auto", opacity: 0.8 }} />
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "var(--fog)", margin: 0 }}>PSG College of Technology</p>
+              <p style={{ fontSize: 9, color: "var(--dust)", margin: 0 }}>© All rights reserved · PSG Tech Students' Union</p>
+            </div>
+          </div>
+          <p style={{ fontSize: 9, color: "var(--dust)", margin: 0 }}>
+            Developed by Dinesh T M (23Z320)
+          </p>
+        </footer>
       </main>
 
       {/* ── Mobile drawer backdrop ── */}
@@ -293,9 +322,13 @@ export default function Layout({ children, eventId }: LayoutProps) {
               style={{ background: "var(--amber)" }}>
               <span style={{ color: "var(--ink)", fontFamily: "'DM Serif Display', serif", fontSize: 13, fontWeight: 700, lineHeight: 1 }}>C</span>
             </div>
-            <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>
-              ClubHub
-            </span>
+            <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+              <span style={{ color: "var(--cream)", fontFamily: "'DM Serif Display', serif", fontSize: 15, letterSpacing: "-0.02em" }}>ClubHub</span>
+              <span style={{ fontSize: 8, color: "var(--fog)", letterSpacing: "0.04em", marginTop: 2, display: "flex", alignItems: "center", gap: 3 }}>
+                <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" style={{ height: 9, width: "auto", opacity: 0.7 }} />
+                PSG College of Technology
+              </span>
+            </div>
           </div>
           <button
             type="button"
