@@ -4,7 +4,6 @@ import logging
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from pathlib import Path
 
 import aiosmtplib
 
@@ -139,7 +138,7 @@ async def send_certificate_email(
     club_name: str,
     event_date: str,
     certificate_type: str,
-    pdf_path: str,
+    pdf_bytes: bytes,
     unique_code: str,
     position: str | None = None,
 ) -> None:
@@ -167,19 +166,14 @@ async def send_certificate_email(
     )
     msg.attach(MIMEText(html_body, "html", "utf-8"))
 
-    # Attach PDF
-    pdf_file = Path(settings.LOCAL_STORAGE_PATH) / pdf_path.removeprefix("/media/")
-    if pdf_file.exists():
-        with open(pdf_file, "rb") as f:
-            attachment = MIMEApplication(f.read(), _subtype="pdf")
-            attachment.add_header(
-                "Content-Disposition",
-                "attachment",
-                filename=f"{unique_code}.pdf",
-            )
-            msg.attach(attachment)
-    else:
-        logger.warning("Certificate PDF not found at %s — sending email without attachment", pdf_file)
+    if pdf_bytes:
+        attachment = MIMEApplication(pdf_bytes, _subtype="pdf")
+        attachment.add_header(
+            "Content-Disposition",
+            "attachment",
+            filename=f"{unique_code}.pdf",
+        )
+        msg.attach(attachment)
 
     try:
         await aiosmtplib.send(

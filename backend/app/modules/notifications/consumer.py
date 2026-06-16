@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import logging
 from typing import Any
@@ -33,6 +34,7 @@ async def _handle_attendance_marked(payload: dict[str, Any]) -> None:
 
 
 async def _handle_certificate_generated(payload: dict[str, Any]) -> None:
+    pdf_bytes = base64.b64decode(payload["pdf_b64"]) if payload.get("pdf_b64") else b""
     await send_certificate_email(
         recipient_email=payload["recipient_email"],
         recipient_name=payload["recipient_name"],
@@ -40,7 +42,7 @@ async def _handle_certificate_generated(payload: dict[str, Any]) -> None:
         club_name=payload["club_name"],
         event_date=payload["event_date"],
         certificate_type=payload["certificate_type"],
-        pdf_path=payload["pdf_path"],
+        pdf_bytes=pdf_bytes,
         unique_code=payload["unique_code"],
         position=payload.get("position"),
     )

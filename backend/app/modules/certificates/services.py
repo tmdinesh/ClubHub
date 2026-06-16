@@ -115,29 +115,23 @@ def _render_pdf_on_template(template_path: Path, placeholders: dict, context: di
     return pdf_buf.getvalue()
 
 
-def _write_cert_pdf(
-    media_dir: Path,
+def _build_cert_pdf(
     context: dict,
     template: CertificateTemplate | None = None,
-) -> tuple[str, str]:
+) -> tuple[str, bytes]:
+    """Generate certificate PDF in memory. Returns (unique_code, pdf_bytes)."""
     unique_code = _generate_unique_code(context.get("event_name", "EVENT"))
     context["unique_code"] = unique_code
-    try:
-        media_dir.mkdir(parents=True, exist_ok=True)
-        if template and template.template_file_url and template.placeholders:
-            rel = template.template_file_url.removeprefix("/media/")
-            template_path = Path(settings.LOCAL_STORAGE_PATH) / rel
-            if template_path.exists():
-                pdf_bytes = _render_pdf_on_template(template_path, template.placeholders, context)
-            else:
-                pdf_bytes = _render_pdf_plain(context)
+    if template and template.template_file_url and template.placeholders:
+        rel = template.template_file_url.removeprefix("/media/")
+        template_path = Path(settings.LOCAL_STORAGE_PATH) / rel
+        if template_path.exists():
+            pdf_bytes = _render_pdf_on_template(template_path, template.placeholders, context)
         else:
             pdf_bytes = _render_pdf_plain(context)
-        pdf_path = media_dir / f"{unique_code}.pdf"
-        pdf_path.write_bytes(pdf_bytes)
-    except OSError:
-        pass
-    return unique_code, f"/media/certificates/{unique_code}.pdf"
+    else:
+        pdf_bytes = _render_pdf_plain(context)
+    return unique_code, pdf_bytes
 
 
 class CertificateService:
@@ -156,45 +150,43 @@ class CertificateService:
 
     async def bulk_generate(
         self, event_id: UUID, template_id: UUID, recipients: list[dict[str, Any]]
-    ) -> list[Certificate]:
+    ) -> list[tuple[Certificate, bytes]]:
         template = await self.repo.get_template(template_id)
         if not template:
             raise NotFoundError("Template", template_id)
 
-        media_dir = Path(settings.LOCAL_STORAGE_PATH) / "certificates"
-        certs: list[Certificate] = []
+        results: list[tuple[Certificate, bytes]] = []
         for r in recipients:
-            unique_code, pdf_url = _write_cert_pdf(media_dir, dict(r), template)
+            unique_code, pdf_bytes = _build_cert_pdf(dict(r), template)
             cert = await self.repo.create_certificate(
                 template_id=template_id,
                 recipient_id=UUID(r["recipient_id"]),
                 event_id=event_id,
                 certificate_type=template.certificate_type,
                 unique_code=unique_code,
-                pdf_url=pdf_url,
+                pdf_url=None,
                 metadata={k: v for k, v in r.items() if k != "recipient_id"},
             )
-            certs.append(cert)
-        return certs
+            results.append((cert, pdf_bytes))
+        return results
 
     async def generate_participation(
         self, event_id: UUID, event_name: str, club_name: str,
         present_users: list[dict]
-    ) -> list[Certificate]:
+    ) -> list[tuple[Certificate, bytes]]:
         if not present_users:
             raise BadRequestError("No attendees marked present for this event")
 
-        media_dir = Path(settings.LOCAL_STORAGE_PATH) / "certificates"
         date_str = datetime.now(timezone.utc).strftime("%B %d, %Y")
         template = await self.repo.get_template_by_event_type(event_id, CertificateType.PARTICIPATION)
-        certs: list[Certificate] = []
+        results: list[tuple[Certificate, bytes]] = []
 
         for u in present_users:
             existing = await self.repo.get_by_event_user_type(
                 event_id, UUID(u["user_id"]), CertificateType.PARTICIPATION
             )
             if existing:
-                certs.append(existing)
+                results.append((existing, b""))
                 continue
 
             context = {
@@ -204,28 +196,27 @@ class CertificateService:
                 "certificate_type": "Participation",
                 "date": date_str,
             }
-            unique_code, pdf_url = _write_cert_pdf(media_dir, context, template)
+            unique_code, pdf_bytes = _build_cert_pdf(context, template)
             cert = await self.repo.create_certificate(
                 template_id=template.id if template else None,
                 recipient_id=UUID(u["user_id"]),
                 event_id=event_id,
                 certificate_type=CertificateType.PARTICIPATION,
                 unique_code=unique_code,
-                pdf_url=pdf_url,
+                pdf_url=None,
                 metadata={"name": u["name"], "event_name": event_name,
                           "certificate_type": "Participation"},
             )
-            certs.append(cert)
-        return certs
+            results.append((cert, pdf_bytes))
+        return results
 
     async def generate_winners(
         self, event_id: UUID, event_name: str, club_name: str,
         winners: list[dict]
-    ) -> list[Certificate]:
-        media_dir = Path(settings.LOCAL_STORAGE_PATH) / "certificates"
+    ) -> list[tuple[Certificate, bytes]]:
         date_str = datetime.now(timezone.utc).strftime("%B %d, %Y")
         template = await self.repo.get_template_by_event_type(event_id, CertificateType.WINNER)
-        certs: list[Certificate] = []
+        results: list[tuple[Certificate, bytes]] = []
 
         for w in winners:
             position_label = POSITION_LABELS.get(w["position"], w["position"])
@@ -237,7 +228,7 @@ class CertificateService:
                 "position": position_label,
                 "date": date_str,
             }
-            unique_code, pdf_url = _write_cert_pdf(media_dir, context, template)
+            unique_code, pdf_bytes = _build_cert_pdf(context, template)
             meta = {
                 "name": w["name"], "event_name": event_name,
                 "certificate_type": "Winner", "position": position_label,
@@ -251,11 +242,11 @@ class CertificateService:
                 event_id=event_id,
                 certificate_type=CertificateType.WINNER,
                 unique_code=unique_code,
-                pdf_url=pdf_url,
+                pdf_url=None,
                 metadata=meta,
             )
-            certs.append(cert)
-        return certs
+            results.append((cert, pdf_bytes))
+        return results
 
     async def list_by_event(self, event_id: UUID) -> list[Certificate]:
         return await self.repo.list_by_event(event_id)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import uuid
 from pathlib import Path
@@ -129,8 +130,8 @@ async def bulk_generate(
     svc: CertificateService = Depends(_svc),
     actor: User = Depends(get_current_user),
 ) -> list[CertificateOut]:
-    certs = await svc.bulk_generate(event_id, body.template_id, body.recipients)
-    return [_cert_out(c) for c in certs]
+    results = await svc.bulk_generate(event_id, body.template_id, body.recipients)
+    return [_cert_out(c) for c, _ in results]
 
 
 @router.post("/events/{event_id}/certificates/generate-participation",
@@ -151,31 +152,32 @@ async def generate_participation(
         event.start_datetime.strftime("%B %d, %Y")
         if event and event.start_datetime else ""
     )
-    certs = await svc.generate_participation(event_id, event_name, club_name, present)
+    results = await svc.generate_participation(event_id, event_name, club_name, present)
     notif_repo = NotificationRepository(db)
     user_repo = UserRepository(db)
-    for cert in certs:
+    for cert, pdf_bytes in results:
         await notif_repo.create(
             user_id=cert.recipient_id,
             type="CERTIFICATE_ISSUED",
             title=f"Certificate issued: {event_name}",
-            body="Your participation certificate has been issued. View it in your dashboard.",
+            body="Your participation certificate has been sent to your email.",
             metadata_={"event_id": str(event_id), "cert_id": str(cert.id)},
         )
-        user = await user_repo.get_by_id(cert.recipient_id)
-        if user:
-            meta = cert.metadata_ or {}
-            await publish_event("CERTIFICATE_GENERATED", {
-                "recipient_email": user.email,
-                "recipient_name": meta.get("name", user.name),
-                "event_name": event_name,
-                "club_name": club_name,
-                "event_date": event_date,
-                "certificate_type": "Participation",
-                "pdf_path": cert.pdf_url,
-                "unique_code": cert.unique_code,
-            })
-    return [_cert_out(c) for c in certs]
+        if pdf_bytes:
+            user = await user_repo.get_by_id(cert.recipient_id)
+            if user:
+                meta = cert.metadata_ or {}
+                await publish_event("CERTIFICATE_GENERATED", {
+                    "recipient_email": user.email,
+                    "recipient_name": meta.get("name", user.name),
+                    "event_name": event_name,
+                    "club_name": club_name,
+                    "event_date": event_date,
+                    "certificate_type": "Participation",
+                    "pdf_b64": base64.b64encode(pdf_bytes).decode(),
+                    "unique_code": cert.unique_code,
+                })
+    return [_cert_out(c) for c, _ in results]
 
 
 @router.post("/events/{event_id}/certificates/generate-winners",
@@ -204,16 +206,16 @@ async def generate_winners(
         }
         for w in body.winners
     ]
-    certs = await svc.generate_winners(event_id, event_name, club_name, winners)
+    results = await svc.generate_winners(event_id, event_name, club_name, winners)
     notif_repo = NotificationRepository(db)
     user_repo = UserRepository(db)
-    for cert in certs:
+    for cert, pdf_bytes in results:
         meta = cert.metadata_ or {}
         await notif_repo.create(
             user_id=cert.recipient_id,
             type="CERTIFICATE_ISSUED",
             title=f"Winner certificate: {event_name}",
-            body=f"Congratulations! You've been awarded {meta.get('position', 'a prize')} at {event_name}.",
+            body=f"Congratulations! Your winner certificate for {event_name} has been sent to your email.",
             metadata_={"event_id": str(event_id), "cert_id": str(cert.id)},
         )
         user = await user_repo.get_by_id(cert.recipient_id)
@@ -225,11 +227,11 @@ async def generate_winners(
                 "club_name": club_name,
                 "event_date": event_date,
                 "certificate_type": "Winner",
-                "pdf_path": cert.pdf_url,
+                "pdf_b64": base64.b64encode(pdf_bytes).decode(),
                 "unique_code": cert.unique_code,
                 "position": meta.get("position"),
             })
-    return [_cert_out(c) for c in certs]
+    return [_cert_out(c) for c, _ in results]
 
 
 @router.get("/certificates/me", response_model=list[CertificateOut])

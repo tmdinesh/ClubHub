@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Award, Download, ExternalLink, ShieldCheck } from "lucide-react";
+import { Award, ExternalLink, Mail, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
@@ -88,33 +88,16 @@ function CertCard({ cert }: { cert: Certificate }) {
           className="flex items-center gap-2 pt-4"
           style={{ borderTop: "1px solid var(--seam)" }}
         >
-          {cert.pdf_url ? (
-            <a
-              href={cert.pdf_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-              style={{
-                background: "color-mix(in srgb, var(--amber) 12%, transparent)",
-                color: "var(--amber)",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background =
-                  "color-mix(in srgb, var(--amber) 20%, transparent)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background =
-                  "color-mix(in srgb, var(--amber) 12%, transparent)";
-              }}
-            >
-              <Download size={12} />
-              Download PDF
-            </a>
-          ) : (
-            <span className="text-xs italic" style={{ color: "var(--ash)" }}>
-              PDF not ready
-            </span>
-          )}
+          <span
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+            style={{
+              background: "color-mix(in srgb, var(--jade) 12%, transparent)",
+              color: "var(--jade)",
+            }}
+          >
+            <Mail size={12} />
+            Sent to your email
+          </span>
           <Link
             to={`/verify/${cert.unique_code}`}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
