@@ -280,30 +280,6 @@ export default function Layout({ children, eventId }: LayoutProps) {
         </div>
 
         {children}
-
-        {/* ── Page footer ── */}
-        <footer style={{
-          borderTop: "1px solid var(--seam)",
-          padding: "16px 24px",
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 8,
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ background: "#e8eef5", borderRadius: 6, padding: "3px 6px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" style={{ height: 52, width: "auto", display: "block" }} />
-            </div>
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--fog)", margin: 0 }}>PSG College of Technology</p>
-              <p style={{ fontSize: 10, color: "var(--dust)", margin: "2px 0 0" }}>© All rights reserved · PSG Tech Students' Union</p>
-            </div>
-          </div>
-          <p style={{ fontSize: 9, color: "var(--dust)", margin: 0 }}>
-            Developed by Dinesh T M (23Z320)
-          </p>
-        </footer>
       </main>
 
       {/* ── Mobile drawer backdrop ── */}
