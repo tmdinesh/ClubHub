@@ -18,9 +18,10 @@ import {
   ChevronLeft,
   CheckCircle2,
   AlertCircle,
+  GraduationCap,
 } from "lucide-react";
 import api, { apiError } from "@/lib/api";
-import type { Event } from "@/types";
+import type { DeptCode, Event } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -89,6 +90,12 @@ export default function EventDetail() {
       return res.data;
     },
     enabled: !!slug,
+  });
+
+  const { data: deptCodes = [] } = useQuery<DeptCode[]>({
+    queryKey: ["department-codes"],
+    queryFn: async () => (await api.get<DeptCode[]>("/department-codes")).data,
+    staleTime: 5 * 60 * 1000,
   });
 
   const [registered, setRegistered] = useState(false);
@@ -267,6 +274,24 @@ export default function EventDetail() {
                     </div>
                   </div>
                 )}
+
+                {/* Eligible departments */}
+                <div className="flex items-start gap-3 text-sm rounded-lg bg-amber-50 border border-amber-100 px-3 py-2.5">
+                  <GraduationCap className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-amber-700">Eligibility</p>
+                    {!event.allowed_departments || event.allowed_departments.length === 0 ? (
+                      <p className="text-amber-600 text-xs mt-0.5">Open to all departments</p>
+                    ) : (
+                      <ul className="text-amber-600 text-xs mt-0.5 space-y-0.5 list-disc list-inside">
+                        {event.allowed_departments.map((code) => {
+                          const found = deptCodes.find((d) => d.code === code);
+                          return <li key={code}>{found ? found.label : code}</li>;
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

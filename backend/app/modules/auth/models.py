@@ -12,6 +12,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
+
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -35,6 +36,7 @@ class User(Base):
     department: Mapped[str | None] = mapped_column(String(128))
     year: Mapped[int | None] = mapped_column()
     roll_number: Mapped[str | None] = mapped_column(String(32))
+    phone_number: Mapped[str | None] = mapped_column(String(20))
     bank_account_name: Mapped[str | None] = mapped_column(String(256))
     bank_account_number: Mapped[str | None] = mapped_column(String(32))
     bank_ifsc: Mapped[str | None] = mapped_column(String(16))
@@ -45,6 +47,15 @@ class User(Base):
     )
 
     audit_logs: Mapped[list["AuditLog"]] = relationship(back_populates="user")
+
+
+class DepartmentCode(Base):
+    __tablename__ = "department_codes"
+    __table_args__ = (UniqueConstraint("code", name="uq_department_codes_code"),)
+
+    code: Mapped[str] = mapped_column(String(16), unique=True, nullable=False)
+    label: Mapped[str] = mapped_column(String(128), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
 class AuditLog(Base):

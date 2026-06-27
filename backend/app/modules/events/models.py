@@ -14,7 +14,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.shared.base_model import Base
@@ -78,6 +78,9 @@ class Event(Base):
     is_team_event: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     team_min_size: Mapped[int] = mapped_column(Integer, default=2, nullable=False)
     team_max_size: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
+    allowed_departments: Mapped[list[str] | None] = mapped_column(ARRAY(String(16)), nullable=True)
+    attendance_mode: Mapped[str] = mapped_column(String(16), nullable=False, default="SCANNER")
+    mass_qr_interval: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     organizer_club: Mapped["Club"] = relationship(back_populates="events")
     organizers: Mapped[list["EventOrganizer"]] = relationship(back_populates="event")

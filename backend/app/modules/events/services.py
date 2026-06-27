@@ -88,6 +88,7 @@ class EventService:
         # Notify confirmed participants when a published event is updated
         if event.status == EventStatus.PUBLISHED and reg_repo and notif_repo:
             users = await reg_repo.list_confirmed_with_users(event_id)
+            club_name = event.organizer_club.name if event.organizer_club else "ClubHub"
             for u in users:
                 await notif_repo.create(
                     user_id=u["user_id"],
@@ -101,6 +102,7 @@ class EventService:
                 "type": EVENT_UPDATED,
                 "event_id": str(event_id),
                 "event_title": updated.title,
+                "club_name": club_name,
                 "users": users,
             })
 
@@ -119,6 +121,7 @@ class EventService:
         # Notify registered participants before soft-delete
         if reg_repo and notif_repo:
             users = await reg_repo.list_confirmed_with_users(event_id)
+            club_name = event.organizer_club.name if event.organizer_club else "ClubHub"
             for u in users:
                 await notif_repo.create(
                     user_id=u["user_id"],
@@ -132,6 +135,7 @@ class EventService:
                 "type": EVENT_CANCELLED,
                 "event_id": str(event_id),
                 "event_title": event.title,
+                "club_name": club_name,
                 "users": users,
             })
 
@@ -156,7 +160,7 @@ class EventService:
         await self.repo.create_approval(event_id, event.faculty_advisor_id)
         return await self.repo.update(event, status=EventStatus.PENDING_APPROVAL)
 
-    async def approve_event(self, event_id: UUID, actor: User) -> Event:
+    async def approve_event(self, event_id: UUID, actor: User, user_repo=None) -> Event:
         if actor.role not in (UserRole.SUPER_ADMIN, UserRole.FACULTY_ADVISOR):
             raise ForbiddenError("Only Faculty Advisors can approve events")
         event = await self.get_event(event_id)
@@ -165,7 +169,31 @@ class EventService:
         if approval:
             approval.status = ApprovalStatus.APPROVED
             approval.reviewed_at = datetime.now(timezone.utc)
-        return await self.repo.update(event, status=EventStatus.PUBLISHED)
+        updated = await self.repo.update(event, status=EventStatus.PUBLISHED)
+
+        # Broadcast new event notification to all users
+        if user_repo:
+            all_users = await user_repo.list_all()
+            club_name = event.organizer_club.name if event.organizer_club else "ClubHub"
+            event_slug = updated.slug
+            start_dt = (
+                updated.start_datetime.strftime("%d %b %Y, %I:%M %p IST")
+                if updated.start_datetime else "TBD"
+            )
+            event_url = f"{__import__('app').core.config.settings.FRONTEND_URL}/events/{event_slug}"
+            from app.modules.notifications.consumer import _handle_event_published, EVENT_PUBLISHED
+            await _handle_event_published({
+                "type": EVENT_PUBLISHED,
+                "event_id": str(event_id),
+                "event_title": updated.title,
+                "club_name": club_name,
+                "event_url": event_url,
+                "start_datetime": start_dt,
+                "venue": updated.venue,
+                "users": [{"user_id": str(u.id), "name": u.name, "email": u.email} for u in all_users],
+            })
+
+        return updated
 
     async def reject_event(self, event_id: UUID, comment: str, actor: User) -> Event:
         if actor.role not in (UserRole.SUPER_ADMIN, UserRole.FACULTY_ADVISOR):
@@ -181,7 +209,48 @@ class EventService:
             approval.reviewed_at = datetime.now(timezone.utc)
         return await self.repo.update(event, status=EventStatus.DRAFT)
 
-    async def delete_event(self, event_id: UUID, actor: User) -> None:
+    async def complete_event(
+        self, event_id: UUID, actor: User,
+        reg_repo=None, notif_repo=None, feedback_svc=None,
+    ) -> Event:
+        if actor.role not in (UserRole.SUPER_ADMIN, UserRole.CLUB_ADMIN):
+            raise ForbiddenError("Only Club Admins can mark events as complete")
+        event = await self.get_event(event_id)
+        self._assert_transition(event.status, EventStatus.COMPLETED)
+        if event.end_datetime:
+            from datetime import datetime, timezone
+            if datetime.now(timezone.utc) < event.end_datetime:
+                raise BadRequestError("Event cannot be marked complete before it has ended")
+        updated = await self.repo.update(event, status=EventStatus.COMPLETED)
+
+        # Auto-create fixed feedback form
+        if feedback_svc:
+            await feedback_svc.setup_for_event(event_id)
+
+        # Notify confirmed participants to fill feedback
+        if reg_repo and notif_repo:
+            users = await reg_repo.list_confirmed_with_users(event_id)
+            club_name = event.organizer_club.name if event.organizer_club else "ClubHub"
+            feedback_url = f"{__import__('app').core.config.settings.FRONTEND_URL}/dashboard/feedback/{event_id}"
+            for u in users:
+                await notif_repo.create(
+                    user_id=u["user_id"],
+                    type="EVENT_UPDATE",
+                    title=f"Share your feedback: {updated.title}",
+                    body="The event has concluded. We'd love to hear your thoughts — please take a moment to fill in the feedback form.",
+                    metadata_={"event_id": str(event_id), "feedback_url": feedback_url},
+                )
+            from app.core.email import send_feedback_request_email
+            for u in users:
+                await send_feedback_request_email(
+                    recipient_email=u["email"],
+                    recipient_name=u["name"],
+                    event_title=updated.title,
+                    club_name=club_name,
+                    feedback_url=feedback_url,
+                )
+
+        return updated
         if actor.role != UserRole.SUPER_ADMIN:
             raise ForbiddenError("Only Super Admins can delete events")
         event = await self.get_event(event_id)

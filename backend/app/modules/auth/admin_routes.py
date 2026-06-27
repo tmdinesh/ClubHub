@@ -3,17 +3,27 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.modules.auth.deps import get_current_user
-from app.modules.auth.models import User
+from app.modules.auth.models import DepartmentCode, User
 from app.modules.auth.repos import UserRepository
-from app.modules.auth.schemas import AdminClubUpdate, AdminUserCreate, AdminUserUpdate, UserOut
+from app.modules.auth.schemas import (
+    AdminClubUpdate,
+    AdminUserCreate,
+    AdminUserUpdate,
+    DeptCodeCreate,
+    DeptCodeOut,
+    DeptCodeUpdate,
+    UserOut,
+)
 from app.modules.events.repos import EventRepository
 from app.modules.events.schemas import ClubOut
 from app.shared.enums import UserRole
 from app.shared.exceptions import ForbiddenError, NotFoundError
+from sqlalchemy import delete, select
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -87,3 +97,73 @@ async def update_club(
     if not club:
         raise NotFoundError("Club", club_id)
     return ClubOut.model_validate(club)
+
+
+# ── Department Codes ───────────────────────────────────────────────────────────
+
+@router.get("/department-codes", response_model=list[DeptCodeOut])
+async def list_department_codes(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(_require_super_admin),
+) -> list[DeptCodeOut]:
+    result = await db.execute(select(DepartmentCode).order_by(DepartmentCode.code))
+    return [DeptCodeOut.model_validate(d) for d in result.scalars().all()]
+
+
+@router.post("/department-codes", response_model=DeptCodeOut, status_code=201)
+async def create_department_code(
+    body: DeptCodeCreate,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(_require_super_admin),
+) -> DeptCodeOut:
+    dept = DepartmentCode(code=body.code.upper().strip(), label=body.label.strip())
+    db.add(dept)
+    await db.commit()
+    await db.refresh(dept)
+    return DeptCodeOut.model_validate(dept)
+
+
+@router.patch("/department-codes/{dept_id}", response_model=DeptCodeOut)
+async def update_department_code(
+    dept_id: UUID,
+    body: DeptCodeUpdate,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(_require_super_admin),
+) -> DeptCodeOut:
+    result = await db.execute(select(DepartmentCode).where(DepartmentCode.id == dept_id))
+    dept = result.scalar_one_or_none()
+    if not dept:
+        raise NotFoundError("DepartmentCode", dept_id)
+    if body.label is not None:
+        dept.label = body.label.strip()
+    if body.is_active is not None:
+        dept.is_active = body.is_active
+    await db.commit()
+    await db.refresh(dept)
+    return DeptCodeOut.model_validate(dept)
+
+
+@router.delete("/department-codes/{dept_id}", status_code=204, response_class=Response, response_model=None)
+async def delete_department_code(
+    dept_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(_require_super_admin),
+) -> None:
+    result = await db.execute(select(DepartmentCode).where(DepartmentCode.id == dept_id))
+    dept = result.scalar_one_or_none()
+    if not dept:
+        raise NotFoundError("DepartmentCode", dept_id)
+    await db.delete(dept)
+    await db.commit()
+
+
+# ── Maintenance ────────────────────────────────────────────────────────────────
+
+@router.post("/maintenance/purge-inactive-users")
+async def purge_inactive_users(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(_require_super_admin),
+) -> dict:
+    from app.modules.auth.cleanup import delete_inactive_users
+    count = await delete_inactive_users(db)
+    return {"deleted": count}

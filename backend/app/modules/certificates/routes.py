@@ -24,6 +24,8 @@ from app.modules.certificates.schemas import (
 )
 from app.modules.certificates.services import CertificateService
 from app.modules.events.repos import EventRepository
+from app.modules.finance.repos import FinanceRepository
+from app.modules.finance.services import FinanceService
 from app.modules.notifications.repos import NotificationRepository
 from app.modules.registration.repos import RegistrationRepository
 from app.shared.enums import CertificateType, UserRole
@@ -148,36 +150,21 @@ async def generate_participation(
     present = await att_svc.list_present_users(event_id)
     club_name = event.organizer_club.name if event and event.organizer_club else ""
     event_name = event.title if event else str(event_id)
-    event_date = (
-        event.start_datetime.strftime("%B %d, %Y")
-        if event and event.start_datetime else ""
-    )
+
     results = await svc.generate_participation(event_id, event_name, club_name, present)
     notif_repo = NotificationRepository(db)
-    user_repo = UserRepository(db)
-    for cert, pdf_bytes in results:
+    for cert, _ in results:
         await notif_repo.create(
             user_id=cert.recipient_id,
             type="CERTIFICATE_ISSUED",
             title=f"Certificate issued: {event_name}",
-            body="Your participation certificate has been sent to your email.",
+            body="Submit your feedback to receive your participation certificate by email.",
             metadata_={"event_id": str(event_id), "cert_id": str(cert.id)},
         )
-        if pdf_bytes:
-            user = await user_repo.get_by_id(cert.recipient_id)
-            if user:
-                meta = cert.metadata_ or {}
-                await publish_event("CERTIFICATE_GENERATED", {
-                    "recipient_email": user.email,
-                    "recipient_name": meta.get("name", user.name),
-                    "event_name": event_name,
-                    "club_name": club_name,
-                    "event_date": event_date,
-                    "certificate_type": "Participation",
-                    "pdf_b64": base64.b64encode(pdf_bytes).decode(),
-                    "unique_code": cert.unique_code,
-                })
     return [_cert_out(c) for c, _ in results]
+
+
+_POSITION_MAP = {"1st": 1, "2nd": 2, "3rd": 3, "4th": 4}
 
 
 @router.post("/events/{event_id}/certificates/generate-winners",
@@ -207,6 +194,25 @@ async def generate_winners(
         for w in body.winners
     ]
     results = await svc.generate_winners(event_id, event_name, club_name, winners)
+
+    # Upsert EventWinner rows and create prize Expense records
+    fin_svc = FinanceService(FinanceRepository(db))
+    for w in body.winners:
+        position_int = _POSITION_MAP.get(w.position.lower(), None)
+        if position_int is None:
+            try:
+                position_int = int(w.position)
+            except (ValueError, TypeError):
+                continue
+        await fin_svc.set_winner(
+            event_id=event_id,
+            user_id=UUID(w.user_id),
+            position=position_int,
+            prize_amount=w.prize_amount,
+            actor=actor,
+        )
+    await db.commit()
+
     notif_repo = NotificationRepository(db)
     user_repo = UserRepository(db)
     for cert, pdf_bytes in results:
@@ -218,19 +224,23 @@ async def generate_winners(
             body=f"Congratulations! Your winner certificate for {event_name} has been sent to your email.",
             metadata_={"event_id": str(event_id), "cert_id": str(cert.id)},
         )
-        user = await user_repo.get_by_id(cert.recipient_id)
-        if user:
-            await publish_event("CERTIFICATE_GENERATED", {
-                "recipient_email": user.email,
-                "recipient_name": meta.get("name", user.name),
-                "event_name": event_name,
-                "club_name": club_name,
-                "event_date": event_date,
-                "certificate_type": "Winner",
-                "pdf_b64": base64.b64encode(pdf_bytes).decode(),
-                "unique_code": cert.unique_code,
-                "position": meta.get("position"),
-            })
+        if pdf_bytes:
+            user = await user_repo.get_by_id(cert.recipient_id)
+            if user:
+                try:
+                    await publish_event("CERTIFICATE_GENERATED", {
+                        "recipient_email": user.email,
+                        "recipient_name": meta.get("name", user.name),
+                        "event_name": event_name,
+                        "club_name": club_name,
+                        "event_date": event_date,
+                        "certificate_type": "Winner",
+                        "pdf_b64": base64.b64encode(pdf_bytes).decode(),
+                        "unique_code": cert.unique_code,
+                        "position": meta.get("position"),
+                    })
+                except Exception:
+                    pass
     return [_cert_out(c) for c, _ in results]
 
 

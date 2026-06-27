@@ -4,6 +4,7 @@ import secrets
 from datetime import datetime, timezone
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app.modules.auth.models import User
@@ -137,6 +138,7 @@ class TeamService:
         member = await self.repo.add_member(team_id, actor.id)
         await self._sync_registration_team(team.event_id, actor.id, team_id)
         await self._maybe_promote(team)
+        await self._notify_team_action(team, actor.id, "joined")
         return member
 
     async def join_by_key(self, team_id: UUID, join_key: str, actor: User) -> TeamMember:
@@ -150,6 +152,7 @@ class TeamService:
         member = await self.repo.add_member(team_id, actor.id)
         await self._sync_registration_team(team.event_id, actor.id, team_id)
         await self._maybe_promote(team)
+        await self._notify_team_action(team, actor.id, "joined")
         return member
 
     async def invite_member(self, team_id: UUID, email: str, actor: User) -> TeamInvitation:
@@ -182,13 +185,76 @@ class TeamService:
         member = await self.repo.add_member(inv.team_id, actor.id)
         await self._sync_registration_team(team.event_id, actor.id, inv.team_id)
         await self._maybe_promote(team)
+        await self._notify_team_action(team, actor.id, "joined")
         return member
 
     async def _maybe_promote(self, team: Team) -> None:
-        """Transition FORMING → READY when min_size is reached."""
+        """Transition FORMING → READY when min_size is reached; notify all members to submit."""
         count = await self.repo.count_members(team.id)
         if count >= team.min_size and team.status == TeamStatus.FORMING:
             await self.repo.update_team(team, status=TeamStatus.READY)
+            try:
+                from app.core.email import send_team_submit_reminder_email
+                from app.modules.events.models import Club, Event
+                from sqlalchemy import select as sa_select
+                db = self.repo.db
+                event_row = (await db.execute(sa_select(Event).where(Event.id == team.event_id))).scalar_one_or_none()
+                club_row = None
+                if event_row:
+                    club_row = (await db.execute(sa_select(Club).where(Club.id == event_row.organizer_club_id))).scalar_one_or_none()
+                if event_row and club_row:
+                    members = await self.repo.list_members_with_users(team.id)
+                    for m in members:
+                        await send_team_submit_reminder_email(
+                            recipient_email=m["email"],
+                            recipient_name=m["name"],
+                            event_title=event_row.title,
+                            club_name=club_row.name,
+                            team_name=team.name,
+                            min_size=team.min_size,
+                        )
+            except Exception:
+                pass
+
+    async def _notify_team_action(self, team: Team, user_id: UUID, action: str) -> None:
+        """Email the joining/leaving member and notify existing members of a new joiner."""
+        try:
+            from app.core.email import send_team_notification_email
+            from app.modules.events.models import Club, Event
+            from sqlalchemy import select as sa_select
+            db = self.repo.db
+            user_row = (await db.execute(sa_select(User).where(User.id == user_id))).scalar_one_or_none()
+            event_row = (await db.execute(sa_select(Event).where(Event.id == team.event_id))).scalar_one_or_none()
+            club_row = None
+            if event_row:
+                club_row = (await db.execute(sa_select(Club).where(Club.id == event_row.organizer_club_id))).scalar_one_or_none()
+            if not (user_row and event_row and club_row):
+                return
+            # Email the joining/leaving member themselves
+            await send_team_notification_email(
+                recipient_email=user_row.email,
+                recipient_name=user_row.name,
+                event_title=event_row.title,
+                club_name=club_row.name,
+                team_name=team.name,
+                action=action,
+            )
+            # Notify existing members when someone new joins
+            if action == "joined":
+                members = await self.repo.list_members_with_users(team.id)
+                for m in members:
+                    if m["user_id"] != str(user_id):
+                        await send_team_notification_email(
+                            recipient_email=m["email"],
+                            recipient_name=m["name"],
+                            event_title=event_row.title,
+                            club_name=club_row.name,
+                            team_name=team.name,
+                            action="member_joined",
+                            new_member_name=user_row.name,
+                        )
+        except Exception:
+            pass
 
     async def remove_member(self, team_id: UUID, user_id: UUID, actor: User) -> None:
         team = await self.get_team(team_id)
@@ -199,6 +265,7 @@ class TeamService:
             count = await self.repo.count_members(team_id)
             new_status = TeamStatus.READY if count >= team.min_size else TeamStatus.FORMING
             await self.repo.update_team(team, status=new_status)
+        await self._notify_team_action(team, user_id, "removed")
 
     async def submit_team(self, team_id: UUID, actor: User) -> Team:
         team = await self.get_team(team_id)

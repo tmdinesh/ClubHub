@@ -9,6 +9,7 @@ import Login from "@/pages/Login";
 import AuthCallback from "@/pages/AuthCallback";
 import AttendanceLogin from "@/pages/AttendanceLogin";
 import AttendanceScan from "@/pages/AttendanceScan";
+import Onboarding from "@/pages/Onboarding";
 
 // Participant dashboard
 import Dashboard from "@/pages/dashboard/Dashboard";
@@ -27,11 +28,17 @@ import CertificatesManage from "@/pages/manage/CertificatesManage";
 import AnnouncementsPage from "@/pages/manage/AnnouncementsPage";
 import VolunteersPage from "@/pages/manage/VolunteersPage";
 import AttendanceTakersPage from "@/pages/manage/AttendanceTakersPage";
+import FeedbackResults from "@/pages/manage/FeedbackResults";
+import MassAttendance from "@/pages/manage/MassAttendance";
+import FeedbackForm from "@/pages/dashboard/FeedbackForm";
+import AttendanceSelfMark from "@/pages/AttendanceSelfMark";
 
 // Faculty / Admin
 import FacultyApprovals from "@/pages/faculty/FacultyApprovals";
+import FacultyAnalytics from "@/pages/faculty/FacultyAnalytics";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminLogin from "@/pages/AdminLogin";
+import DevLogin from "@/pages/DevLogin";
 import ClubAdminDashboard from "@/pages/club/ClubAdminDashboard";
 import OrganizerDashboard from "@/pages/organizer/OrganizerDashboard";
 
@@ -48,6 +55,7 @@ export default function App() {
         <Route path="/" element={<EventDiscovery />} />
         <Route path="/login" element={<Login />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
         <Route path="/attendance-login" element={<AttendanceLogin />} />
         <Route path="/attendance/:eventId" element={<AttendanceScan />} />
         <Route path="/events/:slug" element={<EventDetail />} />
@@ -70,12 +78,22 @@ export default function App() {
         <Route path="/manage/:eventId/finance" element={<ProtectedRoute><FinancePage /></ProtectedRoute>} />
         <Route path="/manage/:eventId/certificates" element={<ProtectedRoute><CertificatesManage /></ProtectedRoute>} />
         <Route path="/manage/:eventId/announcements" element={<ProtectedRoute><AnnouncementsPage /></ProtectedRoute>} />
+        <Route path="/manage/:eventId/feedback" element={<ProtectedRoute><FeedbackResults /></ProtectedRoute>} />
+        <Route path="/manage/:eventId/mass-attendance" element={<ProtectedRoute><MassAttendance /></ProtectedRoute>} />
+
+        {/* Student self-mark attendance */}
+        <Route path="/attend" element={<AttendanceSelfMark />} />
+
+        {/* Participant feedback */}
+        <Route path="/dashboard/feedback/:eventId" element={<ProtectedRoute><FeedbackForm /></ProtectedRoute>} />
 
         {/* Faculty */}
         <Route path="/faculty/approvals" element={<ProtectedRoute><FacultyApprovals /></ProtectedRoute>} />
+        <Route path="/faculty/analytics" element={<ProtectedRoute><FacultyAnalytics /></ProtectedRoute>} />
 
         {/* Admin */}
         <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/dev-login" element={<DevLogin />} />
         <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
         <Route path="/club" element={<ProtectedRoute><ClubAdminDashboard /></ProtectedRoute>} />
         <Route path="/organizer" element={<ProtectedRoute><OrganizerDashboard /></ProtectedRoute>} />

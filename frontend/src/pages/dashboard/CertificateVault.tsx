@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Award, ExternalLink, Mail, ShieldCheck } from "lucide-react";
+import { Award, ExternalLink, Mail, ShieldCheck, MessageSquare, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
@@ -43,30 +43,42 @@ const CERT_BADGE_STYLE: Record<Certificate["certificate_type"], React.CSSPropert
   },
 };
 
-function CertCard({ cert }: { cert: Certificate }) {
+function CertCard({ cert, feedbackSubmitted }: { cert: Certificate; feedbackSubmitted?: boolean }) {
   const meta = CERT_TYPE_META[cert.certificate_type];
   const accentStyle = CERT_ACCENT_STYLE[cert.certificate_type];
   const badgeStyle = CERT_BADGE_STYLE[cert.certificate_type];
 
+  // Participation certs are held until feedback is submitted
+  const needsFeedback = cert.certificate_type === "PARTICIPATION" && feedbackSubmitted === false;
+
   return (
     <div
-      className="rounded-xl overflow-hidden hover:shadow-md transition-shadow group"
-      style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}
+      className="rounded-xl overflow-hidden hover:shadow-md transition-shadow"
+      style={{
+        background: "var(--ink-soft)",
+        border: needsFeedback
+          ? "1px solid color-mix(in srgb, var(--amber) 40%, var(--seam))"
+          : "1px solid var(--seam)",
+      }}
     >
-      {/* Top accent strip */}
-      <div className="h-1.5" style={accentStyle} />
+      <div className="h-1.5" style={needsFeedback
+        ? { background: "linear-gradient(to right, var(--amber-dim), var(--amber))" }
+        : accentStyle}
+      />
       <div className="p-5">
         <div className="flex items-start justify-between mb-4">
           <div
             className="w-10 h-10 rounded-lg flex items-center justify-center"
-            style={accentStyle}
+            style={needsFeedback
+              ? { background: "color-mix(in srgb, var(--amber) 14%, transparent)" }
+              : accentStyle}
           >
-            <Award size={18} className="text-white" />
+            {needsFeedback
+              ? <MessageSquare size={18} style={{ color: "var(--amber)" }} />
+              : <Award size={18} className="text-white" />
+            }
           </div>
-          <span
-            className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-            style={badgeStyle}
-          >
+          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={badgeStyle}>
             {meta.label}
           </span>
         </div>
@@ -84,35 +96,50 @@ function CertCard({ cert }: { cert: Certificate }) {
           Issued {fmtDateLongIST(cert.issued_at)}
         </p>
 
-        <div
-          className="flex items-center gap-2 pt-4"
-          style={{ borderTop: "1px solid var(--seam)" }}
-        >
-          <span
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-            style={{
-              background: "color-mix(in srgb, var(--jade) 12%, transparent)",
-              color: "var(--jade)",
-            }}
-          >
-            <Mail size={12} />
-            Sent to your email
-          </span>
-          <Link
-            to={`/verify/${cert.unique_code}`}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-            style={{ background: "var(--ink-muted)", color: "var(--fog)" }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background =
-                "color-mix(in srgb, var(--cream) 8%, var(--ink-muted))";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "var(--ink-muted)";
-            }}
-          >
-            <ShieldCheck size={12} />
-            Verify
-          </Link>
+        <div className="flex items-center gap-2 pt-4" style={{ borderTop: "1px solid var(--seam)" }}>
+          {needsFeedback ? (
+            <Link
+              to={`/dashboard/feedback/${cert.event_id}`}
+              className="flex flex-1 items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors"
+              style={{ background: "var(--amber)", color: "var(--ink)" }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "var(--amber-glow)")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "var(--amber)")}
+            >
+              <span className="flex items-center gap-1.5">
+                <MessageSquare size={12} />
+                Submit Feedback to Unlock
+              </span>
+              <ChevronRight size={13} />
+            </Link>
+          ) : (
+            <>
+              <span
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                style={{
+                  background: "color-mix(in srgb, var(--jade) 12%, transparent)",
+                  color: "var(--jade)",
+                }}
+              >
+                <Mail size={12} />
+                Sent to your email
+              </span>
+              <Link
+                to={`/verify/${cert.unique_code}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                style={{ background: "var(--ink-muted)", color: "var(--fog)" }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.background =
+                    "color-mix(in srgb, var(--cream) 8%, var(--ink-muted))";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = "var(--ink-muted)";
+                }}
+              >
+                <ShieldCheck size={12} />
+                Verify
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -143,11 +170,43 @@ function SkeletonCard() {
   );
 }
 
+function useFeedbackStatuses(eventIds: string[]): Record<string, boolean> {
+  const results = useQuery<Record<string, boolean>>({
+    queryKey: ["feedback-statuses", eventIds.slice().sort().join(",")],
+    queryFn: async () => {
+      const entries = await Promise.all(
+        eventIds.map(async (id) => {
+          try {
+            const r = await api.get(`/events/${id}/feedback/status`);
+            return [id, r.data.submitted as boolean] as const;
+          } catch {
+            return [id, false] as const;
+          }
+        }),
+      );
+      return Object.fromEntries(entries);
+    },
+    enabled: eventIds.length > 0,
+    staleTime: 30_000,
+  });
+  return results.data ?? {};
+}
+
 export default function CertificateVault() {
   const { data: certificates, isLoading } = useQuery<Certificate[]>({
     queryKey: ["certificates", "me"],
     queryFn: () => api.get("/certificates/me").then((r) => r.data),
   });
+
+  // Fetch feedback status for all events that have a PARTICIPATION cert
+  const participationEventIds = [
+    ...new Set(
+      (certificates ?? [])
+        .filter((c) => c.certificate_type === "PARTICIPATION")
+        .map((c) => c.event_id),
+    ),
+  ];
+  const feedbackStatuses = useFeedbackStatuses(participationEventIds);
 
   return (
     <Layout>
@@ -201,7 +260,15 @@ export default function CertificateVault() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {certificates.map((cert) => (
-                <CertCard key={cert.id} cert={cert} />
+                <CertCard
+                  key={cert.id}
+                  cert={cert}
+                  feedbackSubmitted={
+                    cert.certificate_type === "PARTICIPATION"
+                      ? (feedbackStatuses[cert.event_id] ?? undefined)
+                      : undefined
+                  }
+                />
               ))}
             </div>
           </>

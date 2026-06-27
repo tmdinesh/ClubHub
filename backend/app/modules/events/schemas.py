@@ -28,6 +28,9 @@ class EventCreate(BaseModel):
     is_team_event: bool = False
     team_min_size: int = 2
     team_max_size: int = 5
+    allowed_departments: list[str] | None = None
+    attendance_mode: str = "SCANNER"
+    mass_qr_interval: int | None = None
 
 
 class EventUpdate(BaseModel):
@@ -44,6 +47,9 @@ class EventUpdate(BaseModel):
     external_event_url: str | None = None
     max_participants: int | None = None
     banner_url: str | None = None
+    allowed_departments: list[str] | None = None
+    attendance_mode: str | None = None
+    mass_qr_interval: int | None = None
 
 
 class EventOut(BaseModel):
@@ -68,6 +74,9 @@ class EventOut(BaseModel):
     is_team_event: bool = False
     team_min_size: int = 2
     team_max_size: int = 5
+    allowed_departments: list[str] | None = None
+    attendance_mode: str = "SCANNER"
+    mass_qr_interval: int | None = None
 
     model_config = {"from_attributes": True}
 

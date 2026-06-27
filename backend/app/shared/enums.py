@@ -26,11 +26,17 @@ class EventType(StrEnum):
     EXTERNAL = "EXTERNAL"
 
 
+class AttendanceMode(StrEnum):
+    SCANNER = "SCANNER"
+    MASS = "MASS"
+
+
 class RegistrationStatus(StrEnum):
     PENDING = "PENDING"
     CONFIRMED = "CONFIRMED"
     CANCELLED = "CANCELLED"
     WAITLISTED = "WAITLISTED"
+    ATTENDED = "ATTENDED"
 
 
 class TeamStatus(StrEnum):

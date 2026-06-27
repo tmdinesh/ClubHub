@@ -158,6 +158,7 @@ function TeamCard({ team, userId }: { team: TeamWithMeta; userId: string }) {
                   <p className="text-[10px] truncate" style={{ color: "var(--fog)" }}>{m.email}</p>
                 </div>
               </div>
+              {/* Remove button hidden — use backend API if needed
               {isLead && m.user_id !== userId && (
                 <button
                   type="button"
@@ -171,6 +172,7 @@ function TeamCard({ team, userId }: { team: TeamWithMeta; userId: string }) {
                   <UserMinus size={10} /> Remove
                 </button>
               )}
+              */}
             </div>
           ))}
         </div>
@@ -233,6 +235,9 @@ export default function MyTeams() {
   const { data: registrations, isLoading: loadingRegs } = useQuery<Registration[]>({
     queryKey: ["registrations", "me"],
     queryFn: () => api.get("/registrations/me").then((r) => r.data),
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const teamEventRegs = registrations?.filter((r) =>

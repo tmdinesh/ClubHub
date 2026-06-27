@@ -4,11 +4,11 @@ import { useParams } from "react-router-dom";
 import {
   Award, Download, ShieldCheck, Loader2, Users, Trophy,
   Search, Check, X, AlertCircle, CheckCircle, Upload, ImageIcon,
-  CreditCard,
+  CreditCard, Lock, Info,
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import api, { apiError } from "@/lib/api";
-import type { Certificate } from "@/types";
+import type { Certificate, Event } from "@/types";
 import { fmtDateIST } from "@/lib/dateIST";
 
 // Cert type badge styles using design system CSS vars
@@ -724,9 +724,18 @@ export default function CertificatesManage() {
   const [winnerSearch, setWinnerSearch] = useState("");
   const [winners, setWinners] = useState<WinnerAssignment[]>([]);
   const [pendingWinnerIdx, setPendingWinnerIdx] = useState<number | null>(null);
+  const [bankUpdateWinner, setBankUpdateWinner] = useState<WinnerAssignment | null>(null);
   const [partError, setPartError] = useState("");
   const [winError, setWinError] = useState("");
   const [templateEditorType, setTemplateEditorType] = useState<"PARTICIPATION" | "WINNER" | null>(null);
+
+  const { data: eventData } = useQuery<Event>({
+    queryKey: ["event", eventId],
+    queryFn: () => api.get(`/events/by-id/${eventId}`).then((r) => r.data),
+    enabled: !!eventId,
+    staleTime: 5 * 60 * 1000,
+  });
+  const isCompleted = eventData?.status === "COMPLETED";
 
   const { data: certificates = [], isLoading: loadingCerts } = useQuery<Certificate[]>({
     queryKey: ["certificates", "event", eventId],
@@ -747,8 +756,14 @@ export default function CertificatesManage() {
   });
 
   const participationMutation = useMutation({
-    mutationFn: () => api.post(`/events/${eventId}/certificates/generate-participation`),
-    onSuccess: () => {
+    mutationFn: () =>
+      api.post(`/events/${eventId}/certificates/generate-participation`).then((r) => r.data as Certificate[]),
+    onSuccess: (newCerts) => {
+      qc.setQueryData<Certificate[]>(["certificates", "event", eventId], (old) => {
+        const existing = old ?? [];
+        const newIds = new Set(newCerts.map((c) => c.id));
+        return [...existing.filter((c) => !newIds.has(c.id)), ...newCerts];
+      });
       qc.invalidateQueries({ queryKey: ["certificates", "event", eventId] });
       setPartError("");
     },
@@ -757,9 +772,16 @@ export default function CertificatesManage() {
 
   const winnersMutation = useMutation({
     mutationFn: (data: { winners: WinnerAssignment[] }) =>
-      api.post(`/events/${eventId}/certificates/generate-winners`, data),
-    onSuccess: () => {
+      api.post(`/events/${eventId}/certificates/generate-winners`, data).then((r) => r.data as Certificate[]),
+    onSuccess: (newCerts) => {
+      // Immediately merge new certs into cache so alreadyHasWinner() is true right away
+      qc.setQueryData<Certificate[]>(["certificates", "event", eventId], (old) => {
+        const existing = old ?? [];
+        const newIds = new Set(newCerts.map((c) => c.id));
+        return [...existing.filter((c) => !newIds.has(c.id)), ...newCerts];
+      });
       qc.invalidateQueries({ queryKey: ["certificates", "event", eventId] });
+      qc.invalidateQueries({ queryKey: ["winners", eventId] });
       setWinners([]);
       setWinnerSearch("");
       setWinError("");
@@ -796,6 +818,30 @@ export default function CertificatesManage() {
   const alreadyHasWinner = (userId: string) =>
     certificates.some((c) => c.recipient_id === userId && c.certificate_type === "WINNER");
 
+  function getWinnerPosition(userId: string): Position {
+    const cert = certificates.find((c) => c.recipient_id === userId && c.certificate_type === "WINNER");
+    const pos = (cert?.metadata_ as any)?.position as string | undefined;
+    if (pos === "1st Place") return "1st";
+    if (pos === "2nd Place") return "2nd";
+    if (pos === "3rd Place") return "3rd";
+    if (pos === "4th Place") return "4th";
+    return "1st";
+  }
+
+  function startBankUpdate(user: PresentUser) {
+    const pos = getWinnerPosition(user.user_id);
+    setBankUpdateWinner({ user_id: user.user_id, name: user.name, position: pos });
+  }
+
+  function handleBankUpdateConfirm(details: BankDetails | null) {
+    if (!bankUpdateWinner) return;
+    const w = details
+      ? { ...bankUpdateWinner, ...details, prize_amount: details.prize_amount ? parseFloat(details.prize_amount) : null }
+      : bankUpdateWinner;
+    setBankUpdateWinner(null);
+    winnersMutation.mutate({ winners: [w] });
+  }
+
   const participationCount = certificates.filter((c) => c.certificate_type === "PARTICIPATION").length;
 
   function handleIssueWinnersClick() {
@@ -806,21 +852,23 @@ export default function CertificatesManage() {
 
   function handleBankConfirm(details: BankDetails | null) {
     if (pendingWinnerIdx === null) return;
-    if (details) {
-      const prize_amount = details.prize_amount ? parseFloat(details.prize_amount) : null;
-      setWinners((prev) => prev.map((w, i) => i === pendingWinnerIdx ? { ...w, ...details, prize_amount } : w));
-    }
-    // Move to next winner or submit
+
+    // Build updated winners list with this winner's bank details applied
+    const updated = details
+      ? winners.map((w, i) => {
+          if (i !== pendingWinnerIdx) return w;
+          return { ...w, ...details, prize_amount: details.prize_amount ? parseFloat(details.prize_amount) : null };
+        })
+      : winners;
+
     const next = pendingWinnerIdx + 1;
     if (next < winners.length) {
+      setWinners(updated);
       setPendingWinnerIdx(next);
     } else {
       setPendingWinnerIdx(null);
-      // Submit with whatever bank details were collected
-      setWinners((current) => {
-        winnersMutation.mutate({ winners: current });
-        return current;
-      });
+      setWinners(updated);
+      winnersMutation.mutate({ winners: updated });
     }
   }
 
@@ -839,6 +887,20 @@ export default function CertificatesManage() {
             {certificates.length} issued · {present.length} attendees present
           </p>
         </div>
+
+        {isCompleted && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            background: "color-mix(in srgb, var(--amber) 8%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--amber) 25%, transparent)",
+            borderRadius: 10, padding: "12px 16px", marginBottom: 20,
+          }}>
+            <Lock size={14} style={{ color: "var(--amber)", flexShrink: 0 }} />
+            <p style={{ fontSize: 13, color: "var(--amber)" }}>
+              This event is completed. Certificate issuance is disabled. Download is still available.
+            </p>
+          </div>
+        )}
 
         {/* Tab bar */}
         <div
@@ -872,9 +934,14 @@ export default function CertificatesManage() {
             <div style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }} className="rounded-xl p-6">
               <h2 style={{ color: "var(--cream)" }} className="text-sm font-semibold mb-1">Issue Participation Certificates</h2>
               <p style={{ color: "var(--dust)" }} className="text-xs mb-5">
-                Automatically issues a certificate to every attendee marked present ({present.length} people).
+                Issues a certificate to every attendee who has submitted their feedback ({present.length} present).
                 Already-issued certificates are skipped.
               </p>
+              <div style={{ color: "var(--sky)", background: "color-mix(in srgb, var(--sky) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--sky) 25%, transparent)" }}
+                className="flex items-start gap-2 text-xs rounded-lg px-3 py-2 mb-4">
+                <Info size={13} style={{ flexShrink: 0, marginTop: 1 }} />
+                Certificates are only issued to attendees who have submitted their event feedback.
+              </div>
 
               {participationTemplate && (
                 <div
@@ -910,10 +977,10 @@ export default function CertificatesManage() {
                   <button
                     type="button"
                     onClick={() => participationMutation.mutate()}
-                    disabled={participationMutation.isPending || present.length === 0}
+                    disabled={participationMutation.isPending || present.length === 0 || isCompleted}
                     style={{ background: "var(--amber)", color: "var(--ink)" }}
                     className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 transition-colors"
-                    onMouseEnter={(e) => { if (!participationMutation.isPending) e.currentTarget.style.background = "var(--amber-glow)"; }}
+                    onMouseEnter={(e) => { if (!participationMutation.isPending && !isCompleted) e.currentTarget.style.background = "var(--amber-glow)"; }}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
                   >
                     {participationMutation.isPending
@@ -995,10 +1062,10 @@ export default function CertificatesManage() {
                 <button
                   type="button"
                   onClick={handleIssueWinnersClick}
-                  disabled={winnersMutation.isPending}
+                  disabled={winnersMutation.isPending || isCompleted}
                   style={{ background: "var(--amber)", color: "var(--ink)" }}
                   className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 transition-colors"
-                  onMouseEnter={(e) => { if (!winnersMutation.isPending) e.currentTarget.style.background = "var(--amber-glow)"; }}
+                  onMouseEnter={(e) => { if (!winnersMutation.isPending && !isCompleted) e.currentTarget.style.background = "var(--amber-glow)"; }}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
                 >
                   {winnersMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Trophy size={14} />}
@@ -1072,9 +1139,56 @@ export default function CertificatesManage() {
                         </div>
                         <div className="flex gap-1.5 flex-wrap justify-end">
                           {hasWinnerCert ? (
-                            <span style={{ color: "var(--amber)" }} className="text-xs font-semibold flex items-center gap-1">
-                              <Check size={12} /> Certificate issued
-                            </span>
+                            assigned ? (
+                              POSITIONS.map((pos) => {
+                                const isActive = assigned === pos;
+                                return (
+                                  <button
+                                    key={pos}
+                                    type="button"
+                                    onClick={() => isActive ? removeWinner(user.user_id) : addWinner(user, pos)}
+                                    style={
+                                      isActive
+                                        ? { background: "var(--amber)", color: "var(--ink)", border: "1px solid var(--amber)" }
+                                        : { background: "var(--ink-muted)", color: "var(--fog)", border: "1px solid var(--seam)" }
+                                    }
+                                    className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors"
+                                    onMouseEnter={(e) => {
+                                      if (!isActive) {
+                                        e.currentTarget.style.background = "color-mix(in srgb, var(--amber) 15%, transparent)";
+                                        e.currentTarget.style.color = "var(--amber)";
+                                        e.currentTarget.style.borderColor = "color-mix(in srgb, var(--amber) 40%, transparent)";
+                                      }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      if (!isActive) {
+                                        e.currentTarget.style.background = "var(--ink-muted)";
+                                        e.currentTarget.style.color = "var(--fog)";
+                                        e.currentTarget.style.borderColor = "var(--seam)";
+                                      }
+                                    }}
+                                  >
+                                    {pos}
+                                  </button>
+                                );
+                              })
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span style={{ color: "var(--amber)" }} className="text-xs font-semibold flex items-center gap-1">
+                                  <Check size={12} /> Certificate issued
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => startBankUpdate(user)}
+                                  style={{ color: "var(--sky)", background: "color-mix(in srgb, var(--sky) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--sky) 30%, transparent)" }}
+                                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-colors"
+                                  onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--sky) 18%, transparent)")}
+                                  onMouseLeave={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--sky) 10%, transparent)")}
+                                >
+                                  <CreditCard size={10} /> Update Bank
+                                </button>
+                              </div>
+                            )
                           ) : (
                             POSITIONS.map((pos) => {
                               const isActive = assigned === pos;
@@ -1325,6 +1439,14 @@ export default function CertificatesManage() {
           winnerName={winners[pendingWinnerIdx].name}
           onConfirm={handleBankConfirm}
           onCancel={() => setPendingWinnerIdx(null)}
+        />
+      )}
+
+      {bankUpdateWinner && (
+        <BankModal
+          winnerName={bankUpdateWinner.name}
+          onConfirm={handleBankUpdateConfirm}
+          onCancel={() => setBankUpdateWinner(null)}
         />
       )}
     </Layout>

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+import re
+from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from pathlib import Path
 from uuid import UUID
@@ -58,8 +59,20 @@ class RegistrationService:
         now = datetime.now(timezone.utc)
         if event.registration_end and now > event.registration_end:
             raise BadRequestError("Registration period has ended")
+        if not event.registration_end and event.start_datetime:
+            cutoff = event.start_datetime - timedelta(hours=2)
+            if now > cutoff:
+                raise BadRequestError("Registration closed 2 hours before the event starts.")
         if event.registration_start and now < event.registration_start:
             raise BadRequestError("Registration has not started yet")
+
+        if event.allowed_departments:
+            username = actor.email.split("@")[0]
+            match = re.search(r"[A-Za-z]+", username)
+            dept_code = match.group(0).upper() if match else ""
+            allowed = [d.upper() for d in event.allowed_departments]
+            if dept_code not in allowed:
+                raise BadRequestError("Your department is not eligible to register for this event.")
 
         existing = await self.repo.get_by_event_user(event_id, actor.id)
         if existing and existing.status != RegistrationStatus.CANCELLED:
@@ -100,7 +113,7 @@ class RegistrationService:
         finally:
             await redis.delete(lock_key)
 
-        if status == RegistrationStatus.CONFIRMED:
+        if status == RegistrationStatus.CONFIRMED and event.attendance_mode != "MASS":
             qr_token = self._make_qr_token(str(reg.id), str(event_id))
             self._write_qr_png(str(reg.id), qr_token)
             reg = await self.repo.update(reg, qr_token=qr_token)
@@ -143,8 +156,11 @@ class RegistrationService:
             waitlisted = await self.repo.first_waitlisted(event_id)
             if waitlisted:
                 now = datetime.now(timezone.utc)
-                qr_token = self._make_qr_token(str(waitlisted.id), str(event_id))
-                self._write_qr_png(str(waitlisted.id), qr_token)
+                if event and event.attendance_mode != "MASS":
+                    qr_token = self._make_qr_token(str(waitlisted.id), str(event_id))
+                    self._write_qr_png(str(waitlisted.id), qr_token)
+                else:
+                    qr_token = None
                 await self.repo.update(
                     waitlisted,
                     status=RegistrationStatus.CONFIRMED,
@@ -193,11 +209,15 @@ class RegistrationService:
                     await self.team_repo.update_team(team, status=new_status)
 
         # Promote first waitlisted participant
+        event = await self.event_repo.get_event(reg.event_id)
         waitlisted = await self.repo.first_waitlisted(reg.event_id)
         if waitlisted:
             now = datetime.now(timezone.utc)
-            qr_token = self._make_qr_token(str(waitlisted.id), str(reg.event_id))
-            self._write_qr_png(str(waitlisted.id), qr_token)
+            if event and event.attendance_mode != "MASS":
+                qr_token = self._make_qr_token(str(waitlisted.id), str(reg.event_id))
+                self._write_qr_png(str(waitlisted.id), qr_token)
+            else:
+                qr_token = None
             await self.repo.update(
                 waitlisted,
                 status=RegistrationStatus.CONFIRMED,

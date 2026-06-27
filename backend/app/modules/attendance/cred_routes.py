@@ -17,8 +17,9 @@ from app.core.database import get_db
 from app.modules.attendance.cred_models import EventAttendanceCred
 from app.modules.auth.deps import get_current_user
 from app.modules.auth.models import User
+from app.modules.events.models import Event
 from app.shared.enums import UserRole
-from app.shared.exceptions import BadRequestError, ForbiddenError
+from app.shared.exceptions import BadRequestError, ForbiddenError, NotFoundError
 
 router = APIRouter(prefix="/events", tags=["attendance-credentials"])
 public_router = APIRouter(tags=["attendance-credentials"])
@@ -86,6 +87,12 @@ async def generate_credentials(
     db: AsyncSession = Depends(get_db),
     actor: User = Depends(_require_club_admin),
 ) -> list[CredOut]:
+    event = (await db.execute(select(Event).where(Event.id == event_id))).scalar_one_or_none()
+    if not event:
+        raise NotFoundError("Event", event_id)
+    if event.attendance_mode == "MASS":
+        raise BadRequestError("Scanner credentials are not used for Mass Attendance events.")
+
     existing = (await db.execute(
         select(EventAttendanceCred).where(EventAttendanceCred.event_id == event_id)
     )).scalars().all()

@@ -63,6 +63,7 @@ class RegistrationRepository:
                 UserModel.name.label("participant_name"),
                 UserModel.email.label("participant_email"),
                 UserModel.roll_number.label("participant_roll_number"),
+                UserModel.phone_number.label("participant_phone_number"),
                 UserModel.bank_account_name.label("bank_account_name"),
                 UserModel.bank_account_number.label("bank_account_number"),
                 UserModel.bank_ifsc.label("bank_ifsc"),
@@ -90,6 +91,7 @@ class RegistrationRepository:
                 "participant_name": row.participant_name,
                 "participant_email": row.participant_email,
                 "participant_roll_number": row.participant_roll_number,
+                "participant_phone_number": row.participant_phone_number,
                 "bank_account_name": row.bank_account_name,
                 "bank_account_number": row.bank_account_number,
                 "bank_ifsc": row.bank_ifsc,
@@ -117,6 +119,8 @@ class RegistrationRepository:
                 Event.is_team_event.label("is_team_event"),
                 Event.team_min_size.label("team_min_size"),
                 Event.team_max_size.label("team_max_size"),
+                Event.attendance_mode.label("event_attendance_mode"),
+                Event.status.label("event_status"),
                 Club.name.label("club_name"),
             )
             .join(Event, Registration.event_id == Event.id)
@@ -144,6 +148,8 @@ class RegistrationRepository:
                 "is_team_event": row.is_team_event,
                 "team_min_size": row.team_min_size,
                 "team_max_size": row.team_max_size,
+                "event_attendance_mode": row.event_attendance_mode,
+                "event_status": row.event_status,
             })
         return result
 

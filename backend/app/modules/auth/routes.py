@@ -11,7 +11,7 @@ from app.core.database import get_db
 from app.modules.auth.deps import get_current_user
 from app.modules.auth.models import User
 from app.modules.auth.repos import UserRepository
-from app.modules.auth.schemas import LogoutRequest, RefreshRequest, SuperAdminLoginRequest, TokenPair, UserOut
+from app.modules.auth.schemas import DevLoginRequest, LogoutRequest, RefreshRequest, SuperAdminLoginRequest, TokenPair, UpdateProfileRequest, UserOut
 from app.modules.auth.services import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -66,6 +66,19 @@ async def me(current_user: User = Depends(get_current_user)) -> UserOut:
     return UserOut.model_validate(current_user)
 
 
+@router.patch("/me", response_model=UserOut)
+async def update_me(
+    body: UpdateProfileRequest,
+    current_user: User = Depends(get_current_user),
+    service: AuthService = Depends(_get_service),
+) -> UserOut:
+    updates = body.model_dump(exclude_none=True)
+    if updates:
+        updated = await service.repo.update_user(current_user.id, **updates)
+        return UserOut.model_validate(updated)
+    return UserOut.model_validate(current_user)
+
+
 @router.post("/super-admin/login", response_model=TokenPair, tags=["auth"])
 async def super_admin_login(
     body: SuperAdminLoginRequest,
@@ -73,4 +86,16 @@ async def super_admin_login(
 ) -> TokenPair:
     """Password-based login for the super admin account configured in environment variables."""
     access_token, refresh_token = await service.super_admin_login(body.email, body.password)
+    return TokenPair(access_token=access_token, refresh_token=refresh_token)
+
+
+@router.post("/dev-login", response_model=TokenPair, tags=["auth"])
+async def dev_login(
+    body: DevLoginRequest,
+    service: AuthService = Depends(_get_service),
+) -> TokenPair:
+    if settings.ENVIRONMENT == "production":
+        from app.shared.exceptions import ForbiddenError
+        raise ForbiddenError("Dev login is disabled in production.")
+    access_token, refresh_token = await service.dev_login(body.email, body.name, body.role)
     return TokenPair(access_token=access_token, refresh_token=refresh_token)

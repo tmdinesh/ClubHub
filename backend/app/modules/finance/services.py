@@ -67,12 +67,53 @@ class FinanceService:
     ) -> dict:
         existing = await self.repo.get_winner_by_position(event_id, position)
         if existing:
-            # Replace: delete old winner and its auto-expense
-            if existing.expense_id:
-                await self.repo.delete_winner(existing)
-            else:
-                await self.repo.delete_winner(existing)
+            # Update the existing row in place
+            existing.user_id = user_id
+            existing.prize_amount = prize_amount
 
+            if prize_amount and prize_amount > 0:
+                ordinal = {1: "1st", 2: "2nd", 3: "3rd"}.get(position, f"{position}th")
+                if existing.expense_id:
+                    expense = await self.repo.get_expense(existing.expense_id)
+                    if expense:
+                        expense.amount = prize_amount
+                        expense.uploaded_by = actor.id
+                        await self.repo.db.flush()
+                    else:
+                        expense = await self.repo.create_expense(
+                            event_id=event_id,
+                            category=ExpenseCategory.PRIZES,
+                            title=f"Cash prize — {ordinal} place",
+                            amount=prize_amount,
+                            bill_url=None,
+                            notes="Auto-created from winner record",
+                            uploaded_by=actor.id,
+                        )
+                        existing.expense_id = expense.id
+                else:
+                    expense = await self.repo.create_expense(
+                        event_id=event_id,
+                        category=ExpenseCategory.PRIZES,
+                        title=f"Cash prize — {ordinal} place",
+                        amount=prize_amount,
+                        bill_url=None,
+                        notes="Auto-created from winner record",
+                        uploaded_by=actor.id,
+                    )
+                    existing.expense_id = expense.id
+            else:
+                # Prize removed — delete the old expense if it exists
+                if existing.expense_id:
+                    expense = await self.repo.get_expense(existing.expense_id)
+                    if expense:
+                        await self.repo.db.delete(expense)
+                    existing.expense_id = None
+
+            await self.repo.db.flush()
+            winners = await self.repo.list_winners(event_id)
+            return next(w for w in winners if w["id"] == str(existing.id))
+
+        # No existing row — create fresh
         expense_id = None
         if prize_amount and prize_amount > 0:
             ordinal = {1: "1st", 2: "2nd", 3: "3rd"}.get(position, f"{position}th")

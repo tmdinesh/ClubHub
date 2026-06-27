@@ -99,6 +99,25 @@ export function fmtTimeIST(iso: string): string {
   return `${p.hour}:${p.minute} ${p.dayPeriod}`;
 }
 
+/** Convert a stored ISO/UTC string back to picker format "YYYY-MM-DDTHH:MM" in IST.
+ *  Use this when pre-filling datetime pickers from existing event data. */
+export function isoToPickerIST(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const f = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  // en-CA gives "YYYY-MM-DD, HH:MM" — normalize to "YYYY-MM-DDTHH:MM"
+  return f.format(d).replace(", ", "T").replace(/ /g, " ").slice(0, 16);
+}
+
 /** Preview string for the DateTimePicker (value is still in picker format, not ISO) */
 export function previewIST(pickerVal: string): string {
   const d = parsePickerIST(pickerVal);

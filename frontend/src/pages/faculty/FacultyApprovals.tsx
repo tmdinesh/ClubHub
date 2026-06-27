@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ClipboardCheck, CheckCircle, XCircle, Loader2, AlertCircle,
   MapPin, Calendar, Users, Building2, Clock, Tag, FileText,
-  ChevronDown, ChevronUp, Radio, Wallet, BarChart3,
+  ChevronDown, ChevronUp, Radio, Wallet, BarChart3, Search,
 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState as useStateAlias } from "react";
@@ -101,6 +101,7 @@ function Detail({ icon, label, value }: { icon: React.ReactNode; label: string; 
 }
 
 function AttendancePanel({ eventId }: { eventId: string }) {
+  const [search, setSearch] = useState("");
   const { data, isLoading } = useQuery<AttendanceData>({
     queryKey: ["faculty-attendance", eventId],
     queryFn: () => api.get(`/events/${eventId}/attendance`).then((r) => r.data),
@@ -114,6 +115,13 @@ function AttendancePanel({ eventId }: { eventId: string }) {
   if (!data) return <p className="text-xs" style={{ color: "var(--dust)" }}>No attendance data yet.</p>;
 
   const pct = data.registered > 0 ? Math.round((data.present / data.registered) * 100) : 0;
+  const filtered = search.trim()
+    ? present.filter(
+        (u) =>
+          u.name.toLowerCase().includes(search.toLowerCase()) ||
+          u.email.toLowerCase().includes(search.toLowerCase()),
+      )
+    : present;
 
   return (
     <div className="space-y-3">
@@ -141,13 +149,27 @@ function AttendancePanel({ eventId }: { eventId: string }) {
       {present.length > 0 && (
         <div>
           <p className="text-xs font-semibold mb-2" style={{ color: "var(--fog)" }}>Present attendees ({present.length})</p>
+          <div className="flex items-center gap-2 mb-2 px-2 py-1.5 rounded-lg" style={{ background: "var(--ink-muted)", border: "1px solid var(--seam)" }}>
+            <Search size={12} style={{ color: "var(--dust)", flexShrink: 0 }} />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name or email…"
+              style={{ background: "transparent", border: "none", outline: "none", fontSize: 12, color: "var(--fog)", width: "100%" }}
+            />
+          </div>
           <div className="max-h-40 overflow-y-auto space-y-1">
-            {present.map((u) => (
-              <div key={u.user_id} className="flex flex-col sm:flex-row sm:justify-between text-xs px-2 py-1.5 rounded gap-0.5" style={{ background: "var(--ink-muted)" }}>
-                <span className="font-medium truncate" style={{ color: "var(--fog)" }}>{u.name}</span>
-                <span className="truncate" style={{ color: "var(--dust)", fontSize: 10 }}>{u.email}</span>
-              </div>
-            ))}
+            {filtered.length === 0 ? (
+              <p className="text-xs text-center py-2" style={{ color: "var(--dust)" }}>No matches.</p>
+            ) : (
+              filtered.map((u) => (
+                <div key={u.user_id} className="flex flex-col sm:flex-row sm:justify-between text-xs px-2 py-1.5 rounded gap-0.5" style={{ background: "var(--ink-muted)" }}>
+                  <span className="font-medium truncate" style={{ color: "var(--fog)" }}>{u.name}</span>
+                  <span className="truncate" style={{ color: "var(--dust)", fontSize: 10 }}>{u.email}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}

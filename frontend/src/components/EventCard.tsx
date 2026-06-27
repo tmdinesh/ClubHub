@@ -1,9 +1,12 @@
 import { Link } from "react-router-dom";
-import { MapPin, Calendar, Users } from "lucide-react";
-import type { Event } from "@/types";
+import { MapPin, Calendar, Users, GraduationCap } from "lucide-react";
+import type { DeptCode, Event } from "@/types";
 import { fmtDateTimeMedIST } from "@/lib/dateIST";
 
-interface EventCardProps { event: Event; }
+interface EventCardProps {
+  event: Event;
+  deptCodes?: DeptCode[];
+}
 
 // Deterministic hue from event id — gives each card a unique accent line
 function hueFromSeed(seed: string): number {
@@ -20,9 +23,19 @@ const STATUS_LABEL: Record<Event["status"], string> = {
   ARCHIVED:         "Archived",
 };
 
-export function EventCard({ event }: EventCardProps) {
+export function EventCard({ event, deptCodes = [] }: EventCardProps) {
   const hue = hueFromSeed(event.id);
   const accentColor = `hsl(${hue} 70% 62%)`;
+
+  const eligibilityLabel = (() => {
+    if (!event.allowed_departments || event.allowed_departments.length === 0) return null;
+    const labels = event.allowed_departments.map((code) => {
+      const found = deptCodes.find((d) => d.code === code);
+      return found ? found.label : code;
+    });
+    if (labels.length <= 2) return labels.join(", ");
+    return `${labels.slice(0, 2).join(", ")} +${labels.length - 2} more`;
+  })();
 
   return (
     <Link to={`/events/${event.slug}`} className="group block animate-fade-up">
@@ -127,6 +140,17 @@ export function EventCard({ event }: EventCardProps) {
             {event.club_name && (
               <span style={{ fontSize: 11, color: "var(--dust)", marginTop: 2 }}>
                 by {event.club_name}
+              </span>
+            )}
+            {eligibilityLabel && (
+              <span style={{
+                fontSize: 10, color: "var(--fog)", display: "flex", alignItems: "center", gap: 4,
+                marginTop: 2,
+              }}>
+                <GraduationCap size={10} style={{ color: "var(--dust)", flexShrink: 0 }} />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  Open to: {eligibilityLabel}
+                </span>
               </span>
             )}
           </div>

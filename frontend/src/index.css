@@ -48,6 +48,44 @@
     --ring:               37 90% 55%;
     --radius:             0.5rem;
   }
+
+  /* ── Light theme overrides ───────────────────────────────────────────────── */
+  :root.light {
+    --ink:        #F7F8FA;
+    --ink-soft:   #EDEEF2;
+    --ink-muted:  #E2E4EA;
+    --seam:       #CDD0D8;
+    --dust:       #A8AFBC;
+    --fog:        #6B7585;
+    --ash:        #4A5468;
+    --cream:      #1A1F2E;
+    --cream-dim:  #3A4152;
+
+    --amber:      #D4880A;
+    --amber-glow: #E89B0F;
+    --amber-dim:  #FDE9C0;
+
+    --jade:       #1E9E62;
+    --jade-dim:   #C2F0DA;
+
+    --cinnabar:   #C9321D;
+    --sky:        #1A7BD4;
+
+    --background: 220 20% 97%;
+    --foreground: 220 20% 10%;
+    --card:       220 20% 92%;
+    --card-foreground: 220 20% 10%;
+    --popover:    220 20% 92%;
+    --popover-foreground: 220 20% 10%;
+    --secondary:  220 15% 88%;
+    --secondary-foreground: 220 15% 30%;
+    --muted:      220 15% 88%;
+    --muted-foreground: 220 10% 45%;
+    --accent:     220 15% 88%;
+    --accent-foreground: 220 20% 10%;
+    --border:     220 15% 80%;
+    --input:      220 15% 80%;
+  }
 }
 
 /* ── Typography ──────────────────────────────────────────────────────────── */

@@ -28,7 +28,7 @@ class AnalyticsRepository:
         reg_confirmed = await self._count(
             Registration,
             Registration.event_id == event_id,
-            Registration.status == RegistrationStatus.CONFIRMED,
+            Registration.status.in_([RegistrationStatus.CONFIRMED, RegistrationStatus.ATTENDED]),
         )
 
         # Attendance
@@ -85,12 +85,66 @@ class AnalyticsRepository:
         }
 
     async def club_analytics(self, club_id: UUID) -> dict:
-        events = (
+        # Event list with per-event stats
+        event_rows = (
             await self.db.execute(
-                select(func.count(Event.id)).where(Event.organizer_club_id == club_id, Event.is_deleted == False)
+                select(Event)
+                .where(Event.organizer_club_id == club_id, Event.is_deleted == False)
+                .order_by(Event.start_datetime.desc().nullslast())
             )
-        ).scalar_one()
-        return {"club_id": str(club_id), "total_events": events}
+        ).scalars().all()
+
+        total_events = len(event_rows)
+        total_participants = 0
+        total_spent = 0.0
+        events_detail = []
+
+        for e in event_rows:
+            confirmed = (
+                await self.db.execute(
+                    select(func.count(Registration.id)).where(
+                        Registration.event_id == e.id,
+                        Registration.status.in_([RegistrationStatus.CONFIRMED, RegistrationStatus.ATTENDED]),
+                    )
+                )
+            ).scalar_one()
+            total_participants += confirmed
+
+            spent = float((
+                await self.db.execute(
+                    select(func.coalesce(func.sum(Expense.amount), 0)).where(Expense.event_id == e.id)
+                )
+            ).scalar_one())
+            total_spent += spent
+
+            nps_scores = (
+                await self.db.execute(select(NpsScore).where(NpsScore.event_id == e.id))
+            ).scalars().all()
+            nps_val = None
+            if nps_scores:
+                n = len(nps_scores)
+                promoters = sum(1 for s in nps_scores if s.score >= 9)
+                detractors = sum(1 for s in nps_scores if s.score <= 6)
+                nps_val = round(((promoters - detractors) / n) * 100, 1)
+
+            events_detail.append({
+                "id": str(e.id),
+                "title": e.title,
+                "status": e.status.value if hasattr(e.status, "value") else e.status,
+                "start_datetime": e.start_datetime.isoformat() if e.start_datetime else None,
+                "category": e.category,
+                "participants": confirmed,
+                "spent": spent,
+                "nps": nps_val,
+            })
+
+        return {
+            "club_id": str(club_id),
+            "total_events": total_events,
+            "total_participants": total_participants,
+            "total_spent": total_spent,
+            "events": events_detail,
+        }
 
     async def all_clubs_analytics(self) -> list[dict]:
         clubs = (await self.db.execute(select(Club).where(Club.is_active == True).order_by(Club.name))).scalars().all()
@@ -168,59 +222,10 @@ class AnalyticsRepository:
             q = q.where(cond)
         return (await self.db.execute(q)).scalar_one()
 
-    async def winners_bank_export(self, from_date: date, to_date: date) -> str:
-        from_dt = datetime(from_date.year, from_date.month, from_date.day, 0, 0, 0, tzinfo=timezone.utc)
-        to_dt = datetime(to_date.year, to_date.month, to_date.day, 23, 59, 59, tzinfo=timezone.utc)
-
-        q = (
-            select(
-                Event.title.label("event"),
-                EventWinner.position,
-                EventWinner.prize_amount,
-                User.name.label("participant_name"),
-                User.email.label("participant_email"),
-                User.roll_number,
-                User.bank_account_name,
-                User.bank_account_number,
-                User.bank_ifsc,
-            )
-            .join(Event, EventWinner.event_id == Event.id)
-            .join(User, EventWinner.user_id == User.id)
-            .where(
-                Event.is_deleted == False,
-                Event.start_datetime >= from_dt,
-                Event.start_datetime <= to_dt,
-            )
-            .order_by(Event.start_datetime, Event.title, EventWinner.position)
-        )
-        rows = (await self.db.execute(q)).all()
-
-        buf = io.StringIO()
-        writer = csv.writer(buf)
-        writer.writerow([
-            "Event", "Position", "Participant Name", "Email",
-            "Roll Number", "Prize Amount (₹)",
-            "Bank Account Name", "Account Number", "IFSC Code",
-        ])
-        for r in rows:
-            writer.writerow([
-                r.event,
-                r.position,
-                r.participant_name,
-                r.participant_email,
-                r.roll_number or "",
-                float(r.prize_amount) if r.prize_amount else "",
-                r.bank_account_name or "",
-                r.bank_account_number or "",
-                r.bank_ifsc or "",
-            ])
-        return buf.getvalue()
-
-    async def winners_bank_list(self, from_date: date, to_date: date) -> list[dict]:
-        from_dt = datetime(from_date.year, from_date.month, from_date.day, 0, 0, 0, tzinfo=timezone.utc)
-        to_dt = datetime(to_date.year, to_date.month, to_date.day, 23, 59, 59, tzinfo=timezone.utc)
-
-        q = (
+    def _winner_base_query(self):
+        from app.modules.certificates.models import Certificate
+        from app.shared.enums import CertificateType
+        return (
             select(
                 Event.title.label("event"),
                 Event.start_datetime.label("event_date"),
@@ -229,32 +234,113 @@ class AnalyticsRepository:
                 User.name.label("participant_name"),
                 User.email.label("participant_email"),
                 User.roll_number,
-                User.bank_account_name,
-                User.bank_account_number,
-                User.bank_ifsc,
+                Certificate.metadata_.label("cert_meta"),
             )
             .join(Event, EventWinner.event_id == Event.id)
             .join(User, EventWinner.user_id == User.id)
+            .outerjoin(
+                Certificate,
+                (Certificate.event_id == EventWinner.event_id)
+                & (Certificate.recipient_id == EventWinner.user_id)
+                & (Certificate.certificate_type == CertificateType.WINNER),
+            )
+            .where(Event.is_deleted == False)
+        )
+
+    def _row_to_winner_dict(self, r) -> dict:
+        meta = r.cert_meta or {}
+        return {
+            "event": r.event,
+            "event_date": r.event_date.isoformat() if r.event_date else None,
+            "position": r.position,
+            "prize_amount": float(r.prize_amount) if r.prize_amount else None,
+            "participant_name": r.participant_name,
+            "participant_email": r.participant_email,
+            "roll_number": r.roll_number,
+            "bank_account_name": meta.get("bank_name"),
+            "bank_account_number": meta.get("bank_account"),
+            "bank_ifsc": meta.get("ifsc"),
+            "upi": meta.get("upi"),
+        }
+
+    def _write_bank_csv(self, rows) -> str:
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow([
+            "Event", "Position", "Participant Name", "Email",
+            "Roll Number", "Prize Amount (₹)",
+            "Bank Name", "Account Number", "IFSC Code", "UPI ID",
+        ])
+        for r in rows:
+            meta = r.cert_meta or {}
+            writer.writerow([
+                r.event,
+                ["", "1st", "2nd", "3rd", "4th"][r.position] if r.position and r.position <= 4 else f"{r.position}th",
+                r.participant_name,
+                r.participant_email,
+                r.roll_number or "",
+                float(r.prize_amount) if r.prize_amount else "",
+                meta.get("bank_name", ""),
+                meta.get("bank_account", ""),
+                meta.get("ifsc", ""),
+                meta.get("upi", ""),
+            ])
+        return buf.getvalue()
+
+    async def winners_bank_export(self, from_date: date, to_date: date) -> str:
+        from_dt = datetime(from_date.year, from_date.month, from_date.day, 0, 0, 0, tzinfo=timezone.utc)
+        to_dt = datetime(to_date.year, to_date.month, to_date.day, 23, 59, 59, tzinfo=timezone.utc)
+        q = (
+            self._winner_base_query()
             .where(
-                Event.is_deleted == False,
                 Event.start_datetime >= from_dt,
                 Event.start_datetime <= to_dt,
             )
             .order_by(Event.start_datetime, Event.title, EventWinner.position)
         )
         rows = (await self.db.execute(q)).all()
-        return [
-            {
-                "event": r.event,
-                "event_date": r.event_date.isoformat() if r.event_date else None,
-                "position": r.position,
-                "prize_amount": float(r.prize_amount) if r.prize_amount else None,
-                "participant_name": r.participant_name,
-                "participant_email": r.participant_email,
-                "roll_number": r.roll_number,
-                "bank_account_name": r.bank_account_name,
-                "bank_account_number": r.bank_account_number,
-                "bank_ifsc": r.bank_ifsc,
-            }
-            for r in rows
-        ]
+        return self._write_bank_csv(rows)
+
+    async def winners_bank_list(self, from_date: date, to_date: date) -> list[dict]:
+        from_dt = datetime(from_date.year, from_date.month, from_date.day, 0, 0, 0, tzinfo=timezone.utc)
+        to_dt = datetime(to_date.year, to_date.month, to_date.day, 23, 59, 59, tzinfo=timezone.utc)
+        q = (
+            self._winner_base_query()
+            .where(
+                Event.start_datetime >= from_dt,
+                Event.start_datetime <= to_dt,
+            )
+            .order_by(Event.start_datetime, Event.title, EventWinner.position)
+        )
+        rows = (await self.db.execute(q)).all()
+        return [self._row_to_winner_dict(r) for r in rows]
+
+    async def winners_bank_export_by_club(self, club_id: UUID, from_date: date, to_date: date) -> str:
+        from_dt = datetime(from_date.year, from_date.month, from_date.day, 0, 0, 0, tzinfo=timezone.utc)
+        to_dt = datetime(to_date.year, to_date.month, to_date.day, 23, 59, 59, tzinfo=timezone.utc)
+        q = (
+            self._winner_base_query()
+            .where(
+                Event.organizer_club_id == club_id,
+                Event.start_datetime >= from_dt,
+                Event.start_datetime <= to_dt,
+            )
+            .order_by(Event.start_datetime, Event.title, EventWinner.position)
+        )
+        rows = (await self.db.execute(q)).all()
+        return self._write_bank_csv(rows)
+
+    async def winners_bank_list_by_club(self, club_id: UUID, from_date: date, to_date: date) -> list[dict]:
+        from_dt = datetime(from_date.year, from_date.month, from_date.day, 0, 0, 0, tzinfo=timezone.utc)
+        to_dt = datetime(to_date.year, to_date.month, to_date.day, 23, 59, 59, tzinfo=timezone.utc)
+        q = (
+            self._winner_base_query()
+            .where(
+                Event.organizer_club_id == club_id,
+                Event.start_datetime >= from_dt,
+                Event.start_datetime <= to_dt,
+            )
+            .order_by(Event.start_datetime, Event.title, EventWinner.position)
+        )
+        rows = (await self.db.execute(q)).all()
+        return [self._row_to_winner_dict(r) for r in rows]

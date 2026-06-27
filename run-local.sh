@@ -82,7 +82,7 @@ $DC -f docker-compose.yml -f docker-compose.override.yml up -d $BUILD_FLAG
 # Sync node_modules inside the container — the anonymous volume can get out of
 # date when new packages are added to package.json on the host side.
 info "Syncing frontend node_modules…"
-$DC -f docker-compose.yml -f docker-compose.override.yml exec -T frontend npm install --prefer-offline --silent 2>&1 | tail -3 || true
+$DC -f docker-compose.yml -f docker-compose.override.yml exec -T frontend npm install --silent 2>&1 | tail -3 || true
 
 # ── Wait for nginx to be reachable ────────────────────────────────────────────
 

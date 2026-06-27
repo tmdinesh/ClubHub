@@ -24,7 +24,11 @@ export default function AuthCallback() {
       })
       .then((res) => {
         setAuth(res.data, accessToken, refreshToken);
-        navigate(roleHomePath(res.data.role), { replace: true });
+        if (!res.data.phone_number) {
+          navigate("/onboarding", { replace: true });
+        } else {
+          navigate(roleHomePath(res.data.role), { replace: true });
+        }
       })
       .catch(() => {
         navigate("/login", { replace: true });

@@ -5,7 +5,7 @@ import json
 import logging
 from typing import Any
 
-from app.core.email import send_certificate_email
+from app.core.email import send_certificate_email, send_event_update_email, send_new_event_email
 from app.core.rabbitmq import Consumer
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,6 @@ EVENT_COMPLETED = "EVENT_COMPLETED"
 async def _handle_registration_confirmed(payload: dict[str, Any]) -> None:
     logger.info("Sending QR email to user %s for event %s", payload.get("user_id"), payload.get("event_id"))
     # TODO: integrate SMTP / SendGrid
-
 
 async def _handle_team_invitation(payload: dict[str, Any]) -> None:
     logger.info("Sending team invite to %s", payload.get("email"))
@@ -61,28 +60,76 @@ EVENT_CANCELLED = "EVENT_CANCELLED"
 
 
 async def _handle_event_updated(payload: dict[str, Any]) -> None:
+    event_title = payload.get("event_title", "")
+    club_name = payload.get("club_name", "ClubHub")
+    users = payload.get("users", [])
     logger.info(
-        "Event updated — notifying %d registered participants for event %s",
-        len(payload.get("users", [])),
+        "Event updated — emailing %d registered participants for event %s",
+        len(users),
         payload.get("event_id"),
     )
-    for user in payload.get("users", []):
-        logger.info(
-            "  → Notify %s (%s): event '%s' has been updated",
-            user.get("name"), user.get("email"), payload.get("event_title"),
+    for user in users:
+        await send_event_update_email(
+            recipient_email=user["email"],
+            recipient_name=user["name"],
+            event_title=event_title,
+            club_name=club_name,
+            message_body=(
+                f"Details for <strong>{event_title}</strong> have been updated by the organiser. "
+                "Please log in to ClubHub to review the latest information."
+            ),
+            subject_prefix="Event Updated",
         )
 
 
 async def _handle_event_cancelled(payload: dict[str, Any]) -> None:
+    event_title = payload.get("event_title", "")
+    club_name = payload.get("club_name", "ClubHub")
+    users = payload.get("users", [])
     logger.info(
-        "Event cancelled — notifying %d registered participants for event %s",
-        len(payload.get("users", [])),
+        "Event cancelled — emailing %d registered participants for event %s",
+        len(users),
         payload.get("event_id"),
     )
-    for user in payload.get("users", []):
-        logger.info(
-            "  → Notify %s (%s): event '%s' has been cancelled",
-            user.get("name"), user.get("email"), payload.get("event_title"),
+    for user in users:
+        await send_event_update_email(
+            recipient_email=user["email"],
+            recipient_name=user["name"],
+            event_title=event_title,
+            club_name=club_name,
+            message_body=(
+                f"We regret to inform you that <strong>{event_title}</strong> has been cancelled. "
+                "Your registration has been voided. We apologise for any inconvenience."
+            ),
+            subject_prefix="Event Cancelled",
+            cancelled=True,
+        )
+
+
+EVENT_PUBLISHED = "EVENT_PUBLISHED"
+
+
+async def _handle_event_published(payload: dict[str, Any]) -> None:
+    event_title = payload.get("event_title", "")
+    club_name = payload.get("club_name", "ClubHub")
+    event_url = payload.get("event_url", "")
+    start_datetime = payload.get("start_datetime", "")
+    venue = payload.get("venue")
+    users = payload.get("users", [])
+    logger.info(
+        "New event published — emailing %d users for event %s",
+        len(users),
+        payload.get("event_id"),
+    )
+    for user in users:
+        await send_new_event_email(
+            recipient_email=user["email"],
+            recipient_name=user["name"],
+            event_title=event_title,
+            club_name=club_name,
+            event_url=event_url,
+            start_datetime=start_datetime,
+            venue=venue,
         )
 
 
@@ -95,6 +142,7 @@ HANDLERS: dict[str, Any] = {
     EVENT_COMPLETED: _handle_event_completed,
     EVENT_UPDATED: _handle_event_updated,
     EVENT_CANCELLED: _handle_event_cancelled,
+    EVENT_PUBLISHED: _handle_event_published,
 }
 
 
@@ -109,6 +157,7 @@ class NotificationConsumer(Consumer):
         EVENT_COMPLETED,
         EVENT_UPDATED,
         EVENT_CANCELLED,
+        EVENT_PUBLISHED,
     ]
 
     async def handle(self, payload: dict[str, Any]) -> None:

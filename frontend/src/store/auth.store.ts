@@ -9,6 +9,7 @@ export interface User {
   role: string;
   department: string | null;
   year: number | null;
+  phone_number: string | null;
   is_active: boolean;
   club_id: string | null;
 }

@@ -101,6 +101,6 @@ class CertificateRepository:
                 Certificate.event_id == event_id,
                 Certificate.recipient_id == user_id,
                 Certificate.certificate_type == cert_type,
-            ))
+            ).limit(1))
         )
-        return result.scalar_one_or_none()
+        return result.scalars().first()

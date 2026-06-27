@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth.store";
+import { useThemeStore } from "@/store/theme.store";
 import {
   LayoutDashboard, CalendarDays, Users, Award, Bell, LogOut,
   ChevronRight, Settings, ShieldCheck, ClipboardCheck, Megaphone,
   BarChart3, Wallet, ListChecks, Radio, KeyRound, Building2,
-  Menu, X,
+  Menu, X, MessageSquare, Sun, Moon,
 } from "lucide-react";
 import api from "@/lib/api";
 import type { Event } from "@/types";
@@ -18,19 +19,26 @@ interface NavItem {
   exact?: boolean;
 }
 
-function getNavItems(role: string, eventId?: string): NavItem[] {
+function getNavItems(role: string, eventId?: string, attendanceMode?: string): NavItem[] {
   if (role === "SUPER_ADMIN") {
-    return [
+    const base: NavItem[] = [
       { to: "/admin",              label: "Metrics",        icon: <BarChart3 size={15} />, exact: true },
       { to: "/admin?tab=analytics",label: "Club Analytics", icon: <Building2 size={15} /> },
       { to: "/admin?tab=users",    label: "Users",          icon: <Users size={15} /> },
       { to: "/admin?tab=clubs",    label: "Club Setup",     icon: <Settings size={15} /> },
       { to: "/faculty/approvals",  label: "Approvals",      icon: <ShieldCheck size={15} /> },
     ];
+    if (eventId) base.push(
+      { to: `/manage/${eventId}/overview`,      label: "Overview",      icon: <BarChart3 size={15} /> },
+      { to: `/manage/${eventId}/registrations`, label: "Registrations", icon: <ListChecks size={15} /> },
+      { to: `/manage/${eventId}/feedback`,      label: "Feedback",      icon: <MessageSquare size={15} /> },
+    );
+    return base;
   }
   if (role === "FACULTY_ADVISOR") {
     return [
       { to: "/faculty/approvals", label: "Approval Queue", icon: <ClipboardCheck size={15} /> },
+      { to: "/faculty/analytics", label: "Analytics", icon: <BarChart3 size={15} /> },
     ];
   }
   if (role === "CLUB_ADMIN") {
@@ -41,10 +49,11 @@ function getNavItems(role: string, eventId?: string): NavItem[] {
       { to: `/manage/${eventId}/overview`,          label: "Overview",           icon: <BarChart3 size={15} /> },
       { to: `/manage/${eventId}/registrations`,     label: "Registrations",      icon: <ListChecks size={15} /> },
       { to: `/manage/${eventId}/attendance`,        label: "Attendance",         icon: <Radio size={15} /> },
-      { to: `/manage/${eventId}/attendance-takers`, label: "Att. Credentials",   icon: <KeyRound size={15} /> },
+      ...(attendanceMode !== "MASS" ? [{ to: `/manage/${eventId}/attendance-takers`, label: "Att. Credentials", icon: <KeyRound size={15} /> }] : []),
       { to: `/manage/${eventId}/finance`,           label: "Finance",            icon: <Wallet size={15} /> },
       { to: `/manage/${eventId}/certificates`,      label: "Certificates",       icon: <Award size={15} /> },
       { to: `/manage/${eventId}/announcements`,     label: "Announcements",      icon: <Megaphone size={15} /> },
+      { to: `/manage/${eventId}/feedback`,          label: "Feedback",           icon: <MessageSquare size={15} /> },
     );
     return base;
   }
@@ -82,10 +91,9 @@ interface LayoutProps {
 
 export default function Layout({ children, eventId }: LayoutProps) {
   const { user, logout } = useAuthStore();
+  const { theme, toggle } = useThemeStore();
   const navigate = useNavigate();
   const role = user?.role ?? "PARTICIPANT";
-  const navItems = getNavItems(role, eventId);
-  const section = eventId ? "Event" : (SECTION_LABEL[role] ?? "Portal");
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const { data: eventData } = useQuery<Event>({
@@ -94,6 +102,9 @@ export default function Layout({ children, eventId }: LayoutProps) {
     enabled: !!eventId,
     staleTime: 5 * 60 * 1000,
   });
+
+  const navItems = getNavItems(role, eventId, eventData?.attendance_mode);
+  const section = eventId ? "Event" : (SECTION_LABEL[role] ?? "Portal");
 
   useEffect(() => {
     document.body.classList.toggle("drawer-open", mobileOpen);
@@ -197,6 +208,14 @@ export default function Layout({ children, eventId }: LayoutProps) {
                 {user?.role?.toLowerCase().replace("_", " ")}
               </p>
             </div>
+            <button type="button" onClick={toggle}
+              className="p-1 rounded transition-colors"
+              style={{ color: "var(--dust)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--amber)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--dust)")}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
+              {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+            </button>
             <button type="button" onClick={handleLogout}
               className="p-1 rounded transition-colors"
               style={{ color: "var(--dust)" }}
@@ -228,7 +247,7 @@ export default function Layout({ children, eventId }: LayoutProps) {
             <img
               src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png"
               alt="PSG College of Technology"
-              style={{ height: 92, width: "auto", display: "block", flexShrink: 0 }}
+              style={{ height: 92, width: "auto", display: "block", flexShrink: 0, mixBlendMode: "multiply" }}
             />
             <div style={{ width: 1, height: 56, background: "#b0c4d8", flexShrink: 0 }} />
             <div>
@@ -258,7 +277,7 @@ export default function Layout({ children, eventId }: LayoutProps) {
             <img
               src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png"
               alt="PSG College of Technology"
-              style={{ height: 56, width: "auto", display: "block", flexShrink: 0 }}
+              style={{ height: 56, width: "auto", display: "block", flexShrink: 0, mixBlendMode: "multiply" }}
             />
             <div style={{ width: 1, height: 36, background: "#b0c4d8", flexShrink: 0 }} />
             <div>
@@ -310,7 +329,7 @@ export default function Layout({ children, eventId }: LayoutProps) {
             <img
               src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png"
               alt="PSG College of Technology"
-              style={{ height: 72, width: "auto", display: "block", flexShrink: 0 }}
+              style={{ height: 72, width: "auto", display: "block", flexShrink: 0, mixBlendMode: "multiply" }}
             />
             <div style={{ width: 1, height: 44, background: "#b0c4d8", flexShrink: 0 }} />
             <div>

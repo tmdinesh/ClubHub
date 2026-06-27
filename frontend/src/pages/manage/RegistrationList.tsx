@@ -21,6 +21,7 @@ interface RegistrationDetail {
   participant_name: string;
   participant_email: string;
   participant_roll_number: string | null;
+  participant_phone_number: string | null;
   bank_account_name: string | null;
   bank_account_number: string | null;
   bank_ifsc: string | null;
@@ -88,7 +89,7 @@ const ALL_STATUSES: Array<RegistrationDetail["status"] | "ALL"> = [
 
 type SortField = "registered_at" | "status" | "participant_name";
 type SortDir = "asc" | "desc";
-type ViewMode = "list" | "teams" | "winners";
+type ViewMode = "list" | "teams";
 
 function SkeletonRow() {
   return (
@@ -393,7 +394,7 @@ export default function RegistrationList() {
   }, [registrations, statusFilter, search, sortField, sortDir]);
 
   function exportCSV() {
-    const cols = ["name", "roll_number", "email", "status"];
+    const cols = ["name", "roll_number", "phone", "email", "status"];
     if (isTeamEvent) cols.push("team");
     cols.push("bank_account_name", "bank_account_number", "bank_ifsc", "registered_at");
     const headers = cols.join(",");
@@ -401,6 +402,7 @@ export default function RegistrationList() {
       const row: string[] = [
         `"${r.participant_name}"`,
         r.participant_roll_number ?? "",
+        r.participant_phone_number ?? "",
         r.participant_email,
         r.status,
       ];
@@ -491,7 +493,7 @@ export default function RegistrationList() {
             width: "fit-content",
           }}
         >
-          {(["list", ...(isTeamEvent ? ["teams"] : []), "winners"] as ViewMode[]).map((m) => (
+          {(["list", ...(isTeamEvent ? ["teams"] : [])] as ViewMode[]).map((m) => (
             <button
               key={m}
               type="button"
@@ -512,7 +514,7 @@ export default function RegistrationList() {
                 gap: 5,
               }}
             >
-              {m === "list" ? "All Participants" : m === "teams" ? "By Team" : <><Trophy size={11} /> Winners</>}
+              {m === "list" ? "All Participants" : "By Team"}
             </button>
           ))}
         </div>
@@ -712,6 +714,9 @@ export default function RegistrationList() {
                         <td style={{ padding: "14px 16px" }}>
                           <p style={{ fontWeight: 600, color: "var(--cream)", fontSize: 14 }}>{reg.participant_name}</p>
                           <p style={{ fontSize: 12, color: "var(--ash)", marginTop: 2 }}>{reg.participant_email}</p>
+                          {reg.participant_phone_number && (
+                            <p style={{ fontSize: 12, color: "var(--fog)", marginTop: 1 }}>{reg.participant_phone_number}</p>
+                          )}
                         </td>
                         {isTeamEvent && (
                           <td style={{ padding: "14px 16px" }}>
@@ -848,10 +853,6 @@ export default function RegistrationList() {
           </div>
         )}
 
-        {/* Winners panel */}
-        {viewMode === "winners" && (
-          <WinnersPanel eventId={eventId!} registrations={registrations} />
-        )}
       </div>
     </Layout>
   );

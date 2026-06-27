@@ -43,6 +43,12 @@ class FinanceRepository:
         await self.db.flush()
         return expense
 
+    async def get_expense(self, expense_id: UUID) -> Expense | None:
+        result = await self.db.execute(
+            select(Expense).where(Expense.id == expense_id)
+        )
+        return result.scalar_one_or_none()
+
     async def list_expenses(self, event_id: UUID) -> list[Expense]:
         result = await self.db.execute(
             select(Expense).where(Expense.event_id == event_id)
@@ -67,6 +73,8 @@ class FinanceRepository:
 
     async def list_winners(self, event_id: UUID) -> list[dict]:
         from app.modules.auth.models import User
+        from app.modules.certificates.models import Certificate
+        from app.shared.enums import CertificateType
         q = (
             select(
                 EventWinner.id,
@@ -77,11 +85,15 @@ class FinanceRepository:
                 User.name.label("participant_name"),
                 User.email.label("participant_email"),
                 User.roll_number.label("roll_number"),
-                User.bank_account_name.label("bank_account_name"),
-                User.bank_account_number.label("bank_account_number"),
-                User.bank_ifsc.label("bank_ifsc"),
+                Certificate.metadata_.label("cert_meta"),
             )
             .join(User, EventWinner.user_id == User.id)
+            .outerjoin(
+                Certificate,
+                (Certificate.event_id == EventWinner.event_id)
+                & (Certificate.recipient_id == EventWinner.user_id)
+                & (Certificate.certificate_type == CertificateType.WINNER),
+            )
             .where(EventWinner.event_id == event_id)
             .order_by(EventWinner.position)
         )
@@ -96,9 +108,10 @@ class FinanceRepository:
                 "participant_name": r.participant_name,
                 "participant_email": r.participant_email,
                 "roll_number": r.roll_number,
-                "bank_account_name": r.bank_account_name,
-                "bank_account_number": r.bank_account_number,
-                "bank_ifsc": r.bank_ifsc,
+                "bank_account_name": (r.cert_meta or {}).get("bank_name"),
+                "bank_account_number": (r.cert_meta or {}).get("bank_account"),
+                "bank_ifsc": (r.cert_meta or {}).get("ifsc"),
+                "upi": (r.cert_meta or {}).get("upi"),
             }
             for r in rows
         ]

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import api from "@/lib/api";
-import type { Event } from "@/types";
+import type { DeptCode, Event } from "@/types";
 import { EventCard } from "@/components/EventCard";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -47,6 +47,12 @@ export default function EventDiscovery() {
       const res = await api.get<Event[]>("/events", { params });
       return res.data;
     },
+  });
+
+  const { data: deptCodes = [] } = useQuery<DeptCode[]>({
+    queryKey: ["department-codes"],
+    queryFn: async () => (await api.get<DeptCode[]>("/department-codes")).data,
+    staleTime: 5 * 60 * 1000,
   });
 
   const categories = useMemo(() => {
@@ -115,12 +121,7 @@ export default function EventDiscovery() {
           pointerEvents: "none",
         }} />
 
-        <p className="animate-fade-up" style={{
-          fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase",
-          color: "var(--amber)", marginBottom: 16,
-        }}>
-          College Event Platform
-        </p>
+        
         <h1 className="animate-fade-up delay-100" style={{
           fontFamily: "'DM Serif Display', serif",
           fontSize: "clamp(36px, 6vw, 64px)",
@@ -214,7 +215,7 @@ export default function EventDiscovery() {
             <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
               {filtered.map((event, i) => (
                 <div key={event.id} style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}>
-                  <EventCard event={event} />
+                  <EventCard event={event} deptCodes={deptCodes} />
                 </div>
               ))}
             </div>

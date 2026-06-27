@@ -7,11 +7,11 @@ import {
   Clock, CheckCircle, Send, BarChart3, Loader2, AlertTriangle, X,
   Pencil, Trash2, FileDown,
 } from "lucide-react";
-import { toISO, previewIST, fmtDateTimeMedIST } from "@/lib/dateIST";
+import { toISO, previewIST, fmtDateTimeMedIST, isoToPickerIST } from "@/lib/dateIST";
 import Layout from "@/components/Layout";
 import api, { apiError } from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
-import type { Event } from "@/types";
+import type { DeptCode, Event } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -291,6 +291,9 @@ interface CreateEventForm {
   is_team_event: boolean;
   team_min_size: string;
   team_max_size: string;
+  allowed_departments: string[];
+  attendance_mode: "SCANNER" | "MASS";
+  mass_qr_interval: string;
 }
 
 const EMPTY_FORM: CreateEventForm = {
@@ -298,6 +301,7 @@ const EMPTY_FORM: CreateEventForm = {
   max_participants: "", start_datetime: "", end_datetime: "",
   registration_start: "", registration_end: "",
   is_team_event: false, team_min_size: "2", team_max_size: "5",
+  allowed_departments: [], attendance_mode: "SCANNER", mass_qr_interval: "30",
 };
 
 // ── Report modal ─────────────────────────────────────────────────────────────
@@ -441,6 +445,12 @@ export default function ClubAdminDashboard() {
     enabled: !!clubId,
   });
 
+  const { data: deptCodes = [] } = useQuery<DeptCode[]>({
+    queryKey: ["department-codes"],
+    queryFn: async () => (await api.get<DeptCode[]>("/department-codes")).data,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const createMutation = useMutation({
     mutationFn: (payload: object) => api.post("/events", payload),
     onSuccess: () => {
@@ -498,19 +508,16 @@ export default function ClubAdminDashboard() {
 
   function startEdit(event: Event) {
     setEditingEventId(event.id);
-    // Pre-fill form from current event values (strip TZ offset for picker)
-    const strip = (iso: string | null) =>
-      iso ? iso.slice(0, 16).replace("+05:30", "").replace("Z", "").replace(/\+\d\d:\d\d$/, "") : "";
     setEditForm({
       title: event.title,
       description: event.description ?? "",
       venue: event.venue ?? "",
       category: event.category ?? "",
       max_participants: event.max_participants ? String(event.max_participants) : "",
-      start_datetime: strip(event.start_datetime),
-      end_datetime: strip(event.end_datetime),
-      registration_start: strip(event.registration_start),
-      registration_end: strip(event.registration_end),
+      start_datetime: isoToPickerIST(event.start_datetime),
+      end_datetime: isoToPickerIST(event.end_datetime),
+      registration_start: isoToPickerIST(event.registration_start),
+      registration_end: isoToPickerIST(event.registration_end),
     });
     setEditPickerKey((k) => k + 1);
   }
@@ -564,6 +571,9 @@ export default function ClubAdminDashboard() {
       is_team_event: form.is_team_event,
       team_min_size: form.is_team_event ? parseInt(form.team_min_size) || 2 : 2,
       team_max_size: form.is_team_event ? parseInt(form.team_max_size) || 5 : 5,
+      allowed_departments: form.allowed_departments.length > 0 ? form.allowed_departments : null,
+      attendance_mode: form.attendance_mode,
+      mass_qr_interval: form.attendance_mode === "MASS" ? parseInt(form.mass_qr_interval) || 30 : null,
     });
   }
 
@@ -784,6 +794,118 @@ export default function ClubAdminDashboard() {
                 )}
               </div>
 
+              {/* Department eligibility */}
+              <div style={{ borderTop: "1px solid var(--seam)", paddingTop: "16px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                  <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--dust)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                    Department Eligibility
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm((f) => ({
+                        ...f,
+                        allowed_departments:
+                          f.allowed_departments.length === deptCodes.length
+                            ? []
+                            : deptCodes.map((d) => d.code),
+                      }))
+                    }
+                    style={{
+                      fontSize: "11px", fontWeight: 600, padding: "3px 10px", borderRadius: 99,
+                      border: `1px solid ${form.allowed_departments.length === deptCodes.length && deptCodes.length > 0 ? "var(--jade)" : "var(--seam)"}`,
+                      background: form.allowed_departments.length === deptCodes.length && deptCodes.length > 0 ? "rgba(74,222,128,0.12)" : "transparent",
+                      color: form.allowed_departments.length === deptCodes.length && deptCodes.length > 0 ? "var(--jade)" : "var(--fog)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Open to All
+                  </button>
+                </div>
+                <p style={{ fontSize: "12px", color: "var(--ash)", marginBottom: "12px" }}>
+                  Select which departments can register. Leave all unchecked for no restriction (open to all).
+                </p>
+                {deptCodes.length === 0 ? (
+                  <p style={{ fontSize: "12px", color: "var(--dust)", fontStyle: "italic" }}>No department codes configured yet.</p>
+                ) : (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                    {deptCodes.map((d) => {
+                      const selected = form.allowed_departments.includes(d.code);
+                      return (
+                        <button
+                          key={d.code}
+                          type="button"
+                          onClick={() =>
+                            setForm((f) => ({
+                              ...f,
+                              allowed_departments: selected
+                                ? f.allowed_departments.filter((c) => c !== d.code)
+                                : [...f.allowed_departments, d.code],
+                            }))
+                          }
+                          style={{
+                            fontSize: "12px", fontWeight: 500, padding: "5px 12px", borderRadius: 99,
+                            border: `1px solid ${selected ? "var(--amber)" : "var(--seam)"}`,
+                            background: selected ? "rgba(245,166,35,0.12)" : "transparent",
+                            color: selected ? "var(--amber)" : "var(--fog)",
+                            cursor: "pointer", transition: "all 150ms",
+                          }}
+                        >
+                          {d.label} <span style={{ opacity: 0.6 }}>({d.code})</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {form.allowed_departments.length > 0 && (
+                  <p style={{ fontSize: "11px", color: "var(--amber)", marginTop: "8px" }}>
+                    {form.allowed_departments.length} department{form.allowed_departments.length > 1 ? "s" : ""} selected
+                  </p>
+                )}
+              </div>
+
+              {/* Attendance mode */}
+              <div style={{ borderTop: "1px solid var(--seam)", paddingTop: "16px" }}>
+                <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--dust)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "16px" }}>
+                  Attendance System
+                </p>
+                <div style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
+                  {(["SCANNER", "MASS"] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, attendance_mode: mode }))}
+                      style={{
+                        flex: 1, fontSize: "13px", fontWeight: 600, padding: "10px 12px", borderRadius: 8, cursor: "pointer", transition: "all 150ms",
+                        border: `1px solid ${form.attendance_mode === mode ? "var(--amber)" : "var(--seam)"}`,
+                        background: form.attendance_mode === mode ? "rgba(245,166,35,0.12)" : "transparent",
+                        color: form.attendance_mode === mode ? "var(--amber)" : "var(--fog)",
+                        textAlign: "center",
+                      }}
+                    >
+                      {mode === "SCANNER" ? "Scanner Mode" : "Mass Attendance"}
+                    </button>
+                  ))}
+                </div>
+                <p style={{ fontSize: "12px", color: "var(--ash)", marginBottom: "8px" }}>
+                  {form.attendance_mode === "SCANNER"
+                    ? "Organisers use a scanner device to scan each participant's personal QR code."
+                    : "A rotating QR code is displayed on screen; participants scan it from their own devices."}
+                </p>
+                {form.attendance_mode === "MASS" && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="mass_interval">QR Refresh Interval (seconds)</Label>
+                    <Input
+                      id="mass_interval" type="number" min={10}
+                      value={form.mass_qr_interval}
+                      onChange={(e) => field("mass_qr_interval", e.target.value)}
+                      placeholder="30"
+                    />
+                    <p style={{ fontSize: "11px", color: "var(--ash)" }}>How often the displayed QR code rotates. Minimum 10 seconds.</p>
+                  </div>
+                )}
+              </div>
+
               <div style={{ borderTop: "1px solid var(--seam)", paddingTop: "16px" }}>
                 <p style={{ fontSize: "11px", fontWeight: 600, color: "var(--dust)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "16px" }}>Schedule</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -816,6 +938,9 @@ export default function ClubAdminDashboard() {
                     onChange={(v) => field("registration_end", v)}
                     error={fieldErrors.registration_end}
                   />
+                  <p style={{ fontSize: 11, color: "var(--dust)", marginTop: -8 }}>
+                    If left blank, registration closes automatically 2 hours before the event starts.
+                  </p>
                 </div>
               </div>
             </div>
@@ -964,7 +1089,7 @@ export default function ClubAdminDashboard() {
                         Edit
                       </button>
                     )}
-                    {event.status !== "ARCHIVED" && (
+                    {event.status !== "ARCHIVED" && event.status !== "COMPLETED" && (
                       <button
                         type="button"
                         onClick={() => setCancelConfirm(event.id)}

@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import {
   CalendarDays, QrCode, X, AlertCircle, Search,
   Users, Plus, ChevronRight, Loader2, CheckCircle, Crown,
-  Globe, Copy, Check, KeyRound,
+  Globe, Copy, Check, KeyRound, MessageSquare,
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import api, { apiError } from "@/lib/api";
@@ -14,7 +14,7 @@ import type { Registration, Team } from "@/types";
 import { fmtDateIST } from "@/lib/dateIST";
 
 // Status badge inline style helpers
-function statusBadgeStyle(type: "CONFIRMED" | "PENDING" | "WAITLISTED" | "CANCELLED"): React.CSSProperties {
+function statusBadgeStyle(type: "CONFIRMED" | "PENDING" | "WAITLISTED" | "CANCELLED" | "ATTENDED"): React.CSSProperties {
   switch (type) {
     case "CONFIRMED":
       return {
@@ -39,6 +39,12 @@ function statusBadgeStyle(type: "CONFIRMED" | "PENDING" | "WAITLISTED" | "CANCEL
         background: "color-mix(in srgb, var(--ash) 15%, transparent)",
         color: "var(--ash)",
         border: "1px solid color-mix(in srgb, var(--ash) 30%, transparent)",
+      };
+    case "ATTENDED":
+      return {
+        background: "color-mix(in srgb, var(--indigo) 15%, transparent)",
+        color: "var(--indigo)",
+        border: "1px solid color-mix(in srgb, var(--indigo) 30%, transparent)",
       };
   }
 }
@@ -210,7 +216,7 @@ function MyTeamCard({
                   type="email"
                   value={inviteEmail}
                   onChange={(e) => { setInviteEmail(e.target.value); setInviteToken(null); setInviteError(""); }}
-                  placeholder="teammate@college.edu"
+                  placeholder="roll@psgtech.ac.in"
                   className="flex-1 text-sm px-3 py-1.5 rounded-lg focus:outline-none"
                   style={{
                     background: "var(--ink-soft)",
@@ -753,6 +759,9 @@ export default function MyEvents() {
   const { data: registrations, isLoading, error } = useQuery<Registration[]>({
     queryKey: ["registrations", "me"],
     queryFn: () => api.get("/registrations/me").then((r) => r.data),
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const cancelMutation = useMutation({
@@ -935,12 +944,18 @@ export default function MyEvents() {
                               : <span style={{ color: "var(--ash)" }}>—</span>}
                           </td>
                           <td className="px-4 py-3.5">
-                            <span
-                              className="inline-flex items-center text-[11px] font-semibold px-2.5 py-1 rounded-full"
-                              style={statusBadgeStyle(reg.status)}
-                            >
-                              {reg.status}
-                            </span>
+                            {(() => {
+                              const isAbsent = reg.status === "CONFIRMED" && reg.event_status === "COMPLETED";
+                              const displayStatus = isAbsent ? "ABSENT" : reg.status;
+                              const style = isAbsent
+                                ? { background: "color-mix(in srgb, var(--cinnabar) 15%, transparent)", color: "var(--cinnabar)", border: "1px solid color-mix(in srgb, var(--cinnabar) 30%, transparent)" }
+                                : statusBadgeStyle(reg.status);
+                              return (
+                                <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-1 rounded-full" style={style}>
+                                  {displayStatus}
+                                </span>
+                              );
+                            })()}
                           </td>
                           <td className="px-4 py-3.5">
                             <div className="flex items-center gap-2">
@@ -974,7 +989,7 @@ export default function MyEvents() {
                                   />
                                 </button>
                               )}
-                              {reg.status === "CONFIRMED" && (
+                              {reg.status === "CONFIRMED" && reg.event_attendance_mode !== "MASS" && reg.event_status !== "COMPLETED" && (
                                 <button
                                   type="button"
                                   onClick={() => handleShowTicket(reg)}
@@ -986,7 +1001,16 @@ export default function MyEvents() {
                                   <QrCode size={12} /> Ticket
                                 </button>
                               )}
-                              {(reg.status === "CONFIRMED" || reg.status === "WAITLISTED") && (
+                              {reg.status === "CONFIRMED" && reg.event_attendance_mode === "MASS" && reg.event_status !== "COMPLETED" && (
+                                <Link
+                                  to="/attend"
+                                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                  style={{ background: "color-mix(in srgb, var(--amber) 12%, transparent)", color: "var(--amber)", textDecoration: "none" }}
+                                >
+                                  <QrCode size={12} /> Mark Attendance
+                                </Link>
+                              )}
+                              {(reg.status === "CONFIRMED" || reg.status === "WAITLISTED") && reg.event_status !== "COMPLETED" && (
                                 <button
                                   type="button"
                                   onClick={() => { if (confirm("Cancel this registration?")) cancelMutation.mutate(reg.id); }}
@@ -1001,6 +1025,15 @@ export default function MyEvents() {
                                 >
                                   <X size={12} /> Cancel
                                 </button>
+                              )}
+                              {reg.status === "ATTENDED" && reg.event_status === "COMPLETED" && (
+                                <Link
+                                  to={`/dashboard/feedback/${reg.event_id}`}
+                                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                  style={{ background: "color-mix(in srgb, var(--jade) 12%, transparent)", color: "var(--jade)", textDecoration: "none" }}
+                                >
+                                  <MessageSquare size={12} /> Give Feedback
+                                </Link>
                               )}
                             </div>
                           </td>

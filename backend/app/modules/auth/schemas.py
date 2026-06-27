@@ -17,6 +17,7 @@ class UserOut(BaseModel):
     department: str | None
     year: int | None
     roll_number: str | None = None
+    phone_number: str | None = None
     bank_account_name: str | None = None
     bank_account_number: str | None = None
     bank_ifsc: str | None = None
@@ -47,6 +48,12 @@ class SuperAdminLoginRequest(BaseModel):
     password: str
 
 
+class DevLoginRequest(BaseModel):
+    email: EmailStr
+    name: str
+    role: UserRole = UserRole.PARTICIPANT
+
+
 class AdminUserCreate(BaseModel):
     email: EmailStr
     name: str
@@ -62,3 +69,26 @@ class AdminUserUpdate(BaseModel):
 
 class AdminClubUpdate(BaseModel):
     faculty_advisor_id: UUID | None
+
+
+class UpdateProfileRequest(BaseModel):
+    phone_number: str | None = None
+
+
+class DeptCodeCreate(BaseModel):
+    code: str
+    label: str
+
+
+class DeptCodeUpdate(BaseModel):
+    label: str | None = None
+    is_active: bool | None = None
+
+
+class DeptCodeOut(BaseModel):
+    id: UUID
+    code: str
+    label: str
+    is_active: bool
+
+    model_config = {"from_attributes": True}

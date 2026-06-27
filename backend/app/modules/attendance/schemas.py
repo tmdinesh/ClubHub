@@ -61,3 +61,13 @@ class CheckpointOut(BaseModel):
     order: int
 
     model_config = {"from_attributes": True}
+
+
+class MassQRResponse(BaseModel):
+    qr_token: str
+    expires_at: datetime
+    interval_seconds: int
+
+
+class MassScanRequest(BaseModel):
+    qr_token: str

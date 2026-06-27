@@ -51,7 +51,7 @@ class AttendanceRepository:
         result = await self.db.execute(
             select(func.count(Registration.id)).where(
                 Registration.event_id == event_id,
-                Registration.status == RegistrationStatus.CONFIRMED,
+                Registration.status.in_([RegistrationStatus.CONFIRMED, RegistrationStatus.ATTENDED]),
             )
         )
         return result.scalar_one()

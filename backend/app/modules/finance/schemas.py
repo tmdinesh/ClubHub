@@ -73,3 +73,4 @@ class WinnerOut(BaseModel):
     bank_account_name: str | None
     bank_account_number: str | None
     bank_ifsc: str | None
+    upi: str | None = None

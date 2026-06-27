@@ -38,6 +38,8 @@ class RegistrationWithEventOut(BaseModel):
     is_team_event: bool = False
     team_min_size: int = 2
     team_max_size: int = 5
+    event_attendance_mode: str = "SCANNER"
+    event_status: str = "PUBLISHED"
 
     model_config = {"from_attributes": False}
 
@@ -53,6 +55,8 @@ class RegistrationDetailOut(BaseModel):
     created_at: datetime
     participant_name: str
     participant_email: str
+    participant_roll_number: str | None = None
+    participant_phone_number: str | None = None
     team_id: UUID | None = None
     team_name: str | None = None
     team_lead_id: UUID | None = None

@@ -12,7 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.modules.analytics.repos import AnalyticsRepository
 from app.modules.auth.deps import get_current_user
-from app.modules.auth.models import User
+from app.modules.auth.models import DepartmentCode, User
+from app.modules.auth.schemas import DeptCodeOut
 from app.modules.events.models import Club, Event
 from app.modules.events.repos import EventRepository
 from app.modules.events.schemas import (
@@ -26,6 +27,7 @@ from app.shared.exceptions import ForbiddenError
 
 router = APIRouter(prefix="/events", tags=["events"])
 clubs_router = APIRouter(prefix="/clubs", tags=["clubs"])
+dept_router = APIRouter(prefix="/department-codes", tags=["departments"])
 
 
 def _svc(db: AsyncSession = Depends(get_db)) -> EventService:
@@ -194,8 +196,11 @@ async def approve_event(
     event_id: UUID,
     svc: EventService = Depends(_svc),
     actor: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> EventOut:
-    event = await svc.approve_event(event_id, actor)
+    from app.modules.auth.repos import UserRepository
+    user_repo = UserRepository(db)
+    event = await svc.approve_event(event_id, actor, user_repo=user_repo)
     return _event_out(event)
 
 
@@ -239,6 +244,22 @@ async def cancel_event(
     return _event_out(event)
 
 
+@router.post("/{event_id}/complete", response_model=EventOut)
+async def complete_event(
+    event_id: UUID,
+    svc: EventService = Depends(_svc),
+    db: AsyncSession = Depends(get_db),
+    actor: User = Depends(get_current_user),
+) -> EventOut:
+    from app.modules.feedback.repos import FeedbackRepository
+    from app.modules.feedback.services import FeedbackService
+    reg_repo = RegistrationRepository(db)
+    notif_repo = NotificationRepository(db)
+    feedback_svc = FeedbackService(FeedbackRepository(db))
+    event = await svc.complete_event(event_id, actor, reg_repo, notif_repo, feedback_svc)
+    return _event_out(event)
+
+
 @router.delete("/{event_id}", status_code=204, response_class=Response, response_model=None)
 async def delete_event(
     event_id: UUID,
@@ -277,3 +298,13 @@ async def list_clubs(db: AsyncSession = Depends(get_db)) -> list[ClubOut]:
     repo = EventRepository(db)
     clubs = await repo.list_clubs()
     return [ClubOut.model_validate(c) for c in clubs]
+
+
+# ── Department Codes (public read) ────────────────────────────────────────────
+
+@dept_router.get("", response_model=list[DeptCodeOut])
+async def list_department_codes_public(db: AsyncSession = Depends(get_db)) -> list[DeptCodeOut]:
+    result = await db.execute(
+        select(DepartmentCode).where(DepartmentCode.is_active == True).order_by(DepartmentCode.code)
+    )
+    return [DeptCodeOut.model_validate(d) for d in result.scalars().all()]

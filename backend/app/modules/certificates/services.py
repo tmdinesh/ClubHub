@@ -219,6 +219,23 @@ class CertificateService:
         results: list[tuple[Certificate, bytes]] = []
 
         for w in winners:
+            existing = await self.repo.get_by_event_user_type(
+                event_id, UUID(w["user_id"]), CertificateType.WINNER
+            )
+            if existing:
+                # Update metadata with any bank details provided in this run
+                meta = dict(existing.metadata_ or {})
+                for field in ("prize_amount", "bank_account", "bank_name", "ifsc", "upi"):
+                    val = w.get(field)
+                    if val is not None and val != "":
+                        meta[field] = val
+                from sqlalchemy.orm.attributes import flag_modified
+                existing.metadata_ = meta
+                flag_modified(existing, "metadata_")
+                await self.repo.db.flush()
+                results.append((existing, b""))
+                continue
+
             position_label = POSITION_LABELS.get(w["position"], w["position"])
             context = {
                 "event_name": event_name,

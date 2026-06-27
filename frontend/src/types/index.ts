@@ -20,6 +20,16 @@ export interface Event {
   is_team_event: boolean;
   team_min_size: number;
   team_max_size: number;
+  allowed_departments: string[] | null;
+  attendance_mode: "SCANNER" | "MASS";
+  mass_qr_interval: number | null;
+}
+
+export interface DeptCode {
+  id: string;
+  code: string;
+  label: string;
+  is_active: boolean;
 }
 
 export interface Registration {
@@ -27,7 +37,7 @@ export interface Registration {
   event_id: string;
   user_id: string;
   team_id: string | null;
-  status: "PENDING" | "CONFIRMED" | "CANCELLED" | "WAITLISTED";
+  status: "PENDING" | "CONFIRMED" | "CANCELLED" | "WAITLISTED" | "ATTENDED";
   registered_at: string;
   confirmed_at: string | null;
   created_at: string;
@@ -39,6 +49,8 @@ export interface Registration {
   is_team_event: boolean;
   team_min_size: number;
   team_max_size: number;
+  event_attendance_mode?: string;
+  event_status?: string;
 }
 
 export interface Certificate {

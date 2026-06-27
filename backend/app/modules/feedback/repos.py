@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.feedback.models import (
@@ -43,6 +43,15 @@ class FeedbackRepository:
         await self.db.flush()
         return resp
 
+    async def has_responded(self, form_id: UUID, respondent_id: UUID) -> bool:
+        result = await self.db.execute(
+            select(FeedbackResponse).where(
+                FeedbackResponse.form_id == form_id,
+                FeedbackResponse.respondent_id == respondent_id,
+            )
+        )
+        return result.scalar_one_or_none() is not None
+
     async def create_answer(self, response_id: UUID, question_id: UUID, value: str | None) -> FeedbackAnswer:
         ans = FeedbackAnswer(response_id=response_id, question_id=question_id, answer_value=value)
         self.db.add(ans)
@@ -58,6 +67,12 @@ class FeedbackRepository:
     async def list_questions(self, form_id: UUID) -> list[FeedbackQuestion]:
         result = await self.db.execute(
             select(FeedbackQuestion).where(FeedbackQuestion.form_id == form_id).order_by(FeedbackQuestion.order)
+        )
+        return list(result.scalars().all())
+
+    async def list_answers_for_question(self, question_id: UUID) -> list[FeedbackAnswer]:
+        result = await self.db.execute(
+            select(FeedbackAnswer).where(FeedbackAnswer.question_id == question_id)
         )
         return list(result.scalars().all())
 
@@ -77,6 +92,15 @@ class FeedbackRepository:
         self.db.add(nps)
         await self.db.flush()
         return nps
+
+    async def has_nps(self, event_id: UUID, respondent_id: UUID) -> bool:
+        result = await self.db.execute(
+            select(NpsScore).where(
+                NpsScore.event_id == event_id,
+                NpsScore.respondent_id == respondent_id,
+            )
+        )
+        return result.scalar_one_or_none() is not None
 
     async def list_nps(self, event_id: UUID) -> list[NpsScore]:
         result = await self.db.execute(

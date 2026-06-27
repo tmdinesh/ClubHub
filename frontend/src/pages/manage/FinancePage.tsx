@@ -20,10 +20,12 @@ import {
   AlertCircle,
   Loader2,
   Receipt,
+  Lock,
+  Trophy,
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
-import type { FinanceSummary } from "@/types";
+import type { FinanceSummary, Event } from "@/types";
 
 interface Expense {
   id: string;
@@ -33,6 +35,20 @@ interface Expense {
   bill_url: string | null;
   notes: string | null;
   created_at: string;
+}
+
+interface Winner {
+  id: string;
+  position: number;
+  prize_amount: number | null;
+  user_id: string;
+  participant_name: string;
+  participant_email: string;
+  roll_number: string | null;
+  bank_account_name: string | null;
+  bank_account_number: string | null;
+  bank_ifsc: string | null;
+  upi: string | null;
 }
 
 const expenseSchema = z.object({
@@ -71,6 +87,14 @@ export default function FinancePage() {
   const [showForm, setShowForm] = React.useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
+  const { data: eventData } = useQuery<Event>({
+    queryKey: ["event", eventId],
+    queryFn: () => api.get(`/events/by-id/${eventId}`).then((r) => r.data),
+    enabled: !!eventId,
+    staleTime: 5 * 60 * 1000,
+  });
+  const isCompleted = eventData?.status === "COMPLETED";
+
   const { data: budget, isLoading: loadingBudget } = useQuery<FinanceSummary>({
     queryKey: ["budget", eventId],
     queryFn: () => api.get(`/events/${eventId}/budget`).then((r) => r.data),
@@ -81,6 +105,13 @@ export default function FinancePage() {
     queryKey: ["expenses", eventId],
     queryFn: () => api.get(`/events/${eventId}/expenses`).then((r) => r.data),
     enabled: !!eventId,
+  });
+
+  const { data: winners } = useQuery<Winner[]>({
+    queryKey: ["winners", eventId],
+    queryFn: () => api.get(`/events/${eventId}/winners`).then((r) => r.data),
+    enabled: !!eventId,
+    staleTime: 0,
   });
 
   const addExpense = useMutation({
@@ -128,16 +159,31 @@ export default function FinancePage() {
           </div>
           <button
             type="button"
-            onClick={() => setShowForm(!showForm)}
-            style={{ background: "var(--amber)", color: "var(--ink)" }}
+            onClick={() => !isCompleted && setShowForm(!showForm)}
+            disabled={isCompleted}
+            style={{ background: "var(--amber)", color: "var(--ink)", opacity: isCompleted ? 0.4 : 1, cursor: isCompleted ? "not-allowed" : "pointer" }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--amber-glow)")}
+            onMouseEnter={(e) => { if (!isCompleted) e.currentTarget.style.background = "var(--amber-glow)"; }}
             onMouseLeave={(e) => (e.currentTarget.style.background = "var(--amber)")}
           >
             <Plus size={15} />
             Add Expense
           </button>
         </div>
+
+        {isCompleted && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            background: "color-mix(in srgb, var(--amber) 8%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--amber) 25%, transparent)",
+            borderRadius: 10, padding: "12px 16px", marginBottom: 20,
+          }}>
+            <Lock size={14} style={{ color: "var(--amber)", flexShrink: 0 }} />
+            <p style={{ fontSize: 13, color: "var(--amber)" }}>
+              This event is completed. Finance records are read-only.
+            </p>
+          </div>
+        )}
 
         {/* Budget overview */}
         {loadingBudget ? (
@@ -190,7 +236,7 @@ export default function FinancePage() {
         ) : null}
 
         {/* Add expense form */}
-        {showForm && (
+        {showForm && !isCompleted && (
           <div
             style={{ background: "var(--ink-soft)", border: "1px solid var(--amber)", boxShadow: "0 0 0 1px var(--amber)" }}
             className="rounded-xl p-5 mb-5"
@@ -370,6 +416,49 @@ export default function FinancePage() {
             </div>
           )}
         </div>
+
+        {/* Winners & Bank Details */}
+        {winners && winners.length > 0 && (
+          <div
+            style={{ background: "var(--ink-soft)", border: "1px solid var(--seam)" }}
+            className="rounded-xl overflow-hidden mt-5"
+          >
+            <div style={{ borderBottom: "1px solid var(--seam)" }} className="px-4 py-3 flex items-center gap-2">
+              <Trophy size={14} style={{ color: "var(--amber)" }} />
+              <h2 style={{ color: "var(--fog)" }} className="text-sm font-semibold">Winners & Bank Details</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr style={{ background: "var(--ink-muted)" }}>
+                    {["Position", "Name", "Email", "Roll No.", "Prize (₹)", "Bank Name", "Account No.", "IFSC", "UPI"].map((h) => (
+                      <th key={h} className="px-4 py-2.5 text-left font-semibold uppercase tracking-wider whitespace-nowrap" style={{ color: "var(--dust)" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {winners.map((w) => (
+                    <tr key={w.id} style={{ borderTop: "1px solid var(--seam)" }}>
+                      <td className="px-4 py-3 font-semibold" style={{ color: "var(--amber)" }}>
+                        {["", "1st", "2nd", "3rd", "4th"][w.position] ?? `${w.position}th`}
+                      </td>
+                      <td className="px-4 py-3 font-medium" style={{ color: "var(--cream)" }}>{w.participant_name}</td>
+                      <td className="px-4 py-3" style={{ color: "var(--fog)" }}>{w.participant_email}</td>
+                      <td className="px-4 py-3" style={{ color: "var(--fog)" }}>{w.roll_number ?? "—"}</td>
+                      <td className="px-4 py-3 font-semibold" style={{ color: w.prize_amount ? "var(--jade)" : "var(--dust)" }}>
+                        {w.prize_amount ? formatCurrency(w.prize_amount) : "—"}
+                      </td>
+                      <td className="px-4 py-3" style={{ color: "var(--fog)" }}>{w.bank_account_name ?? "—"}</td>
+                      <td className="px-4 py-3 font-mono" style={{ color: "var(--fog)" }}>{w.bank_account_number ?? "—"}</td>
+                      <td className="px-4 py-3 font-mono" style={{ color: "var(--fog)" }}>{w.bank_ifsc ?? "—"}</td>
+                      <td className="px-4 py-3" style={{ color: "var(--sky)" }}>{w.upi ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );

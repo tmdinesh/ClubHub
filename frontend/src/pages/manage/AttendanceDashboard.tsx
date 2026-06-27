@@ -3,11 +3,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import {
   Radio, UserCheck, UserX, Users, AlertCircle,
-  Plus, MapPin, Loader2, Download,
+  Plus, MapPin, Loader2, Download, Lock,
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import api, { apiError } from "@/lib/api";
-import type { AttendanceDashboard as AttendanceData } from "@/types";
+import type { AttendanceDashboard as AttendanceData, Event } from "@/types";
 
 interface Checkpoint {
   id: string;
@@ -88,6 +88,14 @@ export default function AttendanceDashboard() {
 
   const [newCpName, setNewCpName] = useState("");
   const [cpError, setCpError] = useState("");
+
+  const { data: eventData } = useQuery<Event>({
+    queryKey: ["event", eventId],
+    queryFn: () => api.get(`/events/by-id/${eventId}`).then((r) => r.data),
+    enabled: !!eventId,
+    staleTime: 5 * 60 * 1000,
+  });
+  const isCompleted = eventData?.status === "COMPLETED";
 
   const { data, isLoading, error, dataUpdatedAt } = useQuery<AttendanceResponse>({
     queryKey: ["attendance", eventId],
@@ -208,6 +216,20 @@ export default function AttendanceDashboard() {
           </div>
         )}
 
+        {isCompleted && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            background: "color-mix(in srgb, var(--amber) 8%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--amber) 25%, transparent)",
+            borderRadius: 10, padding: "12px 16px", marginBottom: 20,
+          }}>
+            <Lock size={14} style={{ color: "var(--amber)", flexShrink: 0 }} />
+            <p style={{ fontSize: 13, color: "var(--amber)" }}>
+              This event is completed. Attendance records are read-only.
+            </p>
+          </div>
+        )}
+
         {/* Checkpoints */}
         <div
           style={{
@@ -244,6 +266,7 @@ export default function AttendanceDashboard() {
               value={newCpName}
               onChange={(e) => { setNewCpName(e.target.value); setCpError(""); }}
               placeholder="e.g. Main Entrance, Hall A, Gate 2…"
+              disabled={isCompleted}
               style={{
                 flex: 1,
                 fontSize: 14,
@@ -253,8 +276,10 @@ export default function AttendanceDashboard() {
                 border: "1px solid var(--seam)",
                 color: "var(--cream)",
                 outline: "none",
+                opacity: isCompleted ? 0.5 : 1,
               }}
               onFocus={(e) => {
+                if (isCompleted) return;
                 e.currentTarget.style.borderColor = "var(--amber)";
                 e.currentTarget.style.boxShadow = "0 0 0 3px rgba(245,166,35,0.12)";
               }}
@@ -265,7 +290,7 @@ export default function AttendanceDashboard() {
             />
             <button
               type="submit"
-              disabled={!newCpName.trim() || createCpMutation.isPending}
+              disabled={!newCpName.trim() || createCpMutation.isPending || isCompleted}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -279,7 +304,7 @@ export default function AttendanceDashboard() {
                 border: "none",
                 cursor: "pointer",
                 flexShrink: 0,
-                opacity: (!newCpName.trim() || createCpMutation.isPending) ? 0.5 : 1,
+                opacity: (!newCpName.trim() || createCpMutation.isPending || isCompleted) ? 0.5 : 1,
                 transition: "opacity 0.15s",
               }}
             >
