@@ -27,28 +27,201 @@ def _generate_unique_code(event_title: str) -> str:
 
 
 def _render_pdf_plain(context: dict[str, str]) -> bytes:
-    """Generate a plain PDF without a template image."""
+    """Default branded certificate — landscape A4, styled to match ClubHub email templates."""
     from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.utils import ImageReader
     from reportlab.pdfgen import canvas
+    import urllib.request
 
     buf = BytesIO()
-    c = canvas.Canvas(buf, pagesize=landscape(A4))
-    width, height = landscape(A4)
+    W, H = landscape(A4)  # 841.9 x 595.3 pt
+    c = canvas.Canvas(buf, pagesize=(W, H))
 
+    is_winner = context.get("certificate_type", "").lower() == "winner"
+
+    # ── Background: white ─────────────────────────────────────────────────────
+    c.setFillColorRGB(1, 1, 1)
+    c.rect(0, 0, W, H, fill=1, stroke=0)
+
+    # ── Header band (fixed 88 pt, compact like email header) ──────────────────
+    band_h = 88
+    steps = 60
+    if is_winner:
+        r0, g0, b0 = 0.471, 0.208, 0.055   # #78350f
+        r1, g1, b1 = 0.855, 0.467, 0.024   # #d97706
+    else:
+        r0, g0, b0 = 0.118, 0.106, 0.294   # #1e1b4b
+        r1, g1, b1 = 0.310, 0.275, 0.898   # #4f46e5
+    for i in range(steps):
+        t = i / steps
+        r, g, b = r0 + (r1 - r0) * t, g0 + (g1 - g0) * t, b0 + (b1 - b0) * t
+        y = H - band_h + (band_h / steps) * i
+        c.setFillColorRGB(r, g, b)
+        c.rect(0, y, W, band_h / steps + 1, fill=1, stroke=0)
+
+    # Thin top edge stripe
+    c.setFillColorRGB(*(0.855, 0.467, 0.024) if is_winner else (0.310, 0.275, 0.898))
+    c.rect(0, H - 4, W, 4, fill=1, stroke=0)
+
+    # ── PSG Tech logo ─────────────────────────────────────────────────────────
+    logo_size = 38
+    logo_x = 32
+    logo_y = H - band_h + (band_h - logo_size) / 2
+    try:
+        logo_url = (
+            "https://upload.wikimedia.org/wikipedia/en/e/eb/"
+            "PSG_College_of_Technology_logo.png"
+        )
+        req = urllib.request.Request(logo_url, headers={"User-Agent": "ClubHub/1.0"})
+        with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310
+            logo_reader = ImageReader(BytesIO(resp.read()))
+        c.drawImage(logo_reader, logo_x, logo_y, width=logo_size, height=logo_size,
+                    preserveAspectRatio=True, mask="auto")
+    except Exception:
+        pass
+
+    # Institution name
+    text_x = logo_x + logo_size + 10
+    text_mid = logo_y + logo_size / 2
+    c.setFillColorRGB(1, 1, 1)
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(text_x, text_mid + 5, "PSG College of Technology")
+    sub_color = (0.98, 0.88, 0.70) if is_winner else (0.78, 0.80, 0.95)
+    c.setFillColorRGB(*sub_color)
+    c.setFont("Helvetica", 8.5)
+    c.drawString(text_x, text_mid - 7, "Peelamedu, Coimbatore – 641 004")
+
+    # "via ClubHub" right side
+    c.setFillColorRGB(*sub_color)
+    c.setFont("Helvetica-Oblique", 8.5)
+    c.drawRightString(W - 32, text_mid - 1, "via ClubHub")
+
+    # Separator below header
+    c.setStrokeColorRGB(0.898, 0.906, 0.918)
+    c.setLineWidth(0.5)
+    c.line(0, H - band_h, W, H - band_h)
+
+    # ── Left accent bar ────────────────────────────────────────────────────────
+    bar_color = (0.855, 0.467, 0.024) if is_winner else (0.310, 0.275, 0.898)
+    c.setFillColorRGB(*bar_color)
+    c.rect(0, 0, 6, H - band_h, fill=1, stroke=0)
+
+    # ── Body — vertically centred in the white area ───────────────────────────
+    pad_l = 36
+    pad_r = 44
+    body_area_top = H - band_h      # top of white area  (~507 pt)
+    body_area_bot = 38              # above footer text
+    body_h = body_area_top - body_area_bot  # ~469 pt
+
+    club_name = context.get("club_name", "")
+    cert_label = "Winner Certificate" if is_winner else "Certificate of Participation"
+    recipient = context.get("name", "Recipient")
+    has_position = bool(context.get("position"))
+    unique_code = context.get("unique_code", "")
+
+    # Measure total content height (top baseline to bottom of last element)
+    #   club label line:    8 pt cap-height
+    #   gap:               10
+    #   cert heading:      20 pt cap-height
+    #   gap:               12
+    #   name extra offset: 20 pt (pushed down for visual breathing room)
+    #   name:              36 pt cap-height
+    #   gap below name:     6
+    #   rule:               1
+    #   gap:               16
+    #   table rows (each 20 pt, baseline to baseline):
+    n_rows = 4 if has_position else 3
+    #   verify box:  14 gap + 52 box  (if code present)
+    verify_h = (14 + 52) if unique_code else 0
+    content_h = (8 + 10 + 20 + 12 + 20 + 36 + 6 + 1 + 16
+                 + n_rows * 20
+                 + verify_h)
+
+    # Top of content block — centred in body area
+    # body_area_bot + offset_from_bottom + content_h = top baseline
+    top = body_area_bot + (body_h - content_h) / 2 + content_h
+
+    # Draw from top downward, tracking current Y baseline
+    y = top
+
+    # Club label
+    c.setFont("Helvetica-Bold", 8)
+    c.setFillColorRGB(0.42, 0.45, 0.50)
+    c.drawString(pad_l, y, club_name.upper())
+    y -= (8 + 10)   # cap-height + gap
+
+    # Certificate heading
+    c.setFont("Helvetica-Bold", 20)
+    c.setFillColorRGB(0.067, 0.094, 0.153)
+    c.drawString(pad_l, y, cert_label)
+    y -= (20 + 12 + 20)  # cap-height + gap + extra 20 pt push for name
+
+    # Recipient name
     c.setFont("Helvetica-Bold", 36)
-    c.drawCentredString(width / 2, height - 150, context.get("event_name", ""))
-    c.setFont("Helvetica", 24)
-    cert_type = context.get("certificate_type", "Participation")
-    c.drawCentredString(width / 2, height - 220, f"Certificate of {cert_type}")
-    c.setFont("Helvetica-Bold", 28)
-    c.drawCentredString(width / 2, height - 300, context.get("name", "Recipient"))
-    c.setFont("Helvetica", 18)
-    c.drawCentredString(width / 2, height - 370, context.get("club_name", ""))
-    c.drawCentredString(width / 2, height - 410, context.get("date", ""))
-    if context.get("position"):
-        c.drawCentredString(width / 2, height - 450, f"Position: {context['position']}")
-    c.setFont("Helvetica", 10)
-    c.drawCentredString(width / 2, 40, f"Verify at: /verify/{context.get('unique_code', '')}")
+    name_color = (0.471, 0.208, 0.055) if is_winner else (0.310, 0.275, 0.898)
+    c.setFillColorRGB(*name_color)
+    c.drawString(pad_l, y, recipient)
+    y -= (36 + 6)   # cap-height + gap
+
+    # Rule
+    c.setStrokeColorRGB(0.878, 0.882, 0.894)
+    c.setLineWidth(0.75)
+    c.line(pad_l, y, W - pad_r, y)
+    y -= (1 + 16)   # rule + gap
+
+    # Details table
+    col1_x = pad_l
+    col2_x = pad_l + 108
+    rows = [
+        ("Event",        context.get("event_name", "")),
+        ("Organised by", club_name),
+        ("Date",         context.get("date", "")),
+    ]
+    if has_position:
+        rows.append(("Position", context["position"]))
+
+    for label, value in rows:
+        c.setFont("Helvetica", 10)
+        c.setFillColorRGB(0.42, 0.45, 0.50)
+        c.drawString(col1_x, y, label)
+        c.setFont("Helvetica-Bold", 10)
+        c.setFillColorRGB(0.067, 0.094, 0.153)
+        c.drawString(col2_x, y, value)
+        y -= 20
+
+    # Verify block
+    if unique_code:
+        y -= 14     # gap above box
+        vbox_h = 52
+        vbox_w = min(W * 0.62, W - pad_l - pad_r)
+
+        c.setFillColorRGB(0.941, 0.992, 0.961)
+        c.setStrokeColorRGB(0.733, 0.969, 0.816)
+        c.setLineWidth(0.75)
+        c.roundRect(col1_x, y - vbox_h, vbox_w, vbox_h, 6, fill=1, stroke=1)
+
+        c.setFont("Helvetica-Bold", 7.5)
+        c.setFillColorRGB(0.086, 0.502, 0.239)
+        c.drawString(col1_x + 12, y - 14, "VERIFY AUTHENTICITY")
+
+        verify_url = f"{settings.FRONTEND_URL}/verify/{unique_code}"
+        c.setFont("Helvetica", 8.5)
+        c.setFillColorRGB(0.086, 0.639, 0.298)
+        c.drawString(col1_x + 12, y - 28, verify_url)
+
+        c.setFont("Helvetica", 7.5)
+        c.setFillColorRGB(0.42, 0.45, 0.50)
+        c.drawString(col1_x + 12, y - 40, f"Code: {unique_code}")
+
+    # ── Footer ────────────────────────────────────────────────────────────────
+    c.setFont("Helvetica", 7.5)
+    c.setFillColorRGB(0.62, 0.64, 0.67)
+    c.drawCentredString(
+        W / 2, 22,
+        "This certificate was issued via ClubHub on behalf of the club. "
+        "© All rights reserved · PSG Tech Students’ Union",
+    )
+
     c.save()
     return buf.getvalue()
 
