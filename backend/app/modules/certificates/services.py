@@ -232,11 +232,41 @@ def _render_pdf_on_template(template_path: Path, placeholders: dict, context: di
     from reportlab.lib.pagesizes import A4, landscape
     from reportlab.pdfgen import canvas as rl_canvas
 
+    # Font paths for the 4 supported font families (DejaVu covers sans/serif/mono;
+    # URW Palladio covers a script-like serif fallback when Dancing Script isn't available)
+    FONT_PATHS: dict[str, list[str]] = {
+        "sans": [
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        ],
+        "serif": [
+            "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
+        ],
+        "mono": [
+            "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+        ],
+        "script": [
+            "/usr/share/fonts/type1/urw-base35/URWPalladioL-Ital.t1",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
+        ],
+    }
+
+    def _load_font(font_family: str, size: int) -> ImageFont.FreeTypeFont:
+        paths = FONT_PATHS.get(font_family, FONT_PATHS["sans"])
+        for p in paths:
+            try:
+                return ImageFont.truetype(p, size)
+            except Exception:
+                continue
+        return ImageFont.load_default()
+
     img = Image.open(template_path).convert("RGB")
     draw = ImageDraw.Draw(img)
     img_w, img_h = img.size
 
-    # Map placeholder keys to context values
     field_map = {
         "name": context.get("name", ""),
         "position": context.get("position", ""),
@@ -255,24 +285,24 @@ def _render_pdf_on_template(template_path: Path, placeholders: dict, context: di
         font_size = int(cfg.get("font_size", 36))
         color = cfg.get("color", "#000000")
         align = cfg.get("align", "center")
+        font_family = cfg.get("font_family", "sans")
 
-        try:
-            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
-        except Exception:
-            font = ImageFont.load_default()
+        font = _load_font(font_family, font_size)
 
         if align == "center":
             bbox = draw.textbbox((0, 0), text, font=font)
             text_w = bbox[2] - bbox[0]
             x = x - text_w // 2
+        elif align == "right":
+            bbox = draw.textbbox((0, 0), text, font=font)
+            text_w = bbox[2] - bbox[0]
+            x = x - text_w
         draw.text((x, y), text, fill=color, font=font)
 
-    # Save image to bytes
     img_buf = BytesIO()
     img.save(img_buf, format="PNG")
     img_buf.seek(0)
 
-    # Embed image into a landscape A4 PDF
     pdf_buf = BytesIO()
     page_w, page_h = landscape(A4)
     c = rl_canvas.Canvas(pdf_buf, pagesize=(page_w, page_h))
@@ -280,7 +310,6 @@ def _render_pdf_on_template(template_path: Path, placeholders: dict, context: di
     c.drawImage(
         ImageReader(img_buf), 0, 0, width=page_w, height=page_h, preserveAspectRatio=False
     )
-    # Verification footer
     c.setFont("Helvetica", 8)
     c.setFillColorRGB(0.4, 0.4, 0.4)
     c.drawCentredString(page_w / 2, 15, f"Verify at: /verify/{context.get('unique_code', '')}")

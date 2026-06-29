@@ -9,7 +9,8 @@ import {
 import Layout from "@/components/Layout";
 import api, { apiError } from "@/lib/api";
 import type { Certificate, Event } from "@/types";
-import { fmtDateIST } from "@/lib/dateIST";
+import { fmtDateIST, fmtDateLongIST } from "@/lib/dateIST";
+import { useAuthStore } from "@/store/auth.store";
 
 // Cert type badge styles using design system CSS vars
 const CERT_TYPE_BADGE_STYLES: Record<Certificate["certificate_type"], React.CSSProperties> = {
@@ -41,12 +42,22 @@ const PLACEHOLDER_LABELS: Record<PlaceholderField, string> = {
   club_name: "Club Name",
 };
 
+// 4 common font families available in both the canvas preview and PDF renderer
+const FONTS = [
+  { id: "sans",    label: "Sans-serif",   css: "Inter, system-ui, sans-serif" },
+  { id: "serif",   label: "Serif",        css: "'Georgia', serif" },
+  { id: "mono",    label: "Monospace",    css: "'Courier New', monospace" },
+  { id: "script",  label: "Script",       css: "'Dancing Script', cursive" },
+] as const;
+type FontId = typeof FONTS[number]["id"];
+
 interface PlaceholderConfig {
   x: number;
   y: number;
   font_size: number;
   color: string;
   align: "left" | "center" | "right";
+  font_family: FontId;
 }
 
 interface CertTemplate {
@@ -116,10 +127,12 @@ interface PlaceholderEditorProps {
   certType: "PARTICIPATION" | "WINNER";
   onClose: () => void;
   eventId: string;
+  eventData: Event | undefined;
 }
 
-function TemplateEditor({ certType, onClose, eventId }: PlaceholderEditorProps) {
+function TemplateEditor({ certType, onClose, eventId, eventData }: PlaceholderEditorProps) {
   const qc = useQueryClient();
+  const user = useAuthStore((s) => s.user);
   const imgRef = useRef<HTMLImageElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
@@ -130,6 +143,18 @@ function TemplateEditor({ certType, onClose, eventId }: PlaceholderEditorProps) 
   const [success, setSuccess] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [fileDragOver, setFileDragOver] = useState(false);
+
+  // Preview values shown inside placeholder boxes on the canvas
+  const previewDate = eventData?.start_datetime
+    ? fmtDateLongIST(eventData.start_datetime)
+    : new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+  const previewValues: Record<string, string> = {
+    name:       user?.name ?? "Recipient Name",
+    position:   "1st Place",
+    date:       previewDate,
+    event_name: eventData?.title ?? "Event Name",
+    club_name:  eventData?.club_name ?? "Club Name",
+  };
 
   const availableFields: PlaceholderField[] = certType === "WINNER"
     ? ["name", "position", "date", "event_name", "club_name"]
@@ -163,6 +188,7 @@ function TemplateEditor({ certType, onClose, eventId }: PlaceholderEditorProps) 
         font_size: prev[activeField]?.font_size ?? 48,
         color: prev[activeField]?.color ?? "#000000",
         align: prev[activeField]?.align ?? "center",
+        font_family: prev[activeField]?.font_family ?? "sans",
       },
     }));
   }
@@ -170,7 +196,7 @@ function TemplateEditor({ certType, onClose, eventId }: PlaceholderEditorProps) 
   function updateField(field: PlaceholderField, key: keyof PlaceholderConfig, value: string | number) {
     setPlaceholders((prev) => ({
       ...prev,
-      [field]: { ...(prev[field] ?? { x: 0, y: 0, font_size: 48, color: "#000000", align: "center" }), [key]: value },
+      [field]: { ...(prev[field] ?? { x: 0, y: 0, font_size: 48, color: "#000000", align: "center", font_family: "sans" }), [key]: value },
     }));
   }
 
@@ -273,24 +299,69 @@ function TemplateEditor({ certType, onClose, eventId }: PlaceholderEditorProps) 
                     onLoad={() => setImgLoaded(true)}
                     className="w-full cursor-crosshair"
                   />
-                  {/* Render placed markers */}
+                  {/* Render placed markers with boundary boxes and live preview text */}
                   {imgLoaded && imgRef.current && Object.entries(placeholders).map(([field, cfg]) => {
                     const img = imgRef.current!;
-                    const scaleX = img.getBoundingClientRect().width / img.naturalWidth;
-                    const scaleY = img.getBoundingClientRect().height / img.naturalHeight;
-                    const left = cfg.x * scaleX;
-                    const top = cfg.y * scaleY;
+                    const rect = img.getBoundingClientRect();
+                    const scaleX = rect.width / img.naturalWidth;
+                    const scaleY = rect.height / img.naturalHeight;
+                    const cx = cfg.x * scaleX;
+                    const cy = cfg.y * scaleY;
+                    const displayFontSize = Math.max(8, Math.round(cfg.font_size * scaleX));
+                    const fontCss = FONTS.find((f) => f.id === cfg.font_family)?.css ?? FONTS[0].css;
+                    const previewText = previewValues[field] ?? field;
+                    const isActive = activeField === field;
+                    // Estimate text width for boundary box (rough: 0.6 * fontSize * charCount)
+                    const estTextW = Math.min(previewText.length * displayFontSize * 0.6, rect.width * 0.8);
+                    const estTextH = displayFontSize * 1.3;
+                    const boxLeft = cfg.align === "center" ? cx - estTextW / 2
+                      : cfg.align === "right" ? cx - estTextW : cx;
                     return (
                       <div
                         key={field}
-                        style={{ left, top, transform: "translate(-50%,-50%)", color: cfg.color }}
-                        className="absolute pointer-events-none"
+                        style={{ position: "absolute", left: boxLeft, top: cy - estTextH * 0.2, pointerEvents: "none" }}
                       >
-                        <span
-                          style={{ background: "var(--amber)", color: "var(--ink)" }}
-                          className="text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap"
-                        >
+                        {/* Boundary box */}
+                        <div style={{
+                          position: "absolute",
+                          inset: `-3px -6px`,
+                          border: isActive
+                            ? "2px solid var(--amber)"
+                            : "1.5px dashed rgba(255,255,255,0.7)",
+                          borderRadius: 3,
+                          boxShadow: isActive ? "0 0 0 1px rgba(0,0,0,0.4)" : undefined,
+                          background: "rgba(0,0,0,0.12)",
+                          pointerEvents: "none",
+                        }} />
+                        {/* Field label chip */}
+                        <div style={{
+                          position: "absolute",
+                          top: -16,
+                          left: 0,
+                          background: isActive ? "var(--amber)" : "rgba(0,0,0,0.65)",
+                          color: isActive ? "var(--ink)" : "#fff",
+                          fontSize: 9,
+                          fontWeight: 700,
+                          padding: "1px 5px",
+                          borderRadius: 3,
+                          whiteSpace: "nowrap",
+                          lineHeight: "14px",
+                        }}>
                           {field}
+                        </div>
+                        {/* Preview text */}
+                        <span style={{
+                          display: "block",
+                          fontSize: displayFontSize,
+                          fontFamily: fontCss,
+                          color: cfg.color,
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                          lineHeight: 1,
+                          textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+                          position: "relative",
+                        }}>
+                          {previewText}
                         </span>
                       </div>
                     );
@@ -364,6 +435,20 @@ function TemplateEditor({ certType, onClose, eventId }: PlaceholderEditorProps) 
                         <option value="left">Left</option>
                         <option value="center">Center</option>
                         <option value="right">Right</option>
+                      </select>
+                    </label>
+                    <label style={{ color: "var(--fog)" }} className="text-xs block">
+                      Font
+                      <select
+                        value={placeholders[activeField].font_family ?? "sans"}
+                        onChange={(e) => updateField(activeField, "font_family", e.target.value)}
+                        style={{ ...fieldConfigInputStyle, colorScheme: "dark" }}
+                      >
+                        {FONTS.map((f) => (
+                          <option key={f.id} value={f.id} style={{ fontFamily: f.css }}>
+                            {f.label}
+                          </option>
+                        ))}
                       </select>
                     </label>
                   </div>
@@ -1430,6 +1515,7 @@ export default function CertificatesManage() {
         <TemplateEditor
           certType={templateEditorType}
           eventId={eventId}
+          eventData={eventData}
           onClose={() => setTemplateEditorType(null)}
         />
       )}

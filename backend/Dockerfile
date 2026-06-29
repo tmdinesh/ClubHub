@@ -19,6 +19,12 @@ WORKDIR /app
 # Non-root user for least privilege
 RUN addgroup --system ccops && adduser --system --ingroup ccops ccops
 
+# Install fonts for certificate PDF rendering (sans, serif, mono, script)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    fonts-dejavu-core \
+    fonts-urw-base35 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy installed packages from builder
 COPY --from=builder /install /usr/local
 
