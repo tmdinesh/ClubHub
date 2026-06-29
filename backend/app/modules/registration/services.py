@@ -11,6 +11,7 @@ import qrcode
 from jose import jwt
 
 from app.core.config import settings
+from app.core.email import send_registration_confirmed_email, send_registration_removed_email
 from app.core.redis import get_redis_client
 from app.modules.auth.models import User
 from app.modules.events.repos import EventRepository
@@ -125,6 +126,15 @@ class RegistrationService:
                     body="Your registration is confirmed. Use your QR code to check in at the event.",
                     metadata_={"event_id": str(event_id)},
                 )
+            await send_registration_confirmed_email(
+                recipient_email=actor.email,
+                recipient_name=actor.name,
+                event_title=event.title,
+                club_name=event.organizer_club.name if event.organizer_club else "ClubHub",
+                event_url=f"{settings.FRONTEND_URL}/events/{event_id}",
+                start_datetime=event.start_datetime.strftime("%d %b %Y, %I:%M %p") if event.start_datetime else "",
+                venue=event.venue,
+            )
 
         return reg
 
@@ -152,6 +162,20 @@ class RegistrationService:
                 metadata_={"event_id": str(event_id)},
             )
 
+        from sqlalchemy import select as _select
+        from app.modules.auth.models import User as _User
+        removed_user_result = await self.repo.db.execute(
+            _select(_User).where(_User.id == deleted_user_id)
+        )
+        removed_user = removed_user_result.scalar_one_or_none()
+        if removed_user:
+            await send_registration_removed_email(
+                recipient_email=removed_user.email,
+                recipient_name=removed_user.name,
+                event_title=event_title,
+                club_name=event.organizer_club.name if event and event.organizer_club else "ClubHub",
+            )
+
         if was_confirmed:
             waitlisted = await self.repo.first_waitlisted(event_id)
             if waitlisted:
@@ -174,6 +198,22 @@ class RegistrationService:
                         title="You've been moved off the waitlist!",
                         body="A spot opened up and your registration is now confirmed.",
                         metadata_={"event_id": str(event_id)},
+                    )
+                from sqlalchemy import select as _select
+                from app.modules.auth.models import User as _User
+                promoted_user_result = await self.repo.db.execute(
+                    _select(_User).where(_User.id == waitlisted.user_id)
+                )
+                promoted_user = promoted_user_result.scalar_one_or_none()
+                if promoted_user:
+                    await send_registration_confirmed_email(
+                        recipient_email=promoted_user.email,
+                        recipient_name=promoted_user.name,
+                        event_title=event.title if event else event_title,
+                        club_name=event.organizer_club.name if event and event.organizer_club else "ClubHub",
+                        event_url=f"{settings.FRONTEND_URL}/events/{event_id}",
+                        start_datetime=event.start_datetime.strftime("%d %b %Y, %I:%M %p") if event and event.start_datetime else "",
+                        venue=event.venue if event else None,
                     )
 
     async def cancel(self, reg_id: UUID, actor: User) -> Registration:
@@ -231,6 +271,22 @@ class RegistrationService:
                     title="You've been moved off the waitlist!",
                     body="A spot opened up and your registration is now confirmed. Check your QR code.",
                     metadata_={"event_id": str(reg.event_id)},
+                )
+            from sqlalchemy import select as _select
+            from app.modules.auth.models import User as _User
+            promoted_result = await self.repo.db.execute(
+                _select(_User).where(_User.id == waitlisted.user_id)
+            )
+            promoted_user = promoted_result.scalar_one_or_none()
+            if promoted_user and event:
+                await send_registration_confirmed_email(
+                    recipient_email=promoted_user.email,
+                    recipient_name=promoted_user.name,
+                    event_title=event.title,
+                    club_name=event.organizer_club.name if event.organizer_club else "ClubHub",
+                    event_url=f"{settings.FRONTEND_URL}/events/{reg.event_id}",
+                    start_datetime=event.start_datetime.strftime("%d %b %Y, %I:%M %p") if event.start_datetime else "",
+                    venue=event.venue,
                 )
 
         return reg

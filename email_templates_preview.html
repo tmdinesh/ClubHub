@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>ClubHub — Email Templates & Club Report Preview</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f1117; font-family: 'Segoe UI', Arial, sans-serif; color: #e2e8f0; }
+    .page-header {
+      background: #e8eef5; padding: 20px 40px;
+      display: flex; align-items: center; gap: 16px;
+      border-bottom: 2px solid #c8d5e8;
+    }
+    .page-header img { height: 56px; }
+    .page-header .divider { width: 1px; height: 40px; background: #b0c4d8; }
+    .page-header h1 { font-size: 18px; color: #1e2d4a; font-weight: 700; }
+    .page-header p { font-size: 11px; color: #4a6080; margin-top: 2px; }
+    .toc {
+      max-width: 900px; margin: 40px auto 0; padding: 0 24px;
+      background: #1a1f2e; border-radius: 12px; overflow: hidden;
+    }
+    .toc h2 { padding: 20px 24px 12px; font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; }
+    .toc ul { list-style: none; padding: 0 24px 20px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .toc a {
+      display: inline-block; padding: 6px 14px; background: #2d3748; color: #f6a623;
+      border-radius: 6px; font-size: 13px; font-weight: 600; text-decoration: none;
+      border: 1px solid rgba(246,166,35,0.25); transition: background 0.15s;
+    }
+    .toc a:hover { background: rgba(246,166,35,0.15); }
+    .section-label { max-width: 900px; margin: 48px auto 16px; padding: 0 24px; }
+    .section-label h2 { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+    .section-label h3 { font-size: 22px; font-weight: 700; color: #f1f5f9; }
+    .email-wrapper { max-width: 900px; margin: 0 auto 12px; padding: 0 24px; }
+    .email-preview {
+      border-radius: 16px; overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.6);
+    }
+    /* ── Club Report ── */
+    .report-wrapper { max-width: 900px; margin: 0 auto 80px; padding: 0 24px; }
+    .report { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 20px 60px rgba(0,0,0,0.5); font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a2e; }
+    .report-hdr { background: #1a1a2e; color: #fff; padding: 32px 40px; text-align: center; }
+    .report-hdr h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+    .report-hdr p { font-size: 13px; color: #a5b4fc; margin: 2px 0; }
+    .report-body { padding: 32px 40px; }
+    .report-section { margin-bottom: 28px; }
+    .report-section h2 { font-size: 14px; font-weight: 700; color: #312e81; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 2px solid #e0e7ff; padding-bottom: 6px; margin-bottom: 14px; }
+    .report-section h3 { font-size: 14px; font-weight: 700; color: #1e293b; margin: 18px 0 8px; }
+    .kv-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 12px; }
+    .kv-table tr:nth-child(even) { background: #f8fafc; }
+    .kv-table td { padding: 7px 12px; border: 1px solid #e2e8f0; }
+    .kv-table td:first-child { font-weight: 600; color: #475569; width: 40%; background: #f1f5f9; }
+    .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+    .stat-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; text-align: center; }
+    .stat-box .val { font-size: 24px; font-weight: 700; color: #1e293b; }
+    .stat-box .lbl { font-size: 11px; color: #64748b; margin-top: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .summary-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .event-block { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+    .event-block-title { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .event-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: #4f46e5; color: #fff; border-radius: 6px; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+    .badge-green { background: #dcfce7; color: #16a34a; }
+    .badge-blue { background: #dbeafe; color: #1d4ed8; }
+    .report-footer { background: #f1f5f9; border-top: 1px solid #e2e8f0; padding: 16px 40px; text-align: center; font-size: 11px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+<!-- ── Page Header ── -->
+<div class="page-header">
+  <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" />
+  <div class="divider"></div>
+  <div>
+    <h1>ClubHub — Email Templates &amp; Report Preview</h1>
+    <p>Sample renders of all system-generated emails and the club activity report</p>
+  </div>
+</div>
+
+<!-- ── TOC ── -->
+<div class="toc">
+  <h2>Contents</h2>
+  <ul>
+    <li><a href="#cert">Certificate Email</a></li>
+    <li><a href="#new-event">New Event Published</a></li>
+    <li><a href="#event-reminder">Event Reminder</a></li>
+    <li><a href="#event-updated">Event Updated</a></li>
+    <li><a href="#event-cancelled">Event Cancelled</a></li>
+    <li><a href="#feedback-request">Feedback Request</a></li>
+    <li><a href="#completion-reminder">Completion Reminder (Club Admin)</a></li>
+    <li><a href="#faculty-urgent">URGENT — Faculty Advisor</a></li>
+    <li><a href="#club-report">Club Activity Report</a></li>
+  </ul>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     1. CERTIFICATE EMAIL
+     ════════════════════════════════════════════════════════════ -->
+<div class="section-label" id="cert">
+  <h2>Template 1</h2>
+  <h3>Certificate of Participation / Winner Email</h3>
+</div>
+<div class="email-wrapper">
+  <div class="email-preview">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0;">
+      <tr><td align="center">
+        <table width="600" cellpadding="0" cellspacing="0"
+               style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:600px;width:100%;">
+          <tr><td style="background:#ffffff;padding:20px 32px 16px;border-bottom:1px solid #e5e7eb;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="vertical-align:middle;width:48px;">
+                <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" width="40" style="display:block;width:40px;height:auto;" />
+              </td>
+              <td style="vertical-align:middle;padding-left:12px;">
+                <p style="margin:0;font-size:15px;font-weight:700;color:#111827;line-height:1.2;">PSG College of Technology</p>
+                <p style="margin:3px 0 0;font-size:11px;color:#6b7280;">Peelamedu, Coimbatore – 641 004</p>
+              </td>
+              <td align="right" style="vertical-align:middle;">
+                <span style="font-size:11px;color:#9ca3af;font-style:italic;">via ClubHub</span>
+              </td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4f46e5 100%);padding:28px 32px 22px;">
+            <p style="margin:0 0 4px;font-size:11px;color:#a5b4fc;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">ACM Student Chapter</p>
+            <h1 style="margin:0;font-size:24px;font-weight:700;color:#ffffff;line-height:1.2;">Certificate of Participation</h1>
+            <p style="margin:8px 0 0;font-size:13px;color:#c7d2fe;">CodeSprint 2025 &nbsp;·&nbsp; 15 Mar 2025</p>
+          </td></tr>
+          <tr><td style="padding:32px 32px 24px;">
+            <p style="margin:0 0 20px;font-size:16px;color:#374151;line-height:1.6;">
+              Dear <strong style="color:#111827;">Priya Lakshmi</strong>,
+            </p>
+            <p style="margin:0 0 24px;font-size:15px;color:#4b5563;line-height:1.7;">
+              Congratulations! On behalf of <strong>ACM Student Chapter</strong>, we are pleased to
+              present your <strong>Certificate of Participation</strong> for your participation in
+              <strong>CodeSprint 2025</strong>. Your certificate is attached to this email as a PDF.
+            </p>
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:18px 22px;margin-bottom:24px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr><td style="padding:6px 0;color:#6b7280;font-size:13px;width:40%;">Event</td><td style="padding:6px 0;color:#111827;font-size:13px;font-weight:600;">CodeSprint 2025</td></tr>
+                <tr><td style="padding:6px 0;color:#6b7280;font-size:13px;">Organised by</td><td style="padding:6px 0;color:#111827;font-size:13px;font-weight:600;">ACM Student Chapter</td></tr>
+                <tr><td style="padding:6px 0;color:#6b7280;font-size:13px;">Date</td><td style="padding:6px 0;color:#111827;font-size:13px;font-weight:600;">15 March 2025</td></tr>
+                <tr><td style="padding:6px 0;color:#6b7280;font-size:13px;">Certificate</td><td style="padding:6px 0;color:#111827;font-size:13px;font-weight:600;">Certificate of Participation</td></tr>
+              </table>
+            </div>
+            <p style="margin:0 0 8px;font-size:14px;color:#6b7280;line-height:1.6;">
+              Please find your certificate attached. You may download, print, or share it as needed.
+            </p>
+            <div style="margin-top:32px;padding:18px 24px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;">
+              <p style="margin:0 0 8px;font-size:13px;color:#15803d;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Verify Authenticity</p>
+              <a href="#" style="font-size:13px;color:#16a34a;">https://clubhub.psgtech.ac.in/verify/CERT-2025-A1B2C3D4</a>
+            </div>
+          </td></tr>
+          <tr><td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:18px 32px;">
+            <p style="margin:0 0 6px;font-size:11px;color:#9ca3af;line-height:1.6;">
+              This is an automated message sent via <strong style="color:#6b7280;">ClubHub</strong> on behalf of ACM Student Chapter. Please do not reply.
+            </p>
+            <p style="margin:0;font-size:10px;color:#d1d5db;">© All rights reserved · PSG Tech Students' Union &nbsp;·&nbsp; Developed by Dinesh T M (23Z320)</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     2. NEW EVENT PUBLISHED
+     ════════════════════════════════════════════════════════════ -->
+<div class="section-label" id="new-event">
+  <h2>Template 2</h2>
+  <h3>New Event Published (Broadcast to All Users)</h3>
+</div>
+<div class="email-wrapper">
+  <div class="email-preview">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0;">
+      <tr><td align="center">
+        <table width="600" cellpadding="0" cellspacing="0"
+               style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:600px;width:100%;">
+          <tr><td style="background:#ffffff;padding:20px 32px 16px;border-bottom:1px solid #e5e7eb;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="vertical-align:middle;width:48px;"><img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" width="40" style="display:block;width:40px;height:auto;" /></td>
+              <td style="vertical-align:middle;padding-left:12px;">
+                <p style="margin:0;font-size:15px;font-weight:700;color:#111827;">PSG College of Technology</p>
+                <p style="margin:3px 0 0;font-size:11px;color:#6b7280;">Peelamedu, Coimbatore – 641 004</p>
+              </td>
+              <td align="right"><span style="font-size:11px;color:#9ca3af;font-style:italic;">via ClubHub</span></td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4f46e5 100%);padding:28px 32px 22px;">
+            <p style="margin:0 0 4px;font-size:11px;color:#a5b4fc;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">IEEE Student Branch</p>
+            <h1 style="margin:0;font-size:22px;font-weight:700;color:#ffffff;line-height:1.3;">New Event Added</h1>
+            <p style="margin:8px 0 0;font-size:13px;color:#c7d2fe;">TechTalk: AI in Healthcare</p>
+          </td></tr>
+          <tr><td style="padding:32px 32px 24px;">
+            <p style="margin:0 0 16px;font-size:16px;color:#374151;line-height:1.6;">Dear <strong style="color:#111827;">Arun Kumar</strong>,</p>
+            <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;"><strong>IEEE Student Branch</strong> has published a new event. Don't miss out!</p>
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:18px 22px;margin-bottom:24px;">
+              <p style="margin:0 0 8px;font-size:15px;font-weight:700;color:#111827;">TechTalk: AI in Healthcare</p>
+              <p style="margin:0 0 6px;font-size:14px;color:#4b5563;"><strong>Date:</strong> 25 Jun 2025, 10:00 AM IST</p>
+              <p style="margin:0;font-size:14px;color:#4b5563;"><strong>Venue:</strong> Seminar Hall, Block A</p>
+            </div>
+            <a href="#" style="display:inline-block;padding:12px 28px;background:#4f46e5;color:#ffffff;font-size:14px;font-weight:600;border-radius:8px;text-decoration:none;">View Event</a>
+          </td></tr>
+          <tr><td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:18px 32px;">
+            <p style="margin:0 0 6px;font-size:11px;color:#9ca3af;">This is an automated message sent via <strong style="color:#6b7280;">ClubHub</strong> on behalf of IEEE Student Branch. Please do not reply.</p>
+            <p style="margin:0;font-size:10px;color:#d1d5db;">© All rights reserved · PSG Tech Students' Union &nbsp;·&nbsp; Developed by Dinesh T M (23Z320)</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     3. EVENT REMINDER
+     ════════════════════════════════════════════════════════════ -->
+<div class="section-label" id="event-reminder">
+  <h2>Template 3</h2>
+  <h3>Event Reminder (Sent ~24 hrs Before Start)</h3>
+</div>
+<div class="email-wrapper">
+  <div class="email-preview">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0;">
+      <tr><td align="center">
+        <table width="600" cellpadding="0" cellspacing="0"
+               style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:600px;width:100%;">
+          <tr><td style="background:#ffffff;padding:20px 32px 16px;border-bottom:1px solid #e5e7eb;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="vertical-align:middle;width:48px;"><img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" width="40" style="display:block;width:40px;height:auto;" /></td>
+              <td style="vertical-align:middle;padding-left:12px;">
+                <p style="margin:0;font-size:15px;font-weight:700;color:#111827;">PSG College of Technology</p>
+                <p style="margin:3px 0 0;font-size:11px;color:#6b7280;">Peelamedu, Coimbatore – 641 004</p>
+              </td>
+              <td align="right"><span style="font-size:11px;color:#9ca3af;font-style:italic;">via ClubHub</span></td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4f46e5 100%);padding:28px 32px 22px;">
+            <p style="margin:0 0 4px;font-size:11px;color:#a5b4fc;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">ACM Student Chapter</p>
+            <h1 style="margin:0;font-size:22px;font-weight:700;color:#ffffff;line-height:1.3;">Your Event is Tomorrow!</h1>
+            <p style="margin:8px 0 0;font-size:13px;color:#c7d2fe;">CodeSprint 2025</p>
+          </td></tr>
+          <tr><td style="padding:32px 32px 24px;">
+            <p style="margin:0 0 16px;font-size:16px;color:#374151;line-height:1.6;">Dear <strong style="color:#111827;">Priya Lakshmi</strong>,</p>
+            <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+              This is a friendly reminder that <strong>CodeSprint 2025</strong> organised by <strong>ACM Student Chapter</strong> is starting tomorrow. We look forward to seeing you!
+            </p>
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:18px 22px;margin-bottom:24px;">
+              <p style="margin:0 0 6px;font-size:14px;color:#4b5563;"><strong>Date &amp; Time:</strong> 15 Mar 2025, 09:00 AM IST</p>
+              <p style="margin:0;font-size:14px;color:#4b5563;"><strong>Venue:</strong> Main Auditorium, PSG Tech</p>
+            </div>
+            <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.6;">
+              Please carry your college ID and arrive 10 minutes early for check-in.
+            </p>
+            <a href="#" style="display:inline-block;padding:12px 28px;background:#4f46e5;color:#ffffff;font-size:14px;font-weight:600;border-radius:8px;text-decoration:none;">View Event Details</a>
+          </td></tr>
+          <tr><td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:18px 32px;">
+            <p style="margin:0 0 6px;font-size:11px;color:#9ca3af;">This is an automated message sent via <strong style="color:#6b7280;">ClubHub</strong> on behalf of ACM Student Chapter. Please do not reply.</p>
+            <p style="margin:0;font-size:10px;color:#d1d5db;">© All rights reserved · PSG Tech Students' Union &nbsp;·&nbsp; Developed by Dinesh T M (23Z320)</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     4. EVENT UPDATED
+     ════════════════════════════════════════════════════════════ -->
+<div class="section-label" id="event-updated">
+  <h2>Template 4</h2>
+  <h3>Event Updated (Sent to Registered Participants)</h3>
+</div>
+<div class="email-wrapper">
+  <div class="email-preview">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0;">
+      <tr><td align="center">
+        <table width="600" cellpadding="0" cellspacing="0"
+               style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:600px;width:100%;">
+          <tr><td style="background:#ffffff;padding:20px 32px 16px;border-bottom:1px solid #e5e7eb;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="vertical-align:middle;width:48px;"><img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" width="40" style="display:block;width:40px;height:auto;" /></td>
+              <td style="vertical-align:middle;padding-left:12px;">
+                <p style="margin:0;font-size:15px;font-weight:700;color:#111827;">PSG College of Technology</p>
+                <p style="margin:3px 0 0;font-size:11px;color:#6b7280;">Peelamedu, Coimbatore – 641 004</p>
+              </td>
+              <td align="right"><span style="font-size:11px;color:#9ca3af;font-style:italic;">via ClubHub</span></td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4f46e5 100%);padding:28px 32px 22px;">
+            <p style="margin:0 0 4px;font-size:11px;color:#a5b4fc;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">ACM Student Chapter</p>
+            <h1 style="margin:0;font-size:22px;font-weight:700;color:#ffffff;line-height:1.3;">Event Updated</h1>
+            <p style="margin:8px 0 0;font-size:13px;color:#c7d2fe;">CodeSprint 2025</p>
+          </td></tr>
+          <tr><td style="padding:32px 32px 24px;">
+            <p style="margin:0 0 20px;font-size:16px;color:#374151;line-height:1.6;">Dear <strong style="color:#111827;">Priya Lakshmi</strong>,</p>
+            <p style="margin:0 0 24px;font-size:15px;color:#4b5563;line-height:1.7;">
+              Details for <strong>CodeSprint 2025</strong> have been updated by the organiser.
+              Please log in to ClubHub to review the latest information.
+            </p>
+          </td></tr>
+          <tr><td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:18px 32px;">
+            <p style="margin:0 0 6px;font-size:11px;color:#9ca3af;">This is an automated message sent via <strong style="color:#6b7280;">ClubHub</strong> on behalf of ACM Student Chapter. Please do not reply.</p>
+            <p style="margin:0;font-size:10px;color:#d1d5db;">© All rights reserved · PSG Tech Students' Union &nbsp;·&nbsp; Developed by Dinesh T M (23Z320)</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     5. EVENT CANCELLED
+     ════════════════════════════════════════════════════════════ -->
+<div class="section-label" id="event-cancelled">
+  <h2>Template 5</h2>
+  <h3>Event Cancelled (Sent to Registered Participants)</h3>
+</div>
+<div class="email-wrapper">
+  <div class="email-preview">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0;">
+      <tr><td align="center">
+        <table width="600" cellpadding="0" cellspacing="0"
+               style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:600px;width:100%;">
+          <tr><td style="background:#ffffff;padding:20px 32px 16px;border-bottom:1px solid #e5e7eb;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="vertical-align:middle;width:48px;"><img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" width="40" style="display:block;width:40px;height:auto;" /></td>
+              <td style="vertical-align:middle;padding-left:12px;">
+                <p style="margin:0;font-size:15px;font-weight:700;color:#111827;">PSG College of Technology</p>
+                <p style="margin:3px 0 0;font-size:11px;color:#6b7280;">Peelamedu, Coimbatore – 641 004</p>
+              </td>
+              <td align="right"><span style="font-size:11px;color:#9ca3af;font-style:italic;">via ClubHub</span></td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="background:linear-gradient(135deg,#4a0000 0%,#7f1d1d 60%,#dc2626 100%);padding:28px 32px 22px;">
+            <p style="margin:0 0 4px;font-size:11px;color:#fca5a5;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">IEEE Student Branch</p>
+            <h1 style="margin:0;font-size:22px;font-weight:700;color:#ffffff;line-height:1.3;">Event Cancelled</h1>
+            <p style="margin:8px 0 0;font-size:13px;color:#fecaca;">TechTalk: AI in Healthcare</p>
+          </td></tr>
+          <tr><td style="padding:32px 32px 24px;">
+            <p style="margin:0 0 20px;font-size:16px;color:#374151;line-height:1.6;">Dear <strong style="color:#111827;">Arun Kumar</strong>,</p>
+            <p style="margin:0 0 24px;font-size:15px;color:#4b5563;line-height:1.7;">
+              We regret to inform you that <strong>TechTalk: AI in Healthcare</strong> has been cancelled.
+              Your registration has been voided. We apologise for any inconvenience caused.
+            </p>
+          </td></tr>
+          <tr><td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:18px 32px;">
+            <p style="margin:0 0 6px;font-size:11px;color:#9ca3af;">This is an automated message sent via <strong style="color:#6b7280;">ClubHub</strong> on behalf of IEEE Student Branch. Please do not reply.</p>
+            <p style="margin:0;font-size:10px;color:#d1d5db;">© All rights reserved · PSG Tech Students' Union &nbsp;·&nbsp; Developed by Dinesh T M (23Z320)</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     6. FEEDBACK REQUEST
+     ════════════════════════════════════════════════════════════ -->
+<div class="section-label" id="feedback-request">
+  <h2>Template 6</h2>
+  <h3>Feedback Request (Sent to Attendees After Event Closes)</h3>
+</div>
+<div class="email-wrapper">
+  <div class="email-preview">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0;">
+      <tr><td align="center">
+        <table width="600" cellpadding="0" cellspacing="0"
+               style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:600px;width:100%;">
+          <tr><td style="background:#ffffff;padding:20px 32px 16px;border-bottom:1px solid #e5e7eb;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="vertical-align:middle;width:48px;"><img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" width="40" style="display:block;width:40px;height:auto;" /></td>
+              <td style="vertical-align:middle;padding-left:12px;">
+                <p style="margin:0;font-size:15px;font-weight:700;color:#111827;">PSG College of Technology</p>
+                <p style="margin:3px 0 0;font-size:11px;color:#6b7280;">Peelamedu, Coimbatore – 641 004</p>
+              </td>
+              <td align="right"><span style="font-size:11px;color:#9ca3af;font-style:italic;">via ClubHub</span></td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4f46e5 100%);padding:28px 32px 22px;">
+            <p style="margin:0 0 4px;font-size:11px;color:#a5b4fc;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">ACM Student Chapter</p>
+            <h1 style="margin:0;font-size:22px;font-weight:700;color:#ffffff;line-height:1.3;">Share Your Feedback</h1>
+            <p style="margin:8px 0 0;font-size:13px;color:#c7d2fe;">CodeSprint 2025</p>
+          </td></tr>
+          <tr><td style="padding:32px 32px 24px;">
+            <p style="margin:0 0 16px;font-size:16px;color:#374151;line-height:1.6;">Dear <strong style="color:#111827;">Priya Lakshmi</strong>,</p>
+            <p style="margin:0 0 24px;font-size:15px;color:#4b5563;line-height:1.7;">
+              Thank you for attending <strong>CodeSprint 2025</strong>!
+              We'd love to hear your thoughts — it only takes a minute and helps us make future events even better.
+            </p>
+            <a href="#" style="display:inline-block;padding:12px 28px;background:#4f46e5;color:#ffffff;font-size:14px;font-weight:600;border-radius:8px;text-decoration:none;">Submit Feedback</a>
+          </td></tr>
+          <tr><td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:18px 32px;">
+            <p style="margin:0 0 6px;font-size:11px;color:#9ca3af;">This is an automated message sent via <strong style="color:#6b7280;">ClubHub</strong> on behalf of ACM Student Chapter. Please do not reply.</p>
+            <p style="margin:0;font-size:10px;color:#d1d5db;">© All rights reserved · PSG Tech Students' Union &nbsp;·&nbsp; Developed by Dinesh T M (23Z320)</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     7. COMPLETION REMINDER — CLUB ADMIN
+     ════════════════════════════════════════════════════════════ -->
+<div class="section-label" id="completion-reminder">
+  <h2>Template 7</h2>
+  <h3>Event Completion Reminder (Sent to Club Admin on Days 0 / 2 / 4 / 6)</h3>
+</div>
+<div class="email-wrapper">
+  <div class="email-preview">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0;">
+      <tr><td align="center">
+        <table width="600" cellpadding="0" cellspacing="0"
+               style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:600px;width:100%;">
+          <tr><td style="background:#ffffff;padding:20px 32px 16px;border-bottom:1px solid #e5e7eb;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="vertical-align:middle;width:48px;"><img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" width="40" style="display:block;width:40px;height:auto;" /></td>
+              <td style="vertical-align:middle;padding-left:12px;">
+                <p style="margin:0;font-size:15px;font-weight:700;color:#111827;">PSG College of Technology</p>
+                <p style="margin:3px 0 0;font-size:11px;color:#6b7280;">Peelamedu, Coimbatore – 641 004</p>
+              </td>
+              <td align="right"><span style="font-size:11px;color:#9ca3af;font-style:italic;">via ClubHub</span></td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4f46e5 100%);padding:28px 32px 22px;">
+            <p style="margin:0 0 4px;font-size:11px;color:#a5b4fc;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">Action Required</p>
+            <h1 style="margin:0;font-size:22px;font-weight:700;color:#ffffff;line-height:1.3;">Close Your Event</h1>
+            <p style="margin:8px 0 0;font-size:13px;color:#c7d2fe;">CodeSprint 2025</p>
+          </td></tr>
+          <tr><td style="padding:32px 32px 24px;">
+            <p style="margin:0 0 16px;font-size:16px;color:#374151;line-height:1.6;">Dear <strong style="color:#111827;">Ramesh Babu</strong>,</p>
+            <p style="margin:0 0 16px;font-size:15px;color:#4b5563;line-height:1.7;">
+              Your event <strong>CodeSprint 2025</strong> ended <strong>2 days ago</strong> and has not yet been marked as complete.
+            </p>
+            <p style="margin:0 0 16px;font-size:15px;color:#4b5563;line-height:1.7;">
+              Please complete the following before closing the event:
+            </p>
+            <ul style="margin:0 0 24px;padding-left:20px;font-size:14px;color:#4b5563;line-height:2;">
+              <li>Confirm all attendance has been marked</li>
+              <li>Record event expenditure in the Finance tab</li>
+              <li>Issue participation and winner certificates</li>
+            </ul>
+            <p style="margin:0 0 24px;font-size:14px;color:#ef4444;font-weight:600;">
+              ⚠ The event will be automatically closed in 5 days if no action is taken.
+            </p>
+            <a href="#" style="display:inline-block;padding:12px 28px;background:#4f46e5;color:#ffffff;font-size:14px;font-weight:600;border-radius:8px;text-decoration:none;">Go to Event Dashboard</a>
+          </td></tr>
+          <tr><td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:18px 32px;">
+            <p style="margin:0 0 6px;font-size:11px;color:#9ca3af;">This is an automated message sent via <strong style="color:#6b7280;">ClubHub</strong>. Please do not reply.</p>
+            <p style="margin:0;font-size:10px;color:#d1d5db;">© All rights reserved · PSG Tech Students' Union &nbsp;·&nbsp; Developed by Dinesh T M (23Z320)</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     8. FACULTY ADVISOR — URGENT (Day 6)
+     ════════════════════════════════════════════════════════════ -->
+<div class="section-label" id="faculty-urgent">
+  <h2>Template 8</h2>
+  <h3>[URGENT] Faculty Advisor Warning — 1 Day Left (Sent on Day 6)</h3>
+</div>
+<div class="email-wrapper">
+  <div class="email-preview">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0;">
+      <tr><td align="center">
+        <table width="600" cellpadding="0" cellspacing="0"
+               style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:600px;width:100%;">
+          <tr><td style="background:#ffffff;padding:20px 32px 16px;border-bottom:1px solid #e5e7eb;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="vertical-align:middle;width:48px;"><img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" width="40" style="display:block;width:40px;height:auto;" /></td>
+              <td style="vertical-align:middle;padding-left:12px;">
+                <p style="margin:0;font-size:15px;font-weight:700;color:#111827;">PSG College of Technology</p>
+                <p style="margin:3px 0 0;font-size:11px;color:#6b7280;">Peelamedu, Coimbatore – 641 004</p>
+              </td>
+              <td align="right"><span style="font-size:11px;color:#9ca3af;font-style:italic;">via ClubHub</span></td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="background:linear-gradient(135deg,#4a0000 0%,#7f1d1d 60%,#dc2626 100%);padding:28px 32px 22px;">
+            <p style="margin:0 0 4px;font-size:11px;color:#fca5a5;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">Faculty Advisor Notice</p>
+            <h1 style="margin:0;font-size:22px;font-weight:700;color:#ffffff;line-height:1.3;">1 Day Left to Close Event</h1>
+            <p style="margin:8px 0 0;font-size:13px;color:#fecaca;">CodeSprint 2025</p>
+          </td></tr>
+          <tr><td style="padding:32px 32px 24px;">
+            <p style="margin:0 0 16px;font-size:16px;color:#374151;line-height:1.6;">Dear <strong style="color:#111827;">Dr. Meenakshi Sundaram</strong>,</p>
+            <p style="margin:0 0 16px;font-size:15px;color:#4b5563;line-height:1.7;">
+              The event <strong>CodeSprint 2025</strong> organised by <strong>ACM Student Chapter</strong> ended 6 days ago and has still not been marked as complete.
+            </p>
+            <p style="margin:0 0 24px;font-size:15px;color:#4b5563;line-height:1.7;">
+              <strong style="color:#dc2626;">Only 1 day remains</strong> before the event is automatically closed by the system.
+              Please ensure the club admin updates the finance records, issues certificates, and closes the event before the deadline.
+            </p>
+            <a href="#" style="display:inline-block;padding:12px 28px;background:#dc2626;color:#ffffff;font-size:14px;font-weight:600;border-radius:8px;text-decoration:none;">View Event Dashboard</a>
+          </td></tr>
+          <tr><td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:18px 32px;">
+            <p style="margin:0 0 6px;font-size:11px;color:#9ca3af;">This is an automated message sent via <strong style="color:#6b7280;">ClubHub</strong>. Please do not reply.</p>
+            <p style="margin:0;font-size:10px;color:#d1d5db;">© All rights reserved · PSG Tech Students' Union &nbsp;·&nbsp; Developed by Dinesh T M (23Z320)</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     9. CLUB ACTIVITY REPORT (HTML preview)
+     ════════════════════════════════════════════════════════════ -->
+<div class="section-label" id="club-report">
+  <h2>Section 9</h2>
+  <h3>Club Activity Report — Sample</h3>
+</div>
+<div class="report-wrapper">
+  <div class="report">
+    <div class="report-hdr">
+      <h1>ACM Student Chapter</h1>
+      <p style="font-size:14px;color:#c7d2fe;margin-top:6px;">Annual Club Activity Report</p>
+      <p>Period: 01 June 2025 — 30 June 2026</p>
+      <p>Department: Computer Science &amp; Engineering</p>
+    </div>
+    <div class="report-body">
+      <div class="report-section">
+        <h2>Summary</h2>
+        <div class="summary-stats">
+          <div class="stat-box"><div class="val">4</div><div class="lbl">Events</div></div>
+          <div class="stat-box"><div class="val">312</div><div class="lbl">Total Registrations</div></div>
+          <div class="stat-box"><div class="val">278</div><div class="lbl">Confirmed</div></div>
+          <div class="stat-box"><div class="val">241</div><div class="lbl">Total Attendance</div></div>
+        </div>
+      </div>
+      <div class="report-section">
+        <h2>Event Details</h2>
+        <div class="event-block">
+          <div class="event-block-title"><span class="event-number">1</span> CodeSprint 2025 <span class="badge badge-green">COMPLETED</span></div>
+          <table class="kv-table">
+            <tr><td>Date</td><td>15 Mar 2025 – 16 Mar 2025</td></tr>
+            <tr><td>Venue</td><td>Main Auditorium, PSG Tech</td></tr>
+            <tr><td>Category</td><td>Technical</td></tr>
+            <tr><td>Type</td><td>INTERNAL</td></tr>
+            <tr><td>Max Participants</td><td>200</td></tr>
+          </table>
+          <h3>Description</h3>
+          <p style="font-size:13px;color:#475569;line-height:1.7;margin-bottom:14px;">A 24-hour competitive programming contest designed to challenge students across domains — algorithms, data structures, and system design.</p>
+          <h3>Registration &amp; Attendance</h3>
+          <div class="stat-row">
+            <div class="stat-box"><div class="val">198</div><div class="lbl">Registered</div></div>
+            <div class="stat-box"><div class="val">182</div><div class="lbl">Confirmed</div></div>
+            <div class="stat-box"><div class="val">164</div><div class="lbl">Present</div></div>
+            <div class="stat-box"><div class="val">90.1%</div><div class="lbl">Attendance Rate</div></div>
+          </div>
+          <h3>Finance</h3>
+          <table class="kv-table">
+            <tr><td>Total Budget</td><td>₹50,000</td></tr>
+            <tr><td>Amount Spent</td><td>₹44,200</td></tr>
+            <tr><td>Utilization</td><td>88.4%</td></tr>
+          </table>
+          <h3>Feedback</h3>
+          <table class="kv-table"><tr><td>Net Promoter Score (NPS)</td><td>72</td></tr></table>
+        </div>
+        <div class="event-block">
+          <div class="event-block-title"><span class="event-number">2</span> AI/ML Workshop Series <span class="badge badge-green">COMPLETED</span></div>
+          <table class="kv-table">
+            <tr><td>Date</td><td>10 Apr 2025 – 12 Apr 2025</td></tr>
+            <tr><td>Venue</td><td>Lab Complex, Block C</td></tr>
+            <tr><td>Category</td><td>Workshop</td></tr>
+          </table>
+          <h3>Registration &amp; Attendance</h3>
+          <div class="stat-row">
+            <div class="stat-box"><div class="val">60</div><div class="lbl">Registered</div></div>
+            <div class="stat-box"><div class="val">56</div><div class="lbl">Confirmed</div></div>
+            <div class="stat-box"><div class="val">53</div><div class="lbl">Present</div></div>
+            <div class="stat-box"><div class="val">94.6%</div><div class="lbl">Attendance Rate</div></div>
+          </div>
+          <h3>Finance</h3>
+          <table class="kv-table">
+            <tr><td>Total Budget</td><td>₹12,000</td></tr>
+            <tr><td>Amount Spent</td><td>₹11,500</td></tr>
+            <tr><td>Utilization</td><td>95.8%</td></tr>
+          </table>
+        </div>
+        <div class="event-block">
+          <div class="event-block-title"><span class="event-number">3</span> Hackathon PSG v3.0 <span class="badge badge-green">COMPLETED</span></div>
+          <table class="kv-table">
+            <tr><td>Date</td><td>07 Jun 2025 – 08 Jun 2025</td></tr>
+            <tr><td>Venue</td><td>Innovation Centre, PSG Tech</td></tr>
+            <tr><td>Category</td><td>Technical / External</td></tr>
+          </table>
+          <h3>Registration &amp; Attendance</h3>
+          <div class="stat-row">
+            <div class="stat-box"><div class="val">54</div><div class="lbl">Registered</div></div>
+            <div class="stat-box"><div class="val">40</div><div class="lbl">Confirmed</div></div>
+            <div class="stat-box"><div class="val">24</div><div class="lbl">Present</div></div>
+            <div class="stat-box"><div class="val">60.0%</div><div class="lbl">Attendance Rate</div></div>
+          </div>
+          <h3>Finance</h3>
+          <table class="kv-table">
+            <tr><td>Total Budget</td><td>₹80,000</td></tr>
+            <tr><td>Amount Spent</td><td>₹76,400</td></tr>
+            <tr><td>Utilization</td><td>95.5%</td></tr>
+          </table>
+          <h3>Feedback</h3>
+          <table class="kv-table"><tr><td>Net Promoter Score (NPS)</td><td>65</td></tr></table>
+        </div>
+        <div class="event-block">
+          <div class="event-block-title"><span class="event-number">4</span> Open Source Day 2026 <span class="badge badge-blue">PUBLISHED</span></div>
+          <table class="kv-table">
+            <tr><td>Date</td><td>20 Jun 2026</td></tr>
+            <tr><td>Venue</td><td>Seminar Hall A</td></tr>
+            <tr><td>Max Participants</td><td>80</td></tr>
+          </table>
+          <h3>Registration &amp; Attendance</h3>
+          <div class="stat-row">
+            <div class="stat-box"><div class="val">0</div><div class="lbl">Registered</div></div>
+            <div class="stat-box"><div class="val">0</div><div class="lbl">Confirmed</div></div>
+            <div class="stat-box"><div class="val">—</div><div class="lbl">Present</div></div>
+            <div class="stat-box"><div class="val">—</div><div class="lbl">Attendance Rate</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="report-footer">
+      Generated on 18 June 2026 at 02:30 PM by ClubHub &nbsp;·&nbsp; PSG College of Technology Students' Union
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

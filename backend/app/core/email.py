@@ -120,6 +120,86 @@ async def _send(*, to: str, subject: str, html: str) -> None:
         logger.exception("Failed to send email to %s", to)
 
 
+async def send_registration_confirmed_email(
+    *,
+    recipient_email: str,
+    recipient_name: str,
+    event_title: str,
+    club_name: str,
+    event_url: str,
+    start_datetime: str,
+    venue: str | None,
+) -> None:
+    header = _email_header_html(club_name)
+    accent = f"""
+      <p style="margin:0 0 4px;font-size:11px;color:#a5b4fc;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">
+        {club_name}
+      </p>
+      <h1 style="margin:0;font-size:22px;font-weight:700;color:#ffffff;line-height:1.3;">
+        Registration Confirmed
+      </h1>
+      <p style="margin:8px 0 0;font-size:13px;color:#c7d2fe;">{event_title}</p>"""
+    venue_line = f"<p style='margin:0 0 6px;font-size:14px;color:#4b5563;'><strong>Venue:</strong> {venue}</p>" if venue else ""
+    body = f"""
+      <p style="margin:0 0 16px;font-size:16px;color:#374151;line-height:1.6;">
+        Dear <strong style="color:#111827;">{recipient_name}</strong>,
+      </p>
+      <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
+        Your registration for <strong>{event_title}</strong> is confirmed.
+        Your QR code for check-in is available in the ClubHub app.
+      </p>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:18px 22px;margin-bottom:24px;">
+        <p style="margin:0 0 8px;font-size:15px;font-weight:700;color:#111827;">{event_title}</p>
+        <p style="margin:0 0 6px;font-size:14px;color:#4b5563;"><strong>Date:</strong> {start_datetime}</p>
+        {venue_line}
+      </div>
+      <a href="{event_url}"
+         style="display:inline-block;padding:12px 28px;background:#4f46e5;color:#ffffff;
+                font-size:14px;font-weight:600;border-radius:8px;text-decoration:none;">
+        View Event
+      </a>"""
+    footer = _email_footer_html(club_name)
+    html = _wrap_email(header, accent, body, footer)
+    await _send(
+        to=recipient_email,
+        subject=f"{club_name} · Registration Confirmed: {event_title}",
+        html=html,
+    )
+
+
+async def send_registration_removed_email(
+    *,
+    recipient_email: str,
+    recipient_name: str,
+    event_title: str,
+    club_name: str,
+) -> None:
+    header = _email_header_html(club_name)
+    accent = f"""
+      <p style="margin:0 0 4px;font-size:11px;color:#fca5a5;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">
+        {club_name}
+      </p>
+      <h1 style="margin:0;font-size:22px;font-weight:700;color:#ffffff;line-height:1.3;">
+        Registration Removed
+      </h1>
+      <p style="margin:8px 0 0;font-size:13px;color:#fecaca;">{event_title}</p>"""
+    body = f"""
+      <p style="margin:0 0 16px;font-size:16px;color:#374151;line-height:1.6;">
+        Dear <strong style="color:#111827;">{recipient_name}</strong>,
+      </p>
+      <p style="margin:0 0 24px;font-size:15px;color:#4b5563;line-height:1.7;">
+        Your registration for <strong>{event_title}</strong> has been removed by the event organiser.
+        If you believe this is an error, please contact the club admin.
+      </p>"""
+    footer = _email_footer_html(club_name)
+    html = _wrap_email(header, accent, body, footer, cancelled=True)
+    await _send(
+        to=recipient_email,
+        subject=f"{club_name} · Registration Removed: {event_title}",
+        html=html,
+    )
+
+
 async def send_event_update_email(
     *,
     recipient_email: str,
