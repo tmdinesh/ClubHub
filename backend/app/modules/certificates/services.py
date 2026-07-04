@@ -384,6 +384,13 @@ class CertificateService:
         results: list[tuple[Certificate, bytes]] = []
 
         for u in present_users:
+            # Winners should only receive winner certificates, not participation ones
+            is_winner = await self.repo.get_by_event_user_type(
+                event_id, UUID(u["user_id"]), CertificateType.WINNER
+            )
+            if is_winner:
+                continue
+
             existing = await self.repo.get_by_event_user_type(
                 event_id, UUID(u["user_id"]), CertificateType.PARTICIPATION
             )
