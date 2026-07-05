@@ -349,10 +349,15 @@ async def send_feedback_request_email(
       <p style="margin:0 0 16px;font-size:16px;color:#374151;line-height:1.6;">
         Dear <strong style="color:#111827;">{recipient_name}</strong>,
       </p>
-      <p style="margin:0 0 24px;font-size:15px;color:#4b5563;line-height:1.7;">
+      <p style="margin:0 0 20px;font-size:15px;color:#4b5563;line-height:1.7;">
         Thank you for attending <strong>{event_title}</strong>!
         We'd love to hear your thoughts — it only takes a minute and helps us make future events even better.
       </p>
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px 18px;margin-bottom:24px;">
+        <p style="margin:0;font-size:14px;color:#92400e;line-height:1.6;">
+          <strong>Note:</strong> Your participation certificate will be issued only after you submit your feedback.
+        </p>
+      </div>
       <a href="{feedback_url}"
          style="display:inline-block;padding:12px 28px;background:#4f46e5;color:#ffffff;
                 font-size:14px;font-weight:600;border-radius:8px;text-decoration:none;">
