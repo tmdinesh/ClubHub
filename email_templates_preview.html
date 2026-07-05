@@ -91,7 +91,8 @@
     <li><a href="#team-joined">Team: You've Joined</a></li>
     <li><a href="#team-member-joined">Team: New Member Joined</a></li>
     <li><a href="#team-removed">Team: You've Been Removed</a></li>
-    <li><a href="#team-member-left">Team: Member Left</a></li>
+    <li><a href="#team-member-left-resubmit">Team: Member Left (Resubmit)</a></li>
+    <li><a href="#team-member-left-forming">Team: Member Left (Forming)</a></li>
     <li><a href="#team-ready">Team: Ready to Submit</a></li>
     <li><a href="#club-report">Club Activity Report</a></li>
   </ul>
@@ -645,11 +646,11 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════
-     12. TEAM: MEMBER LEFT (NEW)
+     12a. TEAM: MEMBER LEFT — still meets min size (resubmit required)
      ════════════════════════════════════════════════════════════ -->
-<div class="section-label" id="team-member-left">
-  <h2>Template 12</h2>
-  <h3>Team Notification — A Team Member Has Left</h3>
+<div class="section-label" id="team-member-left-resubmit">
+  <h2>Template 12a</h2>
+  <h3>Team Notification — Member Left (Team still meets minimum size — resubmission required)</h3>
 </div>
 <div class="email-wrapper">
   <div class="email-preview">
@@ -676,7 +677,54 @@
             <p style="margin:0 0 20px;font-size:16px;color:#374151;line-height:1.6;">Dear <strong style="color:#111827;">Arun Kumar</strong>,</p>
             <p style="margin:0 0 24px;font-size:15px;color:#4b5563;line-height:1.7;">
               <strong>Priya Lakshmi</strong> has left team <strong>Team Nexus</strong> for <strong>Hackathon PSG v3.0</strong>.
-              If your team no longer meets the minimum size, resubmission will be required.
+              Your team still meets the minimum size requirement — however, the previous submission has been voided.
+              Please log in and resubmit your team to confirm participation.
+            </p>
+          </td></tr>
+          <tr><td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:18px 32px;">
+            <p style="margin:0 0 6px;font-size:11px;color:#9ca3af;">This is an automated message sent via <strong style="color:#6b7280;">ClubHub</strong> on behalf of ACM Student Chapter. Please do not reply.</p>
+            <p style="margin:0;font-size:10px;color:#d1d5db;">© All rights reserved · PSG Tech Students' Union &nbsp;·&nbsp; Developed by Dinesh T M (23Z320)</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     12b. TEAM: MEMBER LEFT — below min size (forming state)
+     ════════════════════════════════════════════════════════════ -->
+<div class="section-label" id="team-member-left-forming">
+  <h2>Template 12b</h2>
+  <h3>Team Notification — Member Left (Team below minimum size — now Forming)</h3>
+</div>
+<div class="email-wrapper">
+  <div class="email-preview">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0;">
+      <tr><td align="center">
+        <table width="600" cellpadding="0" cellspacing="0"
+               style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:600px;width:100%;">
+          <tr><td style="background:#ffffff;padding:20px 32px 16px;border-bottom:1px solid #e5e7eb;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="vertical-align:middle;width:48px;"><img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" width="40" style="display:block;width:40px;height:auto;" /></td>
+              <td style="vertical-align:middle;padding-left:12px;">
+                <p style="margin:0;font-size:15px;font-weight:700;color:#111827;">PSG College of Technology</p>
+                <p style="margin:3px 0 0;font-size:11px;color:#6b7280;">Peelamedu, Coimbatore – 641 004</p>
+              </td>
+              <td align="right"><span style="font-size:11px;color:#9ca3af;font-style:italic;">via ClubHub</span></td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#4f46e5 100%);padding:28px 32px 22px;">
+            <p style="margin:0 0 4px;font-size:11px;color:#a5b4fc;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">ACM Student Chapter</p>
+            <h1 style="margin:0;font-size:22px;font-weight:700;color:#ffffff;line-height:1.3;">A Team Member Has Left</h1>
+            <p style="margin:8px 0 0;font-size:13px;color:#c7d2fe;">Hackathon PSG v3.0</p>
+          </td></tr>
+          <tr><td style="padding:32px 32px 24px;">
+            <p style="margin:0 0 20px;font-size:16px;color:#374151;line-height:1.6;">Dear <strong style="color:#111827;">Arun Kumar</strong>,</p>
+            <p style="margin:0 0 24px;font-size:15px;color:#4b5563;line-height:1.7;">
+              <strong>Priya Lakshmi</strong> has left team <strong>Team Nexus</strong> for <strong>Hackathon PSG v3.0</strong>.
+              Your team no longer meets the minimum size requirement and is now in the <strong>Forming</strong> state.
+              Recruit more members and resubmit once you reach the minimum size.
             </p>
           </td></tr>
           <tr><td style="background:#f9fafb;border-top:1px solid #e5e7eb;padding:18px 32px;">

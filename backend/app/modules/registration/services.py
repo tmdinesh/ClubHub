@@ -243,13 +243,15 @@ class RegistrationService:
                 await self.team_repo.remove_member(team.id, actor.id)
 
                 # Revert SUBMITTED status if now under min_size
-                if team.status == TeamStatus.SUBMITTED:
+                was_submitted = team.status == TeamStatus.SUBMITTED
+                new_status = team.status
+                if was_submitted:
                     count = await self.team_repo.count_members(team.id)
                     new_status = TeamStatus.READY if count >= team.min_size else TeamStatus.FORMING
                     await self.team_repo.update_team(team, status=new_status)
 
                 # Notify remaining team members that a member has left
-                await self._notify_team_member_left(team, actor)
+                await self._notify_team_member_left(team, actor, new_status)
 
         # Promote first waitlisted participant
         event = await self.event_repo.get_event(reg.event_id)
@@ -294,7 +296,7 @@ class RegistrationService:
 
         return reg
 
-    async def _notify_team_member_left(self, team: "Team", leaving_user: User) -> None:
+    async def _notify_team_member_left(self, team: "Team", leaving_user: User, new_status: "TeamStatus") -> None:
         """Email all remaining team members that a member has left and resubmission may be needed."""
         try:
             from app.core.email import send_team_notification_email
@@ -310,6 +312,7 @@ class RegistrationService:
             if not club_row:
                 return
             members = await self.team_repo.list_members_with_users(team.id)
+            resubmit_required = new_status == TeamStatus.READY
             for m in members:
                 await send_team_notification_email(
                     recipient_email=m["email"],
@@ -319,6 +322,7 @@ class RegistrationService:
                     team_name=team.name,
                     action="member_left",
                     new_member_name=leaving_user.name,
+                    resubmit_required=resubmit_required,
                 )
         except Exception:
             pass

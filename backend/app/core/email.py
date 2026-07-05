@@ -477,8 +477,9 @@ async def send_team_notification_email(
     event_title: str,
     club_name: str,
     team_name: str,
-    action: str,        # "joined" | "removed" | "member_joined"
+    action: str,        # "joined" | "removed" | "member_joined" | "member_left"
     new_member_name: str | None = None,
+    resubmit_required: bool | None = None,
 ) -> None:
     header = _email_header_html(club_name)
     if action == "joined":
@@ -495,11 +496,21 @@ async def send_team_notification_email(
         )
     elif action == "member_left":
         headline = "A Team Member Has Left"
-        body_text = (
-            f"<strong>{new_member_name}</strong> has left team "
-            f"<strong>{team_name}</strong> for <strong>{event_title}</strong>. "
-            f"If your team no longer meets the minimum size, resubmission will be required."
-        )
+        if resubmit_required:
+            body_text = (
+                f"<strong>{new_member_name}</strong> has left team "
+                f"<strong>{team_name}</strong> for <strong>{event_title}</strong>. "
+                f"Your team still meets the minimum size requirement — however, the previous submission "
+                f"has been voided. Please log in and resubmit your team to confirm participation."
+            )
+        else:
+            body_text = (
+                f"<strong>{new_member_name}</strong> has left team "
+                f"<strong>{team_name}</strong> for <strong>{event_title}</strong>. "
+                f"Your team no longer meets the minimum size requirement and is now in the "
+                f"<strong>Forming</strong> state. Recruit more members and resubmit once you reach "
+                f"the minimum size."
+            )
     else:
         headline = "You've Been Removed from a Team"
         body_text = (
