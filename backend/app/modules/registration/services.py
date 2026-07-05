@@ -248,6 +248,9 @@ class RegistrationService:
                     new_status = TeamStatus.READY if count >= team.min_size else TeamStatus.FORMING
                     await self.team_repo.update_team(team, status=new_status)
 
+                # Notify remaining team members that a member has left
+                await self._notify_team_member_left(team, actor)
+
         # Promote first waitlisted participant
         event = await self.event_repo.get_event(reg.event_id)
         waitlisted = await self.repo.first_waitlisted(reg.event_id)
@@ -290,6 +293,35 @@ class RegistrationService:
                 )
 
         return reg
+
+    async def _notify_team_member_left(self, team: "Team", leaving_user: User) -> None:
+        """Email all remaining team members that a member has left and resubmission may be needed."""
+        try:
+            from app.core.email import send_team_notification_email
+            from app.modules.events.models import Club, Event
+            from app.modules.teams.models import Team
+            from sqlalchemy import select as _sel
+            event_row = (await self.event_repo.get_event(team.event_id)) if self.event_repo else None
+            if not event_row:
+                return
+            club_row = (
+                await self.repo.db.execute(_sel(Club).where(Club.id == event_row.organizer_club_id))
+            ).scalar_one_or_none()
+            if not club_row:
+                return
+            members = await self.team_repo.list_members_with_users(team.id)
+            for m in members:
+                await send_team_notification_email(
+                    recipient_email=m["email"],
+                    recipient_name=m["name"],
+                    event_title=event_row.title,
+                    club_name=club_row.name,
+                    team_name=team.name,
+                    action="member_left",
+                    new_member_name=leaving_user.name,
+                )
+        except Exception:
+            pass
 
     async def get_qr_image_path(self, reg_id: UUID, actor: User) -> str:
         """Return the filesystem path to the QR PNG for direct streaming."""

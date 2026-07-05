@@ -488,6 +488,13 @@ async def send_team_notification_email(
             f"<strong>{new_member_name}</strong> has joined your team "
             f"<strong>{team_name}</strong> for <strong>{event_title}</strong>."
         )
+    elif action == "member_left":
+        headline = "A Team Member Has Left"
+        body_text = (
+            f"<strong>{new_member_name}</strong> has left team "
+            f"<strong>{team_name}</strong> for <strong>{event_title}</strong>. "
+            f"If your team no longer meets the minimum size, resubmission will be required."
+        )
     else:
         headline = "You've Been Removed from a Team"
         body_text = (
