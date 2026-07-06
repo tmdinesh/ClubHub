@@ -182,6 +182,15 @@ class AttendanceService:
             writer.writerow([r.registration_id, r.checkpoint_id, r.scanned_at, r.scanned_by, r.is_duplicate])
         return output.getvalue()
 
+    async def list_checkpoints(self, event_id: UUID) -> list[Checkpoint]:
+        checkpoints = await self.repo.list_checkpoints(event_id)
+        if not checkpoints:
+            default = await self.repo.create_checkpoint(
+                event_id=event_id, name="Main Entry", description=None, order=1
+            )
+            checkpoints = [default]
+        return checkpoints
+
     async def create_checkpoint(self, event_id: UUID, name: str, description: str | None, order: int) -> Checkpoint:
         return await self.repo.create_checkpoint(event_id=event_id, name=name, description=description, order=order)
 

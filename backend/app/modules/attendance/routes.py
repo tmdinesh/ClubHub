@@ -103,7 +103,7 @@ async def list_checkpoints(
     event_id: UUID,
     svc: AttendanceService = Depends(_svc),
 ) -> list[CheckpointOut]:
-    cps = await svc.repo.list_checkpoints(event_id)
+    cps = await svc.list_checkpoints(event_id)
     return [CheckpointOut.model_validate(cp) for cp in cps]
 
 
