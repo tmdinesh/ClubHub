@@ -3,24 +3,25 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { AlertCircle, Loader2 } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
+import { roleHomePath } from "@/lib/roleHome";
 
 export default function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { setAuth, isAuthenticated } = useAuthStore();
+  const { setAuth, isAuthenticated, user } = useAuthStore();
 
   useEffect(() => {
     const accessToken = searchParams.get("access_token");
     const refreshToken = searchParams.get("refresh_token");
     if (accessToken && refreshToken) {
       api.get("/auth/me", { headers: { Authorization: `Bearer ${accessToken}` } })
-        .then((res) => { setAuth(res.data, accessToken, refreshToken); navigate("/dashboard", { replace: true }); })
+        .then((res) => { setAuth(res.data, accessToken, refreshToken); navigate(roleHomePath(res.data.role), { replace: true }); })
         .catch(() => {});
     }
   }, [searchParams, setAuth, navigate]);
 
   useEffect(() => {
-    if (isAuthenticated()) navigate("/dashboard", { replace: true });
+    if (isAuthenticated()) navigate(roleHomePath(user?.role ?? "PARTICIPANT"), { replace: true });
   }, [isAuthenticated, navigate]);
 
   const isPending = !!(searchParams.get("access_token") && searchParams.get("refresh_token"));
