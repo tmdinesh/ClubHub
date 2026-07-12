@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Require authentication to view the event listing homepage and individual event detail pages.
+**Goal:** Require authentication to view the event listing homepage and individual event detail pages; gate attendance management endpoints to organizer/staff roles only (no participants).
 
-**Architecture:** Fix `ProtectedRoute` redirect to `/login` (not `/`), wrap two frontend routes, add `get_current_user` dependency to two backend endpoints. No new abstractions.
+**Architecture:** Fix `ProtectedRoute` redirect to `/login` (not `/`), wrap two frontend routes, add `get_current_user` to two event endpoints, add a `_require_attendance_access` dep to four unprotected attendance endpoints and replace the bare `get_current_user` on three already-protected attendance endpoints so role enforcement is consistent.
 
 **Tech Stack:** React + React Router (frontend), FastAPI + `get_current_user` dependency (backend), pytest + httpx AsyncClient (backend tests)
 
@@ -221,4 +221,209 @@ app.dependency_overrides[get_current_user] = lambda: _make_user()
 ```bash
 git add backend/app/modules/events/routes.py backend/tests/test_events.py
 git commit -m "feat: require auth on GET /events/{slug}"
+```
+
+---
+
+### Task 4: Add attendance access guard to attendance management endpoints
+
+Allowed roles: `ATTENDANCE_TEAM`, `CLUB_ADMIN`, `EVENT_HEAD`, `EVENT_COORDINATOR`, `SUPER_ADMIN`, `FACULTY_ADVISOR`, `VOLUNTEER_LEAD`, `FINANCE_LEAD`. `PARTICIPANT` is denied.
+
+**Files:**
+- Modify: `backend/app/modules/attendance/routes.py`
+
+- [ ] **Step 1: Write failing tests for unauthenticated and participant access**
+
+Add this test class to `backend/tests/test_attendance.py` (add `from httpx import AsyncClient` to imports if not already present):
+
+```python
+from app.modules.auth.deps import get_current_user
+from app.modules.auth.models import User
+from app.shared.enums import UserRole
+from app.main import app
+
+def _make_user(role: UserRole = UserRole.PARTICIPANT) -> User:
+    from uuid import uuid4
+    u = User()
+    u.id = uuid4()
+    u.role = role
+    u.email = "test@test.com"
+    u.name = "Test"
+    u.is_active = True
+    u.club_id = None
+    return u
+
+class TestAttendanceRouteAuth:
+    @pytest.mark.asyncio
+    async def test_dashboard_requires_auth(self, client: AsyncClient):
+        response = await client.get("/events/00000000-0000-0000-0000-000000000001/attendance")
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_dashboard_rejects_participant(self, client: AsyncClient):
+        app.dependency_overrides[get_current_user] = lambda: _make_user(UserRole.PARTICIPANT)
+        try:
+            response = await client.get("/events/00000000-0000-0000-0000-000000000001/attendance")
+            assert response.status_code == 403
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
+
+    @pytest.mark.asyncio
+    async def test_checkpoint_stats_requires_auth(self, client: AsyncClient):
+        response = await client.get(
+            "/events/00000000-0000-0000-0000-000000000001/attendance/checkpoint/00000000-0000-0000-0000-000000000002"
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_export_csv_requires_auth(self, client: AsyncClient):
+        response = await client.get("/events/00000000-0000-0000-0000-000000000001/attendance/export")
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_list_checkpoints_requires_auth(self, client: AsyncClient):
+        response = await client.get("/events/00000000-0000-0000-0000-000000000001/checkpoints")
+        assert response.status_code == 401
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+```bash
+cd backend && pytest tests/test_attendance.py::TestAttendanceRouteAuth -v
+```
+
+Expected: all FAIL — endpoints currently return 200 or 404 with no auth.
+
+- [ ] **Step 3: Add `_require_attendance_access` dep and apply it**
+
+In `backend/app/modules/attendance/routes.py`, add the following after the existing imports (add `ForbiddenError` to the imports from `app.shared.exceptions`):
+
+```python
+from app.shared.enums import UserRole
+from app.shared.exceptions import ForbiddenError
+
+_ATTENDANCE_ALLOWED = {
+    UserRole.ATTENDANCE_TEAM,
+    UserRole.CLUB_ADMIN,
+    UserRole.EVENT_HEAD,
+    UserRole.EVENT_COORDINATOR,
+    UserRole.SUPER_ADMIN,
+    UserRole.FACULTY_ADVISOR,
+    UserRole.VOLUNTEER_LEAD,
+    UserRole.FINANCE_LEAD,
+}
+
+def _require_attendance_access(actor: User = Depends(get_current_user)) -> User:
+    if actor.role not in _ATTENDANCE_ALLOWED:
+        raise ForbiddenError("Access denied")
+    return actor
+```
+
+Then update the four currently-unprotected endpoints on `events_router` to use `_require_attendance_access`:
+
+```python
+@events_router.get("/events/{event_id}/attendance", response_model=AttendanceDashboard)
+async def dashboard(
+    event_id: UUID,
+    svc: AttendanceService = Depends(_svc),
+    actor: User = Depends(_require_attendance_access),
+) -> AttendanceDashboard:
+    data = await svc.get_dashboard(event_id)
+    return AttendanceDashboard(**data)
+
+
+@events_router.get("/events/{event_id}/attendance/checkpoint/{cp_id}")
+async def checkpoint_stats(
+    event_id: UUID,
+    cp_id: UUID,
+    svc: AttendanceService = Depends(_svc),
+    actor: User = Depends(_require_attendance_access),
+) -> dict:
+    return await svc.get_checkpoint_stats(event_id, cp_id)
+
+
+@events_router.get("/events/{event_id}/attendance/export")
+async def export_csv(
+    event_id: UUID,
+    svc: AttendanceService = Depends(_svc),
+    actor: User = Depends(_require_attendance_access),
+) -> PlainTextResponse:
+    csv_data = await svc.export_csv(event_id)
+    return PlainTextResponse(csv_data, media_type="text/csv",
+                              headers={"Content-Disposition": f"attachment; filename=attendance_{event_id}.csv"})
+
+
+@events_router.get("/events/{event_id}/checkpoints", response_model=list[CheckpointOut])
+async def list_checkpoints(
+    event_id: UUID,
+    svc: AttendanceService = Depends(_svc),
+    actor: User = Depends(_require_attendance_access),
+) -> list[CheckpointOut]:
+    cps = await svc.list_checkpoints(event_id)
+    return [CheckpointOut.model_validate(cp) for cp in cps]
+```
+
+Also replace the bare `get_current_user` on the three already-protected endpoints so they enforce the same role set:
+
+```python
+@events_router.get("/events/{event_id}/attendance/present")
+async def present_users(
+    event_id: UUID,
+    svc: AttendanceService = Depends(_svc),
+    actor: User = Depends(_require_attendance_access),
+) -> list[dict]:
+    return await svc.list_present_users(event_id)
+
+
+@events_router.post("/events/{event_id}/checkpoints", response_model=CheckpointOut, status_code=201)
+async def create_checkpoint(
+    event_id: UUID,
+    body: CheckpointCreate,
+    svc: AttendanceService = Depends(_svc),
+    actor: User = Depends(_require_attendance_access),
+) -> CheckpointOut:
+    cp = await svc.create_checkpoint(event_id, body.name, body.description, body.order)
+    return CheckpointOut.model_validate(cp)
+
+
+@events_router.get("/events/{event_id}/attendance/mass-qr", response_model=MassQRResponse)
+async def get_mass_qr(
+    event_id: UUID,
+    checkpoint_id: UUID,
+    svc: AttendanceService = Depends(_svc),
+    actor: User = Depends(_require_attendance_access),
+) -> MassQRResponse:
+    from sqlalchemy import select
+    from app.modules.events.models import Event
+    result = await svc.repo.db.execute(select(Event).where(Event.id == event_id))
+    event = result.scalar_one_or_none()
+    if not event:
+        from app.shared.exceptions import NotFoundError
+        raise NotFoundError("Event", event_id)
+    interval = event.mass_qr_interval or 30
+    data = svc.generate_mass_qr(event_id, checkpoint_id, interval)
+    return MassQRResponse(**data)
+```
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+```bash
+cd backend && pytest tests/test_attendance.py::TestAttendanceRouteAuth -v
+```
+
+Expected: all PASS.
+
+- [ ] **Step 5: Run the full test suite to check for regressions**
+
+```bash
+cd backend && pytest tests/ -v
+```
+
+Expected: all tests pass. If any existing attendance test now gets 401/403, add a `get_current_user` override using `_make_user(UserRole.CLUB_ADMIN)` for that test.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add backend/app/modules/attendance/routes.py backend/tests/test_attendance.py
+git commit -m "feat: gate attendance management endpoints to staff roles"
 ```
