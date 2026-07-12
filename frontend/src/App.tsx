@@ -44,7 +44,7 @@ import OrganizerDashboard from "@/pages/organizer/OrganizerDashboard";
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
-  return isAuthenticated ? children : <Navigate to="/" replace />;
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
 export default function App() {
@@ -52,13 +52,13 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Public */}
-        <Route path="/" element={<EventDiscovery />} />
+        <Route path="/" element={<ProtectedRoute><EventDiscovery /></ProtectedRoute>} />
         <Route path="/login" element={<Login />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
         <Route path="/attendance-login" element={<AttendanceLogin />} />
         <Route path="/attendance/:eventId" element={<AttendanceScan />} />
-        <Route path="/events/:slug" element={<EventDetail />} />
+        <Route path="/events/:slug" element={<ProtectedRoute><EventDetail /></ProtectedRoute>} />
         <Route path="/verify/:code" element={<CertificateVerify />} />
 
         {/* Participant dashboard */}
