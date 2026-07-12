@@ -80,6 +80,7 @@ async def list_events(
     skip: int = 0,
     limit: int = 20,
     svc: EventService = Depends(_svc),
+    actor: User = Depends(get_current_user),
 ) -> list[EventOut]:
     events = await svc.list_events(status=status, club_id=club_id, category=category, skip=skip, limit=limit)
     return [_event_out(e) for e in events]

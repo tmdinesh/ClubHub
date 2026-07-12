@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
+from httpx import AsyncClient
 
 from app.modules.auth.models import User
 from app.modules.events.models import Event
@@ -144,3 +145,10 @@ class TestStatusTransitions:
         club_admin = _make_user(UserRole.CLUB_ADMIN)
         with pytest.raises(ForbiddenError):
             await svc.delete_event(event.id, club_admin)
+
+
+class TestEventRouteAuth:
+    @pytest.mark.asyncio
+    async def test_list_events_requires_auth(self, client: AsyncClient):
+        response = await client.get("/events")
+        assert response.status_code == 401
