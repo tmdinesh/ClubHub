@@ -6,12 +6,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
+from httpx import AsyncClient
 from jose import jwt
 
 from app.core.config import settings
+from app.main import app
 from app.modules.attendance.models import AttendanceRecord, Checkpoint
 from app.modules.attendance.repos import AttendanceRepository
 from app.modules.attendance.services import AttendanceService
+from app.modules.auth.deps import get_current_user
 from app.modules.auth.models import User
 from app.modules.registration.models import Registration
 from app.modules.registration.repos import RegistrationRepository
@@ -124,3 +127,48 @@ class TestAttendanceScan:
 
         assert result["is_duplicate"] is False
         att_repo.create_record.assert_called_once()
+
+
+def _make_attendance_user(role: UserRole = UserRole.PARTICIPANT) -> User:
+    from uuid import uuid4
+    u = User()
+    u.id = uuid4()
+    u.role = role
+    u.email = "test@test.com"
+    u.name = "Test"
+    u.is_active = True
+    u.club_id = None
+    return u
+
+
+class TestAttendanceRouteAuth:
+    @pytest.mark.asyncio
+    async def test_dashboard_requires_auth(self, client: AsyncClient):
+        response = await client.get("/events/00000000-0000-0000-0000-000000000001/attendance")
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_dashboard_rejects_participant(self, client: AsyncClient):
+        app.dependency_overrides[get_current_user] = lambda: _make_attendance_user(UserRole.PARTICIPANT)
+        try:
+            response = await client.get("/events/00000000-0000-0000-0000-000000000001/attendance")
+            assert response.status_code == 403
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
+
+    @pytest.mark.asyncio
+    async def test_checkpoint_stats_requires_auth(self, client: AsyncClient):
+        response = await client.get(
+            "/events/00000000-0000-0000-0000-000000000001/attendance/checkpoint/00000000-0000-0000-0000-000000000002"
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_export_csv_requires_auth(self, client: AsyncClient):
+        response = await client.get("/events/00000000-0000-0000-0000-000000000001/attendance/export")
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_list_checkpoints_requires_auth(self, client: AsyncClient):
+        response = await client.get("/events/00000000-0000-0000-0000-000000000001/checkpoints")
+        assert response.status_code == 401

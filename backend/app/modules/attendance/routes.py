@@ -17,12 +17,31 @@ from app.modules.attendance.services import AttendanceService
 from app.modules.auth.deps import get_current_user
 from app.modules.auth.models import User
 from app.modules.registration.repos import RegistrationRepository
+from app.shared.enums import UserRole
+from app.shared.exceptions import ForbiddenError
 
 # /attendance/scan — scanner-facing endpoint
 router = APIRouter(prefix="/attendance", tags=["attendance"])
 
 # /events/{id}/attendance/... and /events/{id}/checkpoints — event-management endpoints
 events_router = APIRouter(tags=["attendance"])
+
+_ATTENDANCE_ALLOWED = {
+    UserRole.ATTENDANCE_TEAM,
+    UserRole.CLUB_ADMIN,
+    UserRole.EVENT_HEAD,
+    UserRole.EVENT_COORDINATOR,
+    UserRole.SUPER_ADMIN,
+    UserRole.FACULTY_ADVISOR,
+    UserRole.VOLUNTEER_LEAD,
+    UserRole.FINANCE_LEAD,
+}
+
+
+def _require_attendance_access(actor: User = Depends(get_current_user)) -> User:
+    if actor.role not in _ATTENDANCE_ALLOWED:
+        raise ForbiddenError("Access denied")
+    return actor
 
 
 def _svc(db: AsyncSession = Depends(get_db)) -> AttendanceService:
@@ -70,7 +89,11 @@ async def mass_scan(
 
 
 @events_router.get("/events/{event_id}/attendance", response_model=AttendanceDashboard)
-async def dashboard(event_id: UUID, svc: AttendanceService = Depends(_svc)) -> AttendanceDashboard:
+async def dashboard(
+    event_id: UUID,
+    svc: AttendanceService = Depends(_svc),
+    actor: User = Depends(_require_attendance_access),
+) -> AttendanceDashboard:
     data = await svc.get_dashboard(event_id)
     return AttendanceDashboard(**data)
 
@@ -79,20 +102,27 @@ async def dashboard(event_id: UUID, svc: AttendanceService = Depends(_svc)) -> A
 async def present_users(
     event_id: UUID,
     svc: AttendanceService = Depends(_svc),
-    actor: User = Depends(get_current_user),
+    actor: User = Depends(_require_attendance_access),
 ) -> list[dict]:
     return await svc.list_present_users(event_id)
 
 
 @events_router.get("/events/{event_id}/attendance/checkpoint/{cp_id}")
 async def checkpoint_stats(
-    event_id: UUID, cp_id: UUID, svc: AttendanceService = Depends(_svc)
+    event_id: UUID,
+    cp_id: UUID,
+    svc: AttendanceService = Depends(_svc),
+    actor: User = Depends(_require_attendance_access),
 ) -> dict:
     return await svc.get_checkpoint_stats(event_id, cp_id)
 
 
 @events_router.get("/events/{event_id}/attendance/export")
-async def export_csv(event_id: UUID, svc: AttendanceService = Depends(_svc)) -> PlainTextResponse:
+async def export_csv(
+    event_id: UUID,
+    svc: AttendanceService = Depends(_svc),
+    actor: User = Depends(_require_attendance_access),
+) -> PlainTextResponse:
     csv_data = await svc.export_csv(event_id)
     return PlainTextResponse(csv_data, media_type="text/csv",
                               headers={"Content-Disposition": f"attachment; filename=attendance_{event_id}.csv"})
@@ -102,6 +132,7 @@ async def export_csv(event_id: UUID, svc: AttendanceService = Depends(_svc)) -> 
 async def list_checkpoints(
     event_id: UUID,
     svc: AttendanceService = Depends(_svc),
+    actor: User = Depends(_require_attendance_access),
 ) -> list[CheckpointOut]:
     cps = await svc.list_checkpoints(event_id)
     return [CheckpointOut.model_validate(cp) for cp in cps]
@@ -112,7 +143,7 @@ async def create_checkpoint(
     event_id: UUID,
     body: CheckpointCreate,
     svc: AttendanceService = Depends(_svc),
-    actor: User = Depends(get_current_user),
+    actor: User = Depends(_require_attendance_access),
 ) -> CheckpointOut:
     cp = await svc.create_checkpoint(event_id, body.name, body.description, body.order)
     return CheckpointOut.model_validate(cp)
@@ -123,7 +154,7 @@ async def get_mass_qr(
     event_id: UUID,
     checkpoint_id: UUID,
     svc: AttendanceService = Depends(_svc),
-    actor: User = Depends(get_current_user),
+    actor: User = Depends(_require_attendance_access),
 ) -> MassQRResponse:
     from sqlalchemy import select
     from app.modules.events.models import Event
