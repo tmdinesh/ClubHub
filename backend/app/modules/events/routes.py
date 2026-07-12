@@ -177,7 +177,11 @@ async def download_club_report(
 
 
 @router.get("/{slug}", response_model=EventOut)
-async def get_event(slug: str, svc: EventService = Depends(_svc)) -> EventOut:
+async def get_event(
+    slug: str,
+    svc: EventService = Depends(_svc),
+    actor: User = Depends(get_current_user),
+) -> EventOut:
     event = await svc.get_event_by_slug(slug)
     return _event_out(event)
 

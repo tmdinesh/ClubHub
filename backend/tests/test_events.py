@@ -152,3 +152,8 @@ class TestEventRouteAuth:
     async def test_list_events_requires_auth(self, client: AsyncClient):
         response = await client.get("/events")
         assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_get_event_by_slug_requires_auth(self, client: AsyncClient):
+        response = await client.get("/events/some-slug")
+        assert response.status_code == 401
