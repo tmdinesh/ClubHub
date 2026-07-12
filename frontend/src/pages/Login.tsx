@@ -30,28 +30,42 @@ export default function Login() {
     <div style={{
       minHeight: "100vh", display: "flex", flexDirection: "column",
       background: "var(--ink)", fontFamily: "'Outfit', sans-serif",
-      position: "relative", overflow: "hidden",
     }}>
+      {/* ── Nav (matches EventDiscovery) ── */}
+      <header style={{
+        position: "sticky", top: 0, zIndex: 50,
+        background: "#e8eef5",
+        borderBottom: "1px solid #c8d5e8",
+        boxShadow: "0 1px 4px rgba(30,45,74,0.08)",
+      }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 88, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Link to="/" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
+            <img
+              src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png"
+              alt="PSG College of Technology"
+              style={{ height: 64, width: "auto", display: "block", flexShrink: 0 }}
+            />
+            <div style={{ width: 1, height: 44, background: "#b0c4d8", flexShrink: 0 }} />
+            <div>
+              <p style={{ fontFamily: "'DM Serif Display', serif", fontSize: 15, color: "#1e2d4a", letterSpacing: "-0.02em", lineHeight: 1.2, margin: 0 }}>
+                PSG College of Technology
+              </p>
+              <p style={{ fontSize: 10, color: "#4a6080", margin: "2px 0 0", letterSpacing: "0.04em" }}>
+                ClubHub · Event Portal
+              </p>
+            </div>
+          </Link>
+        </div>
+      </header>
+
       {/* Background glow */}
       <div style={{
-        position: "fixed", top: "30%", left: "50%", transform: "translate(-50%, -50%)",
+        position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
         width: 700, height: 400, pointerEvents: "none",
         background: "radial-gradient(ellipse, rgba(245,166,35,0.05) 0%, transparent 70%)",
       }} />
 
-      <header style={{ padding: "20px 28px" }}>
-        <Link to="/" style={{
-          fontSize: 13, color: "var(--fog)", textDecoration: "none",
-          transition: "color 150ms",
-        }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "var(--cream)")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--fog)")}
-        >
-          ← Back to events
-        </Link>
-      </header>
-
-      <main style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px" }}>
+      <main style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px" }}>
         <div style={{ width: "100%", maxWidth: 380 }} className="animate-fade-up">
 
           {/* Brand mark */}
@@ -130,6 +144,31 @@ export default function Login() {
 
         </div>
       </main>
+
+      {/* ── Footer (matches EventDiscovery) ── */}
+      <footer style={{
+        borderTop: "1px solid var(--seam)",
+        padding: "24px",
+        marginTop: 48,
+      }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ background: "#e8eef5", borderRadius: 6, padding: "3px 6px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <img src="https://upload.wikimedia.org/wikipedia/en/e/eb/PSG_College_of_Technology_logo.png" alt="PSG Tech" style={{ height: 52, width: "auto", display: "block" }} />
+            </div>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "var(--cream)", margin: 0 }}>PSG College of Technology</p>
+              <p style={{ fontSize: 11, color: "var(--fog)", margin: "3px 0 0" }}>Peelamedu, Coimbatore – 641 004</p>
+            </div>
+          </div>
+          <p style={{ fontSize: 11, color: "var(--dust)", textAlign: "center", margin: 0 }}>
+            © All rights reserved · PSG Tech Students' Union
+          </p>
+          <p style={{ fontSize: 10, color: "var(--dust)", margin: 0 }}>
+            Developed by Dinesh T M (23Z320)
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
