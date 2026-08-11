@@ -61,13 +61,15 @@ services:
       - key: RABBITMQ_URL
         sync: false
 
-# 4. Managed PostgreSQL Database
+  # 4. Managed Redis Instance
+  - type: redis
+    name: ccops-redis
+    ipAllowList: [] # internal connections only
+    plan: free
+
+# 5. Managed PostgreSQL Database
 databases:
   - name: ccops-postgres
     databaseName: ccops
     user: ccops_user
-
-# 5. Managed Redis Instance
-redis:
-  - name: ccops-redis
-    ipAllowList: [] # internal connections only
+    plan: free
