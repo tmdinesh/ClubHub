@@ -1,4 +1,4 @@
-# CCOps — College Club Event Operations Platform
+# ClubHub — College Club Event Operations Platform
 
 A production-grade modular monolith for managing the full lifecycle of college club events: from creation and approval through registration, attendance, certificates, finance, and feedback.
 
