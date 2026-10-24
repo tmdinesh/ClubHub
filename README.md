@@ -300,7 +300,7 @@ Copy `.env.example` to `.env` and fill in the values below.
 | `DATABASE_URL` | Yes | — | Async PostgreSQL DSN (`postgresql+asyncpg://...`) |
 | `TEST_DATABASE_URL` | No | — | Separate DB for tests |
 | `REDIS_URL` | Yes | — | Redis DSN (`redis://...`) |
-| `RABBITMQ_URL` | Yes | — | AMQP DSN (`amqp://...`) |
+| `RABBITMQ_URL` | No | — | Optional AMQP DSN for queued event notifications; without it, certificate emails are dispatched inline |
 | `GOOGLE_CLIENT_ID` | Yes | — | Google OAuth2 client ID |
 | `GOOGLE_CLIENT_SECRET` | Yes | — | Google OAuth2 client secret |
 | `GOOGLE_REDIRECT_URI` | Yes | `http://localhost/api/auth/google/callback` | OAuth callback URL |

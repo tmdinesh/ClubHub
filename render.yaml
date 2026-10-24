@@ -56,8 +56,6 @@ services:
         sync: false
       - key: GOOGLE_REDIRECT_URI
         sync: false
-      - key: RABBITMQ_URL
-        sync: false
 
   # Managed Redis-compatible Key Value store
   - type: keyvalue
