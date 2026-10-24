@@ -57,6 +57,12 @@ services:
         sync: false
       - key: GOOGLE_REDIRECT_URI
         sync: false
+      - key: ALLOWED_EMAIL_DOMAINS
+        value: psgtech.ac.in
+      - key: SUPER_ADMIN_EMAIL
+        sync: false
+      - key: SUPER_ADMIN_PASSWORD
+        sync: false
 
   # Managed Redis-compatible Key Value store
   - type: keyvalue

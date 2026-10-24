@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     # Declared as str so pydantic-settings never tries to JSON-decode it.
     # Accepts either ALLOWED_EMAIL_DOMAINS or ALLOWED_EMAIL_DOMAINS_STR from env.
     allowed_domains_raw: str = Field(
-        default="college.edu",
+        default="psgtech.ac.in",
         validation_alias=AliasChoices("ALLOWED_EMAIL_DOMAINS", "ALLOWED_EMAIL_DOMAINS_STR"),
     )
 

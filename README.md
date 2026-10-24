@@ -308,7 +308,9 @@ Copy `.env.example` to `.env` and fill in the values below.
 | `JWT_ALGORITHM` | No | `HS256` | JWT signing algorithm |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | No | `30` | Access token lifetime |
 | `REFRESH_TOKEN_EXPIRE_DAYS` | No | `7` | Refresh token lifetime |
-| `ALLOWED_EMAIL_DOMAINS` | No | `college.edu` | Comma-separated list of allowed email domains |
+| `ALLOWED_EMAIL_DOMAINS` | No | `psgtech.ac.in` | Comma-separated list of allowed email domains |
+| `SUPER_ADMIN_EMAIL` | No | — | Email used on `/admin/login` for the super admin |
+| `SUPER_ADMIN_PASSWORD` | No | — | bcrypt hash of the super-admin password; enter the original password on the login page |
 | `ENVIRONMENT` | No | `development` | `development` / `staging` / `production` |
 | `DEBUG` | No | `true` | Enables debug mode |
 | `CORS_ORIGINS` | No | `http://localhost,...` | Comma-separated CORS-allowed origins |
@@ -775,7 +777,7 @@ During initial setup, provide these values when Render prompts for them:
 - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: your Google OAuth credentials.
 - `GOOGLE_REDIRECT_URI`: the backend's public URL followed by `/auth/google/callback` (the backend URL does not include `/api`).
 
-RabbitMQ is optional. Without `RABBITMQ_URL`, certificate emails are dispatched inline by the API instead of through a worker. After Render creates the services, add the backend URL plus `/auth/google/callback` to Google's **Authorized redirect URIs**. Add the frontend URL to **Authorized JavaScript origins**. Set `ALLOWED_EMAIL_DOMAINS` on the backend to the allowed institution domains. The Blueprint connects the frontend and backend URLs automatically and generates a `JWT_SECRET`.
+RabbitMQ is optional. Without `RABBITMQ_URL`, certificate emails are dispatched inline by the API instead of through a worker. After Render creates the services, add the backend URL plus `/auth/google/callback` to Google's **Authorized redirect URIs**. Add the frontend URL to **Authorized JavaScript origins**. The Blueprint allows `psgtech.ac.in` accounts and generates a `JWT_SECRET`. To enable administrator password login, set `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` on the backend. `SUPER_ADMIN_PASSWORD` must be a bcrypt hash; generate one locally with `python -c "import bcrypt; print(bcrypt.hashpw(b'choose-a-strong-password', bcrypt.gensalt()).decode())"`, then save the hash in Render. Sign in at `<frontend-url>/admin/login` using the email and original password.
 
 S3 storage is not currently implemented in the app. Uploaded certificate templates and generated QR images use local storage. Render's free services have ephemeral filesystems, so those files are lost when the service restarts or redeploys. Durable uploads require a paid Render persistent disk or a future change to store them in PostgreSQL or object storage.
 
