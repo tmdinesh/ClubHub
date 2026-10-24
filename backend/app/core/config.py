@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import List, Literal
 
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,6 +18,16 @@ class Settings(BaseSettings):
     # ── Database ──────────────────────────────────────────────────────────────
     DATABASE_URL: str = "postgresql+asyncpg://ccops:ccops_pass@localhost:5432/ccops"
     TEST_DATABASE_URL: str = "postgresql+asyncpg://ccops:ccops_pass@localhost:5432/ccops_test"
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def use_async_postgres_driver(cls, value: str) -> str:
+        if isinstance(value, str):
+            if value.startswith("postgres://"):
+                return "postgresql+asyncpg://" + value.removeprefix("postgres://")
+            if value.startswith("postgresql://"):
+                return "postgresql+asyncpg://" + value.removeprefix("postgresql://")
+        return value
 
     # ── Redis ─────────────────────────────────────────────────────────────────
     REDIS_URL: str = "redis://localhost:6379/0"
