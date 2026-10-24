@@ -8,7 +8,7 @@ import {
   Globe, Copy, Check, KeyRound, MessageSquare,
 } from "lucide-react";
 import Layout from "@/components/Layout";
-import api, { apiError } from "@/lib/api";
+import api, { apiError, mediaUrl } from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 import type { Registration, Team } from "@/types";
 import { fmtDateIST } from "@/lib/dateIST";
@@ -633,7 +633,7 @@ interface TicketInfo {
 }
 
 function TicketModal({ ticket, onClose }: { ticket: TicketInfo; onClose: () => void }) {
-  const qrUrl = `/media/qr/${ticket.registrationId}.png`;
+  const qrUrl = mediaUrl(`/media/qr/${ticket.registrationId}.png`);
 
   return (
     <div

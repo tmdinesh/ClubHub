@@ -1,8 +1,16 @@
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/auth.store";
 
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+
+export function mediaUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) return path;
+  const mediaBase = API_BASE_URL.replace(/\/api\/?$/, "");
+  return `${mediaBase}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 const api: AxiosInstance = axios.create({
-  baseURL: "/api",
+  baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -48,7 +56,7 @@ api.interceptors.response.use(
         const { refreshToken, setAuth, logout } = useAuthStore.getState();
         if (!refreshToken) throw new Error("No refresh token");
 
-        const resp = await axios.post("/api/auth/refresh", { refresh_token: refreshToken });
+        const resp = await axios.post(`${API_BASE_URL}/auth/refresh`, { refresh_token: refreshToken });
         const { access_token, refresh_token } = resp.data;
         setAuth(useAuthStore.getState().user!, access_token, refresh_token);
 

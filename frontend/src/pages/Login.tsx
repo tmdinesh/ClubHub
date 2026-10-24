@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { AlertCircle, Loader2 } from "lucide-react";
-import api from "@/lib/api";
+import api, { API_BASE_URL } from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 import { roleHomePath } from "@/lib/roleHome";
 
@@ -111,7 +111,7 @@ export default function Login() {
           }}>
             <button
               type="button"
-              onClick={() => { window.location.href = "/api/auth/google/login"; }}
+              onClick={() => { window.location.href = `${API_BASE_URL}/auth/google/login`; }}
               disabled={isPending}
               style={{
                 width: "100%", display: "flex", alignItems: "center", justifyContent: "center",

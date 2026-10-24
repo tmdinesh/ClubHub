@@ -7,7 +7,7 @@ import {
   CreditCard, Lock, Info,
 } from "lucide-react";
 import Layout from "@/components/Layout";
-import api, { apiError } from "@/lib/api";
+import api, { apiError, mediaUrl } from "@/lib/api";
 import type { Certificate, Event } from "@/types";
 import { fmtDateIST, fmtDateLongIST } from "@/lib/dateIST";
 import { useAuthStore } from "@/store/auth.store";
@@ -1332,7 +1332,7 @@ export default function CertificatesManage() {
                   <div className="flex items-center gap-4">
                     {t?.template_file_url ? (
                       <img
-                        src={t.template_file_url}
+                        src={mediaUrl(t.template_file_url)}
                         alt="template preview"
                         style={{ border: "1px solid var(--seam)" }}
                         className="w-24 h-16 object-cover rounded-lg"
@@ -1476,7 +1476,7 @@ export default function CertificatesManage() {
                         <div className="flex items-center gap-2">
                           {cert.pdf_url && (
                             <a
-                              href={cert.pdf_url}
+                              href={mediaUrl(cert.pdf_url)}
                               target="_blank"
                               rel="noopener noreferrer"
                               style={{ background: "var(--ink-muted)", color: "var(--ash)", border: "none" }}

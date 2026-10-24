@@ -1067,13 +1067,10 @@ function BankExportTab() {
   const { data: rows, isFetching, error: tableError } = useQuery<BankRow[]>({
     queryKey: ["bank-details", fromDate, toDate],
     queryFn: async () => {
-      const token = useAuthStore.getState().accessToken ?? "";
-      const res = await fetch(
-        `/api/analytics/bank-details?from_date=${fromDate}&to_date=${toDate}`,
-        { headers: { Authorization: `Bearer ${token}` } },
+      const res = await api.get<BankRow[]>(
+        `/analytics/bank-details?from_date=${fromDate}&to_date=${toDate}`,
       );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
+      return res.data;
     },
     enabled: !!fromDate && !!toDate,
   });
@@ -1083,16 +1080,11 @@ function BankExportTab() {
     setCsvLoading(true);
     setCsvError(null);
     try {
-      const token = useAuthStore.getState().accessToken ?? "";
-      const res = await fetch(
-        `/api/analytics/bank-export?from_date=${fromDate}&to_date=${toDate}`,
-        { headers: { Authorization: `Bearer ${token}` } },
+      const res = await api.get(
+        `/analytics/bank-export?from_date=${fromDate}&to_date=${toDate}`,
+        { responseType: "blob" },
       );
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || `HTTP ${res.status}`);
-      }
-      const blob = await res.blob();
+      const blob = res.data as Blob;
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
