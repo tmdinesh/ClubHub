@@ -772,13 +772,12 @@ The repository includes a `render.yaml` Blueprint for the Vite frontend, FastAPI
 
 During initial setup, provide these values when Render prompts for them:
 
-- `RABBITMQ_URL`: an AMQP URL from a hosted RabbitMQ provider (Render does not create RabbitMQ in this Blueprint). Use the same URL for the API and worker.
 - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: your Google OAuth credentials.
 - `GOOGLE_REDIRECT_URI`: the backend's public URL followed by `/auth/google/callback` (the backend URL does not include `/api`).
 
-After Render creates the services, add the backend URL plus `/auth/google/callback` to Google's **Authorized redirect URIs**. Add the frontend URL to **Authorized JavaScript origins**. Set `ALLOWED_EMAIL_DOMAINS` on the backend to the allowed institution domains. The Blueprint connects the frontend and backend URLs automatically and generates a `JWT_SECRET`.
+RabbitMQ is optional. Without `RABBITMQ_URL`, certificate emails are dispatched inline by the API instead of through a worker. After Render creates the services, add the backend URL plus `/auth/google/callback` to Google's **Authorized redirect URIs**. Add the frontend URL to **Authorized JavaScript origins**. Set `ALLOWED_EMAIL_DOMAINS` on the backend to the allowed institution domains. The Blueprint connects the frontend and backend URLs automatically and generates a `JWT_SECRET`.
 
-Uploaded files use local storage by default, which is ephemeral on hosted containers. Before relying on uploads in production, configure S3-compatible storage by setting `FILE_STORAGE_BACKEND=s3`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, and `S3_BUCKET_NAME` on the backend.
+S3 storage is not currently implemented in the app. Uploaded certificate templates and generated QR images use local storage. Render's free services have ephemeral filesystems, so those files are lost when the service restarts or redeploys. Durable uploads require a paid Render persistent disk or a future change to store them in PostgreSQL or object storage.
 
 The app can also use Vercel for the static frontend, but its API, database, Redis, and RabbitMQ worker still need hosted services; Render is the simpler single-provider setup for this repository.
 

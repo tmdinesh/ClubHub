@@ -59,33 +59,6 @@ services:
       - key: RABBITMQ_URL
         sync: false
 
-  # Background event and notification worker
-  - type: worker
-    name: ccops-worker
-    runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    dockerCommand: python -m app.worker
-    envVars:
-      - key: ENVIRONMENT
-        value: production
-      - key: DATABASE_URL
-        fromDatabase:
-          name: ccops-postgres
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: ccops-redis
-          property: connectionString
-      - key: JWT_SECRET
-        fromService:
-          type: web
-          name: ccops-backend
-          envVarKey: JWT_SECRET
-      - key: RABBITMQ_URL
-        sync: false
-
   # Managed Redis-compatible Key Value store
   - type: keyvalue
     name: ccops-redis

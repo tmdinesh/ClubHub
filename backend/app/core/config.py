@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
 
     # ── RabbitMQ ──────────────────────────────────────────────────────────────
-    RABBITMQ_URL: str = "amqp://ccops:ccops_pass@localhost:5672/"
+    RABBITMQ_URL: str = ""
 
     # ── Google OAuth ──────────────────────────────────────────────────────────
     GOOGLE_CLIENT_ID: str = ""

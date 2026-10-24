@@ -56,7 +56,13 @@ class Publisher:
 
 
 async def publish_event(event_type: str, payload: dict[str, Any]) -> None:
-    """Convenience wrapper for one-off publishes."""
+    """Publish through RabbitMQ, or dispatch inline when no broker is configured."""
+    if not settings.RABBITMQ_URL:
+        from app.modules.notifications.consumer import NotificationConsumer
+
+        await NotificationConsumer().handle({"type": event_type, **payload})
+        return
+
     async with Publisher() as pub:
         await pub.publish(event_type, payload)
 
